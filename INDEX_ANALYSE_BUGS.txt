@@ -1,0 +1,106 @@
+INDEX - ANALYSE DETAILLEE DES 4 BUGS
+=====================================
+
+Document                          | Contenu                    | Temps Lecture
+──────────────────────────────────┼────────────────────────────┼──────────────
+RESUME_BUGS_VISUELS.txt           | Vue d'ensemble visuelle    | 5 min
+                                  | Avant/Après illustrations  |
+                                  | Priorité correction        |
+                                  |                            |
+CORRECTIONS_BUGS_RAPIDES.txt      | Guide step-by-step         | 10 min
+                                  | Avant/Après code           |
+                                  | Numéros de lignes exacts   |
+                                  | Tests de vérification      |
+                                  |                            |
+ANALYSE_BUGS_DETAILLEE.txt        | Explication technique      | 20 min
+                                  | Pourquoi c'est buggé       |
+                                  | Solutions détaillées       |
+                                  | Trade-offs                 |
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+FLUX DE LECTURE RECOMMANDE
+==========================
+
+1. RESUME_BUGS_VISUELS.txt (5 min)
+   -> Comprendre rapidement les 4 bugs visuellement
+
+2. CORRECTIONS_BUGS_RAPIDES.txt (10 min)
+   -> Voir exactement quoi modifier et où
+
+3. Appliquer fixes #1, #2, #3 (55 secondes)
+   -> Voir les bugs disparaitre
+
+4. ANALYSE_BUGS_DETAILLEE.txt (20 min, optionnel)
+   -> Approfondir la comprension technique
+   -> Préparer le refactoring #4
+
+5. Refactoring #4 (30-45 min, optionnel)
+   -> Fusionner phases 2 et 3
+   -> Améliorer la maintenabilité
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+LES 4 BUGS EN UNE PHRASE CHACUN
+================================
+
+Bug 1 : CSS header.hidden n'a pas "display: none", donc le header prend toujours de la place
+Bug 2 : Classes Tailwind statiques (lg:grid-cols-4) forcent un layout 1x4 au lieu de s'adapter
+Bug 3 : state.students n'est pas reinitialise entre regroupements, donc les eleves se melangent
+Bug 4 : Phase 2 et 3 font la meme chose, 150 lignes de code duplique, fusionnables
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+FICHIER A MODIFIER
+===================
+
+groupsModuleComplete.html
+
+4 localisations principales :
+
+1. Ligne 3544 : header.hidden { ajouter display: none; }
+2. Ligne 1664 : <div class="grid...> remplacer par style=
+3. Ligne 1045-1046 : syncActiveRegroupementState() ajouter state.students = [];
+4. Ligne 1061-1062 : syncActiveRegroupementState() ajouter state.students = [];
+
+(optionnel)
+5. Lignes 666-799 + 1176-1340 : Fusionner renderStep2 + renderStep3
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CRITERES DE SUCCES
+==================
+
+Bug 1 : Header disparait COMPLETEMENT quand H est appuyé
+Bug 2 : 4 groupes s'affichent en 2x2, pas 1x4
+Bug 3 : 0 eleve en commun entre 2 regroupements differents
+Bug 4 : (optionnel) Code plus simple, -1 etape pour utilisateur
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+QUESTIONS FREQUENTES
+====================
+
+Q: Lesquels sont CRITIQUES ?
+A: Bug 3 (donnees qui se melangent) est CRITIQUE
+   Bug 1 et 2 sont importants mais cosmétiques
+   Bug 4 est optimisation
+
+Q: Je peux ignorer certains bugs ?
+A: Bug 3 : NON, données incorrectes
+   Bug 1 : NON, UI non-fonctionnelle
+   Bug 2 : NON, Layout cassé
+   Bug 4 : OUI, juste optimisation
+
+Q: Combien de temps pour tout fixer ?
+A: 1 minute pour bugs 1,2,3
+   30-45 minutes pour bug 4
+   Test inclus
+
+Q: Risque de tout casser ?
+A: NON, changements très localisés et sûrs
+   Aucune modification de logique métier
+   Juste CSS et nettoyage d'état
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+

@@ -1,0 +1,129 @@
+================================================================================
+                        🚀 QUICK START - CORRECTIONS
+================================================================================
+
+QUOI: Les 3 blockers du workflow multi-passe ont été corrigés
+OÙ: Code.js (1 fix) + groupsModuleComplete.html (6 fixes)
+QUAND: 29 octobre 2025
+POURQUOI: Passe 1 data était détruite lors finalisation Passe 2
+
+================================================================================
+                          AVANT (Bugs) vs APRÈS (Fixes)
+================================================================================
+
+PROBLÈME 1: finalizeTempGroups() détruisait TOUS les onglets
+┌─────────────────────────────────────────────────────────────────────────┐
+│ AVANT:                          │ APRÈS:                              │
+│ if (mode == 'replace') {        │ if (mode == 'replace') {           │
+│   // Supprimer TOUS les final   │   if (lastFinalRange) {            │
+│   finalSheets.forEach(sh =>     │     // Supprimer SEULEMENT ceux     │
+│     ss.deleteSheet(sh);         │     // du regroupement actuel       │
+│ }                               │     if (idx >= start && idx <= end) │
+│                                 │       ss.deleteSheet(sh);           │
+│ ❌ Résultat: Passe 1 perdue!   │   }                                │
+│                                 │ }                                   │
+│                                 │ ✅ Résultat: Passe 1 conservée!   │
+└─────────────────────────────────────────────────────────────────────────┘
+
+PROBLÈME 2: Offset input montrait mauvaise valeur
+┌─────────────────────────────────────────────────────────────────────────┐
+│ AVANT:                          │ APRÈS:                              │
+│ // Lire depuis state global     │ // Lire depuis regroupement actif  │
+│ offsetValue = state.tempOffset  │ offsetValue = getEffectiveOffset() │
+│                                 │   = regroupement.offsetStart       │
+│ ❌ Passe 1 finalisée → offset 1 │ ✅ Passe 1: offset 1               │
+│ ❌ Switch Passe 2 → offset 1!   │ ✅ Passe 2: offset 4 (détecté!)   │
+│ ❌ Créateur doit entrer 4 manu  │ ✅ Pas d'erreur possible           │
+└─────────────────────────────────────────────────────────────────────────┘
+
+PROBLÈME 3: Pas de contexte visuel du mode
+┌─────────────────────────────────────────────────────────────────────────┐
+│ AVANT:                          │ APRÈS:                              │
+│ Boutons replace/continue        │ Boutons + BANNERS                  │
+│ (couleur statique, pas d'info)  │ (couleur dynamique + explication)  │
+│                                 │                                    │
+│ ❌ "Continuer? Quoi?"           │ ✅ "📊 Mode Continuation activé"   │
+│ ❌ Pas d'indice offset          │ ✅ "Les groupes continueront..."  │
+│ ❌ Numérotation groupe confuse  │ ✅ Offset = 4 affiché              │
+│                                 │ ✅ Groupe 4, 5, 6, 7 affichés     │
+└─────────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+                            FICHIERS À TESTER
+================================================================================
+
+1. Code.js
+   └─ Ligne 2589-2605: Nouvelle logique finalizeTempGroups()
+      ✓ Syntaxe vérifiée avec node --check
+      ✓ Prêt à tester
+
+2. groupsModuleComplete.html
+   ├─ Ligne 845-892: 6 helpers pour lire per-regroupement
+   ├─ Ligne 894-949: Meilleur contexte dans summary
+   ├─ Ligne 1520-1575: Banners explicatifs
+   ├─ Ligne 1630-1638: Numérotation correcte
+   └─ Ligne 2870-2947: Better state sync
+      ✓ Toutes les fonctions définies
+      ✓ Prêt à tester
+
+================================================================================
+                          COMMENT TESTER (5 min)
+================================================================================
+
+SETUP:
+└─ Avoir une Passe 1 finalisée avec grBe1-3
+
+TEST - Créer Passe 2:
+1. Aller Étape 2 → Créer Passe 2 avec 4 groupes
+2. Aller Étape 5
+   ├─ VÉRIFIER: Offset input = 4 (PAS 1!) ✅
+   ├─ VÉRIFIER: Groupe 4, 5, 6, 7 affichés ✅
+   ├─ VÉRIFIER: Mode button = Continue ✅
+   └─ VÉRIFIER: Blue banner avec explication ✅
+3. Sauver TEMP → grBe4-7TEMP créés
+4. Finaliser → Touch moment!
+   ├─ VÉRIFIER: NO errors ✅
+   └─ VÉRIFIER: Google Sheets:
+      ├─ grBe1, grBe2, grBe3 TOUJOURS VISIBLES! ✅
+      └─ grBe4, grBe5, grBe6, grBe7 CRÉÉS! ✅
+
+RÉSULTAT: ✅ PASS = Tous les blockers résolus!
+
+================================================================================
+                          SI QUELQUE CHOSE NE VA PAS
+================================================================================
+
+Erreur: Offset input montre 1 au lieu de 4
+└─ Check: getEffectiveOffsetStart() dans console
+   └─ Si null: Refresh la page
+
+Erreur: Pas de blue banner
+└─ Check: getEffectiveLastFinalRange() dans console
+   └─ Si null: Re-finalize Passe 1
+
+Erreur: Groupe numbers sont 1,2,3,4 au lieu de 4,5,6,7
+└─ Check: Code.js ligne 2589-2605 est déployée
+   └─ Si non: Re-upload Code.js
+
+================================================================================
+                            DOCUMENTATION
+================================================================================
+
+Pour plus de détails, lire (dans l'ordre):
+1. CORRECTIONS_SUMMARY.txt (ce que tu viens de lire)
+2. BEFORE_AFTER_COMPARISON.md (scénarios détaillés)
+3. CORRECTIONS_APPLIQUEES.md (changements techniques)
+4. TEST_PLAN_VALIDATION.md (steps de test complets)
+
+================================================================================
+                              STATUS FINAL
+================================================================================
+
+✅ Code modifié: Code.js + groupsModuleComplete.html
+✅ Syntax vérifiée: node --check réussi
+✅ Documentation: 4 fichiers créés
+⏳ Attente: Tests par vous
+
+Prêt pour: Phase 2 completion + Phase 3 backend integration
+
+Date: 29 octobre 2025

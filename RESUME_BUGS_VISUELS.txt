@@ -1,0 +1,147 @@
+RESUME VISUEL DES 4 BUGS
+========================
+
+BUG #1 : HEADER NE DISPARAIT PAS COMPLETEMENT EN PHASE 5
+==========================================================
+
+AVANT (BUGUE)                          APRES (CORRIGE)
+─────────────────────────────────      ─────────────────────────────────
+[Title / Stepper] <- VISIBLE           [COMPLETEMENT INVISIBLE]
+[PETIT ESPACE] <- RESIDUEL             
+                                       
+[Groupes normaux]                      [Groupes occupent toute hauteur]
+                                       
+                                       
+PROBLEME : 
+- opacity: 0 cache le contenu
+- MAIS max-height: 0 laisse l'espace
+- Bordure et padding restent visibles
+- update() re-rend et crée du flicker
+
+SOLUTION :
+- Ajouter display: none
+- Retire COMPLETEMENT du flux DOM
+
+
+BUG #2 : GRILLE DES GROUPES MAL POSITIONNEE
+==============================================
+
+AVANT (BUGUE)                          APRES (CORRIGE)
+─────────────────────────────────      ─────────────────────────────────
+[Groupe 1]                             [Groupe 1]  [Groupe 2]
+
+[Groupe 2]                             [Groupe 3]  [Groupe 4]
+
+[Groupe 3]
+
+[Groupe 4]
+
+Layout : 1x4 (vertical empile)         Layout : 2x2 (equilibre)
+Largeur : max 100%                     Largeur : 2 colonnes chacune
+
+
+PROBLEME :
+- Classes Tailwind statiques (lg:grid-cols-4)
+- Forcent 4 colonnes even si seulement 4 groupes
+- = 1 groupe par ligne
+
+SOLUTION :
+- Utiliser repeat(auto-fit, minmax(180px, 1fr))
+- Adapte dynamiquement le nombre de colonnes
+- Responsive automatique
+
+
+BUG #3 : MEMES ELEVES REVIENNENT ENTRE REGROUPEMENTS
+=====================================================
+
+AVANT (BUGUE)                          APRES (CORRIGE)
+─────────────────────────────────      ─────────────────────────────────
+Regroupement 1 (Classes A,B)           Regroupement 1 (Classes A,B)
+  Groupe 1 : Alice, Bob, Carol         Groupe 1 : Alice, Bob, Carol
+  Groupe 2 : Dave, Eve, Frank          Groupe 2 : Dave, Eve, Frank
+  
+Regroupement 2 (Classes C,D)           Regroupement 2 (Classes C,D)
+  Groupe 1 : Alice, Bob, Carol <-BUG!  Groupe 1 : George, Helen, Ivy
+  Groupe 2 : Dave, Eve, Frank <-BUG!   Groupe 2 : Jack, Kate, Liam
+
+
+PROBLEME :
+1. Switch vers Regroupement 2
+2. state.students CONTIENT ENCORE Alice, Bob, etc.
+3. Generer groupes = reutilise les vieux eleves
+4. Meme eleves dans 2 regroupements differents !
+
+SOLUTION :
+- Nettoyer state.students quand on switch de regroupement
+- Reinitialiser state.students = []
+- Verifier concordance avant de reutiliser
+
+
+BUG #4 : PHASE 2 ET 3 REDONDANTES
+==================================
+
+AVANT (BUGUE)                          APRES (REFACTORISE)
+─────────────────────────────────      ─────────────────────────────────
+Phase 1: Type (needs/language)         Phase 1: Type (needs/language)
+Phase 2: Classes + Label               Phase 2: Classes+Label+Config
+         Nombre groupes
+Phase 3: Rappel regroupement            Phase 3: Apercu avant generation
+         Nombre groupes (slider!)
+         Config type                   Phase 4: Resultats groupes
+Phase 4: Apercu
+Phase 5: Resultats                     Total : 4 phases (-1)
+
+DOUBLE CONTROLES :
+- Nombre groupes : Phase 2 (boutons ±) + Phase 3 (slider)
+- Label : Phase 2 (input) + Phase 3 (lecture)
+- Rappel : Phase 2 (liste) + Phase 3 (summary)
+
+PROBLEME :
+- Phase 2 et 3 configurent LA MEME CHOSE
+- Code duplique
+- Utilisateur doit cliquer "Suivant" trop de fois
+- Logique peu claire (pourquoi 2 phases ?)
+
+SOLUTION :
+- Fusionner phase 2 et 3
+- Un seul endroit pour configurer le regroupement
+- Supprimer -150 lignes de code duplique
+- Utilisateur gagne 1 etape
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PRIORITE DE CORRECTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. BUG #3 (ELEVES) ⚠️⚠️⚠️ CRITIQUE
+   Cause : Donnees qui se melangent
+   Impact : Regroupements incorrects, confusion utilisateur
+   Temps : 20 secondes
+
+2. BUG #1 (HEADER) ⚠️⚠️ HAUTEMENT IMPORTANT
+   Cause : UI visuelle qui ne repond pas
+   Impact : Header refuse de disparaitre
+   Temps : 5 secondes
+
+3. BUG #2 (GRILLE) ⚠️⚠️ HAUTEMENT IMPORTANT
+   Cause : Layout non-responsive
+   Impact : Groupes mal disposes
+   Temps : 30 secondes
+
+4. BUG #4 (REDONDANCE) ⚠️ OPTIMISATION
+   Cause : Code architecture
+   Impact : Maintenabilite, UX
+   Temps : 30-45 minutes
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TEMPS TOTAL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+3 corrections rapides (1, 2, 3) : 55 secondes
++ 1 refactoring optional (4) : 30-45 minutes
+
+RECOMMANDE : Appliquer d'abord les 3 rapides, tester, puis refactoring
+
