@@ -62,11 +62,28 @@ function runGlobalDiagnostics() {
 
     // --- Diagnostics croisés (Données vs Configuration) ---
     if (studentCount > totalPlaces) {
-      results.push({ id: 'student_vs_places', status: 'warning', icon: 'warning', message: `Attention, il y a plus d'élèves (${studentCount}) que de places (${totalPlaces}).` });
+      const deficit = studentCount - totalPlaces;
+      results.push({
+        id: 'student_vs_places',
+        status: 'error',
+        icon: 'error',
+        message: `⚠️ ERREUR CRITIQUE: ${studentCount} élèves pour seulement ${totalPlaces} places configurées (déficit de ${deficit} places). Vous DEVEZ augmenter les effectifs dans l'onglet _STRUCTURE ou utiliser l'interface "Configurer Structure (OPT/LV2)" en Phase 1.`
+      });
     } else if (totalPlaces > studentCount) {
-       results.push({ id: 'student_vs_places', status: 'info', icon: 'info', message: `Il y a plus de places (${totalPlaces}) que d'élèves (${studentCount}).` });
+      const surplus = totalPlaces - studentCount;
+      results.push({
+        id: 'student_vs_places',
+        status: 'info',
+        icon: 'info',
+        message: `ℹ️ ${studentCount} élèves pour ${totalPlaces} places configurées (${surplus} places disponibles). C'est normal si vous prévoyez d'ajouter des élèves.`
+      });
     } else {
-       results.push({ id: 'student_vs_places', status: 'ok', icon: 'check_circle', message: `Le nombre d'élèves correspond au nombre de places.` });
+      results.push({
+        id: 'student_vs_places',
+        status: 'ok',
+        icon: 'check_circle',
+        message: `✅ Nombre d'élèves (${studentCount}) = Nombre de places (${totalPlaces}). Configuration parfaite !`
+      });
     }
 
     // On ajoutera ici les diagnostics de contraintes ASSO/DISSO, etc.

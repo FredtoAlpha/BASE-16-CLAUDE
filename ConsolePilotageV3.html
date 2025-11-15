@@ -1461,6 +1461,10 @@
                         <h1>Console de Pilotage</h1>
                         <div class="version">Version 3.0 Expert</div>
                     </div>
+                    <!-- BOUTON DE VRAIE FERMETURE -->
+                    <button onclick="closeConsole()" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; margin-left: auto;" title="Fermer la Console">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </div>
 
                 <!-- Theme Toggle -->
@@ -1722,6 +1726,53 @@
                     <p style="margin-top: var(--space-md); font-size: 13px; color: var(--text-secondary); text-align: center;">
                         💾 La configuration est automatiquement sauvegardée dans votre navigateur et dans la feuille _CONFIG
                     </p>
+                </div>
+
+                <!-- ÉTAPES SUPPLÉMENTAIRES OBLIGATOIRES -->
+                <div class="card" style="border: 2px solid var(--warning); background: linear-gradient(135deg, rgba(245, 158, 11, 0.05), rgba(251, 191, 36, 0.05));">
+                    <div class="card-header">
+                        <div class="card-icon" style="background: var(--warning);">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div>
+                            <h2 class="card-title" style="color: var(--warning);">⚠️ ÉTAPES OBLIGATOIRES AVANT CONSOLIDATION</h2>
+                            <p style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">Ces étapes DOIVENT être complétées après l'initialisation</p>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; gap: var(--space-lg);">
+                        <!-- Étape 1 : Génération NOM_PRENOM et ID_ELEVE -->
+                        <div style="padding: var(--space-lg); background: white; border-radius: var(--radius-lg); border: 1px solid var(--border-light);">
+                            <div style="display: flex; align-items: center; gap: var(--space-md); margin-bottom: var(--space-md);">
+                                <div style="width: 32px; height: 32px; background: linear-gradient(135deg, var(--primary-500), #764ba2); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px;">1</div>
+                                <div style="flex: 1;">
+                                    <h3 style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">Générer NOM_PRENOM & ID_ELEVE</h3>
+                                    <p style="font-size: 13px; color: var(--text-secondary);">Crée les colonnes D (NOM_PRENOM) et A (ID_ELEVE) dans les onglets sources</p>
+                                </div>
+                            </div>
+                            <button id="btn-generate-ids" class="btn btn-warning" style="width: 100%;">
+                                <i class="btn-icon fas fa-id-card"></i>
+                                <span>Générer NOM_PRENOM & ID_ELEVE</span>
+                            </button>
+                            <div id="ids-status" style="margin-top: var(--space-sm); font-size: 13px; color: var(--text-secondary);"></div>
+                        </div>
+
+                        <!-- Étape 2 : Configuration Structure Classes -->
+                        <div style="padding: var(--space-lg); background: white; border-radius: var(--radius-lg); border: 1px solid var(--border-light);">
+                            <div style="display: flex; align-items: center; gap: var(--space-md); margin-bottom: var(--space-md);">
+                                <div style="width: 32px; height: 32px; background: linear-gradient(135deg, var(--secondary-500), var(--secondary-700)); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px;">2</div>
+                                <div style="flex: 1;">
+                                    <h3 style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">Configurer la Structure des Classes</h3>
+                                    <p style="font-size: 13px; color: var(--text-secondary);">Définit le nombre d'élèves par classe et le placement des OPT/LV2</p>
+                                </div>
+                            </div>
+                            <button id="btn-configure-structure" class="btn btn-info" style="width: 100%;">
+                                <i class="btn-icon fas fa-cogs"></i>
+                                <span>Configurer Structure (OPT/LV2)</span>
+                            </button>
+                            <div id="structure-status" style="margin-top: var(--space-sm); font-size: 13px; color: var(--text-secondary);"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -2060,6 +2111,20 @@
             const wasMinimized = localStorage.getItem('console_v3_minimized') === 'true';
             if (wasMinimized) {
                 document.body.classList.add('console-minimized');
+            }
+        }
+
+        // ===================================================================
+        // FERMETURE COMPLÈTE DE LA CONSOLE
+        // ===================================================================
+        function closeConsole() {
+            if (confirm('⚠️ Voulez-vous vraiment FERMER la Console de Pilotage V3 ?\n\nVous pourrez la rouvrir depuis le menu BASE-16 RENEW.')) {
+                try {
+                    google.script.host.close();
+                } catch (e) {
+                    // Si on est en mode dev local, on simule la fermeture
+                    window.close();
+                }
             }
         }
 
@@ -2543,7 +2608,51 @@
                         showToast('error', 'Erreur lors de l\'initialisation');
                         showAlert('error', error.message);
                     })
-                    .v3_runInitialisation(config);
+                    .v3_runInitializationWithForm(formData);
+            });
+
+            // NOUVEAUX BOUTONS - Étape 1 : Générer NOM_PRENOM & ID_ELEVE
+            document.getElementById('btn-generate-ids').addEventListener('click', () => {
+                showLoading('Génération NOM_PRENOM & ID_ELEVE...');
+                const statusDiv = document.getElementById('ids-status');
+
+                google.script.run
+                    .withSuccessHandler(response => {
+                        hideLoading();
+                        if (response.success) {
+                            statusDiv.innerHTML = '<span style="color: var(--success);"><i class="fas fa-check-circle"></i> ' + response.message + '</span>';
+                            showToast('success', '✅ NOM_PRENOM & ID_ELEVE générés !');
+                        } else {
+                            statusDiv.innerHTML = '<span style="color: var(--danger);"><i class="fas fa-exclamation-circle"></i> Erreur: ' + response.error + '</span>';
+                            showToast('error', 'Erreur lors de la génération');
+                        }
+                    })
+                    .withFailureHandler(error => {
+                        hideLoading();
+                        statusDiv.innerHTML = '<span style="color: var(--danger);"><i class="fas fa-exclamation-circle"></i> Erreur: ' + error.message + '</span>';
+                        showToast('error', 'Erreur lors de la génération');
+                    })
+                    .v3_genererNomPrenomEtID();
+            });
+
+            // NOUVEAUX BOUTONS - Étape 2 : Configurer Structure
+            document.getElementById('btn-configure-structure').addEventListener('click', () => {
+                const statusDiv = document.getElementById('structure-status');
+                statusDiv.innerHTML = '<span style="color: var(--info);"><i class="fas fa-spinner fa-spin"></i> Ouverture de l\'interface...</span>';
+
+                try {
+                    google.script.run
+                        .withSuccessHandler(() => {
+                            statusDiv.innerHTML = '<span style="color: var(--success);"><i class="fas fa-check-circle"></i> Interface ouverte - Complétez la configuration</span>';
+                        })
+                        .withFailureHandler(error => {
+                            statusDiv.innerHTML = '<span style="color: var(--danger);"><i class="fas fa-exclamation-circle"></i> Erreur: ' + error.message + '</span>';
+                            showToast('error', 'Impossible d\'ouvrir l\'interface');
+                        })
+                        .ouvrirConfigurationComplete();
+                } catch (e) {
+                    statusDiv.innerHTML = '<span style="color: var(--danger);"><i class="fas fa-exclamation-circle"></i> Erreur: ' + e.message + '</span>';
+                }
             });
 
             // Sauvegarde automatique lors de la modification d'un champ
