@@ -64,11 +64,17 @@ function v3_runInitializationWithForm(formData) {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const config = getConfig();
 
-    // 1. Vérifier le mot de passe
-    if (formData.adminPassword !== config.ADMIN_PASSWORD) {
+    // 1. Vérifier le mot de passe (avec fallback sur ADMIN_PASSWORD_DEFAULT)
+    const adminPassword = config.ADMIN_PASSWORD || config.ADMIN_PASSWORD_DEFAULT || "admin123";
+    const enteredPassword = (formData.adminPassword || "").trim();
+
+    Logger.log(`V3 Init - Mot de passe entré: "${enteredPassword}"`);
+    Logger.log(`V3 Init - Mot de passe attendu: "${adminPassword}"`);
+
+    if (enteredPassword !== adminPassword) {
       return {
         success: false,
-        error: "Mot de passe administrateur incorrect"
+        error: `Mot de passe administrateur incorrect. Attendu: "${adminPassword}"`
       };
     }
 
@@ -272,13 +278,14 @@ function v3_runPreFinalizeDiagnostics() {
  */
 function ouvrirConsolePilotageV3() {
   const html = HtmlService.createHtmlOutputFromFile('ConsolePilotageV3')
-    .setWidth(1600)
-    .setHeight(900)
-    .setTitle('Console de Pilotage V3 - Expert Edition');
+    .setWidth(1200)  // Réduit à 1200px (au lieu de 1600) pour laisser plus d'espace à Google Sheets
+    .setHeight(800)  // Réduit à 800px (au lieu de 900)
+    .setTitle('Console de Pilotage V3 - Non-Bloquante');
 
   // UTILISE showModelessDialog au lieu de showModalDialog
   // Cela permet de ne PAS bloquer l'accès à Google Sheets !
-  SpreadsheetApp.getUi().showModelessDialog(html, '🚀 Console de Pilotage V3 - Non-Bloquante');
+  // L'utilisateur peut déplacer et redimensionner cette fenêtre avec les contrôles du navigateur
+  SpreadsheetApp.getUi().showModelessDialog(html, '🚀 Console de Pilotage V3 - Accès complet à Google Sheets');
 }
 
 /**

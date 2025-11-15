@@ -1424,29 +1424,20 @@
     <!-- Toast Container -->
     <div class="toast-container" id="toast-container"></div>
 
-    <!-- Bouton de Minimisation/Maximisation Flottant -->
-    <button class="console-toggle-btn" id="console-toggle-btn" onclick="toggleConsoleMinimize()" title="Minimiser/Restaurer la Console">
-        <i class="fas fa-chevron-down"></i>
-    </button>
-
-    <!-- Barre Minimisée (visible quand la console est minimisée) -->
-    <div class="console-minimized-bar">
-        <div class="minimized-bar-content">
-            <div class="minimized-bar-logo">
-                <i class="fas fa-rocket"></i>
-                <div class="minimized-bar-title">Console de Pilotage V3</div>
-            </div>
-            <div class="minimized-bar-status">
-                <div style="color: rgba(255,255,255,0.7); font-size: 14px;">
-                    <i class="fas fa-check-circle" style="color: var(--success); margin-right: 5px;"></i>
-                    Système prêt
-                </div>
-            </div>
+    <!-- Bandeau d'instructions NON-BLOQUANT -->
+    <div style="position: fixed; top: 0; left: 0; right: 0; background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 12px 20px; z-index: 100000; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 15px; font-size: 14px; font-weight: 600;">
+        <i class="fas fa-info-circle" style="font-size: 24px;"></i>
+        <div style="flex: 1;">
+            ✅ <strong>CONSOLE NON-BLOQUANTE</strong> : Vous pouvez cliquer sur Google Sheets pendant que cette fenêtre est ouverte !
+            Déplacez-la sur le côté droit de votre écran avec votre souris. Redimensionnez-la en tirant les bords.
         </div>
+        <button onclick="this.parentElement.style.display='none'" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+            J'ai compris
+        </button>
     </div>
 
-    <!-- App Container -->
-    <div class="app-container">
+    <!-- App Container avec marge pour le bandeau -->
+    <div class="app-container" style="margin-top: 60px;">
 
         <!-- =====================================================================
          * SIDEBAR - Left Navigation
