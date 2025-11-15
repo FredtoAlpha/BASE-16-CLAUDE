@@ -22,145 +22,6 @@ function nettoyerListeInput(inputString) {
 }
 
 /**
- * Vérifie le mot de passe administrateur (version simple, dépend de getConfig).
- * @param {string} action - Description de l'action à protéger.
- * @return {boolean} Vrai si le mot de passe est correct.
- */
-function verifierMotDePasse(action) {
-  const config = getConfig(); // Appel la version centrale
-  const ui = SpreadsheetApp.getUi();
-
-  const mdpResponse = ui.prompt(
-    `Accès ${action}`,
-    "Veuillez entrer le mot de passe administrateur :",
-    ui.ButtonSet.OK_CANCEL
-  );
-
-  if (mdpResponse.getSelectedButton() !== ui.Button.OK) {
-    return false;
-  }
-
-  const motDePasse = mdpResponse.getResponseText();
-  // Utilise le mot de passe de la config
-  const mdpCorrect = config.ADMIN_PASSWORD;
-
-  if (motDePasse !== mdpCorrect) {
-    ui.alert(
-      "Accès refusé",
-      "Mot de passe incorrect.",
-      ui.ButtonSet.OK
-    );
-    return false;
-  }
-
-  // Journaliser la tentative d'accès réussie (si logAction est défini)
-  try {
-      logAction(`Accès ${action} validé`);
-  } catch(e) { Logger.log(`Accès ${action} validé (logAction non disponible)`); }
-  return true;
-}
-
-// --- Fonction Principale d'Initialisation via Menu ---
-
-/**
- * Ouvre la boîte de dialogue d'initialisation du système.
- * Version UNIVERSELLE pour tous les niveaux.
- */
-function ouvrirInitialisation() {
-  // 1. Vérifier mot de passe
-  if (!verifierMotDePasse("Administration (Initialisation)")) return;
-
-  const ui = SpreadsheetApp.getUi();
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-
-  // 2. Confirmer réinitialisation si nécessaire
-  try {
-      const structureSheet = ss.getSheetByName(CONFIG.SHEETS.STRUCTURE);
-      if (structureSheet) {
-        const response = ui.alert(
-          "Réinitialisation du système",
-          "Ce classeur semble déjà initialisé. La réinitialisation effacera la configuration et les données existantes.\n\nVoulez-vous continuer ?",
-          ui.ButtonSet.YES_NO
-        );
-        if (response !== ui.Button.YES) {
-            ui.alert("Initialisation annulée.");
-            return;
-        }
-         Logger.log("Confirmation réinitialisation OK.");
-      }
-  } catch (e) {
-      Logger.log(`Erreur vérification feuille _STRUCTURE: ${e}`);
-  }
-
-  // 3. Demander le niveau
-  const niveaux = ["6°", "5°", "4°", "3°"];
-  const niveauResponse = ui.prompt(
-    "Initialisation - Étape 1/5 : Niveau",
-    `Niveau scolaire (${niveaux.join(", ")}) :`,
-    ui.ButtonSet.OK_CANCEL
-  );
-  if (niveauResponse.getSelectedButton() !== ui.Button.OK) return;
-  const niveau = niveauResponse.getResponseText().trim();
-  if (!niveaux.includes(niveau)) {
-    ui.alert("Niveau invalide", `Veuillez entrer un niveau valide: ${niveaux.join(", ")}.`, ui.ButtonSet.OK);
-    return;
-  }
-  Logger.log(`Niveau : ${niveau}`);
-
-  // 4. Demander le nombre de classes/écoles SOURCES
-  const sourceLabel = niveau === "6°" ? "écoles primaires" : `classes de ${determinerNiveauSource(niveau)}`;
-  const nbSourcesResponse = ui.prompt(
-    "Initialisation - Étape 2/5 : Sources",
-    `Nombre de ${sourceLabel} sources (ex: ${niveau === "6°" ? "9" : "6"}) :`,
-    ui.ButtonSet.OK_CANCEL
-  );
-  if (nbSourcesResponse.getSelectedButton() !== ui.Button.OK) return;
-  const nbSources = parseInt(nbSourcesResponse.getResponseText(), 10);
-  if (isNaN(nbSources) || nbSources <= 0 || nbSources > 20) {
-    ui.alert("Nombre invalide", "Veuillez entrer un nombre valide (1-20).", ui.ButtonSet.OK);
-    return;
-  }
-  Logger.log(`Nb Sources : ${nbSources}`);
-
-  // 5. Demander le nombre de classes DESTINATIONS
-  const nbDestResponse = ui.prompt(
-    "Initialisation - Étape 3/5 : Destinations",
-    `Nombre de classes de ${niveau} à créer (ex: ${nbSources === 9 ? "5" : nbSources}) :`,
-    ui.ButtonSet.OK_CANCEL
-  );
-  if (nbDestResponse.getSelectedButton() !== ui.Button.OK) return;
-  const nbDest = parseInt(nbDestResponse.getResponseText(), 10);
-  if (isNaN(nbDest) || nbDest <= 0 || nbDest > 15) {
-    ui.alert("Nombre invalide", "Veuillez entrer un nombre valide (1-15).", ui.ButtonSet.OK);
-    return;
-  }
-  Logger.log(`Nb Destinations : ${nbDest}`);
-
-  // 6. Demander les LV2
-  const lv2Response = ui.prompt(
-    "Initialisation - Étape 4/5 : LV2",
-    "Entrez les SIGLES des LV2 proposées, séparés par des virgules (Ex: ESP,ITA,ALL). Laissez vide si aucune.",
-    ui.ButtonSet.OK_CANCEL
-  );
-  if (lv2Response.getSelectedButton() !== ui.Button.OK) return;
-  const lv2Options = nettoyerListeInput(lv2Response.getResponseText());
-  Logger.log(`Options LV2 saisies : ${lv2Options.join(', ') || 'Aucune'}`);
-
-  // 7. Demander les Options
-  const optResponse = ui.prompt(
-    "Initialisation - Étape 5/5 : Options Spécifiques",
-    "Entrez les SIGLES des options spécifiques, séparés par des virgules (Ex: LATIN,GREC,CHAV). Laissez vide si aucune.",
-    ui.ButtonSet.OK_CANCEL
-  );
-  if (optResponse.getSelectedButton() !== ui.Button.OK) return;
-  const optOptions = nettoyerListeInput(optResponse.getResponseText());
-  Logger.log(`Options spécifiques saisies : ${optOptions.join(', ') || 'Aucune'}`);
-
-  // 8. Lancer l'initialisation complète
-  initialiserSysteme(niveau, nbSources, nbDest, lv2Options, optOptions);
-}
-
-/**
  * Détermine le niveau source en fonction du niveau destination
  * @param {string} niveau - Niveau de destination
  * @return {string} Le niveau source
@@ -276,7 +137,7 @@ function initialiserSysteme(niveau, nbSources, nbDest, lv2Options, optOptions) {
     SpreadsheetApp.getActiveSpreadsheet().toast('Initialisation terminée !', 'Succès', 5);
     Logger.log("--- Initialisation Système Terminée avec Succès ---");
 
-    // Afficher une confirmation finale
+    // Préparer le message de confirmation finale
     const messageFinal = `Initialisation Réussie !\n\n` +
                          `Niveau: ${niveau}\n` +
                          `Sources: ${nbSources} ${niveau === "6°" ? "écoles" : "classes"}\n` +
@@ -287,22 +148,22 @@ function initialiserSysteme(niveau, nbSources, nbDest, lv2Options, optOptions) {
                          `1. Vérifier _STRUCTURE\n` +
                          `2. Importer les données dans les onglets sources\n` +
                          `3. Utiliser la Console pour la répartition`;
-    ui.alert("Initialisation Terminée", messageFinal, ui.ButtonSet.OK);
 
     // Journaliser l'action
     logAction(`Initialisation: ${niveau}, ${nbSources} sources → ${nbDest} destinations, LV2[${lv2Options.join(',')}], OPT[${optOptions.join(',')}]`);
 
-    // Ouvrir la Console (si elle existe)
-    try { if (typeof ouvrirConsole === "function") { ouvrirConsole(); } } catch(e) { Logger.log("Console non disponible"); }
+    // Retourner un objet succès
+    return { success: true, message: messageFinal };
 
   } catch (e) {
     Logger.log(`!!! ERREUR FATALE LORS DE L'INITIALISATION !!!\nErreur: ${e.toString()}\nStack: ${e.stack}`);
     SpreadsheetApp.getActiveSpreadsheet().toast('Erreur pendant l\'initialisation!', 'ERREUR', 10);
-    ui.alert(
-      "Erreur lors de l'initialisation",
-      `Une erreur majeure s'est produite : ${e.message}\nConsultez les logs (Extensions > Apps Script > Exécutions) pour plus de détails.`,
-      ui.ButtonSet.OK
-    );
+
+    // Retourner un objet erreur
+    return {
+      success: false,
+      error: `Une erreur majeure s'est produite : ${e.message}\nConsultez les logs (Extensions > Apps Script > Exécutions) pour plus de détails.`
+    };
   }
 }
 
