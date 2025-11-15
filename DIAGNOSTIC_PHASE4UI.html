@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>🔍 Diagnostic Phase4UI</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+      color: #333;
+    }
+    h1 {
+      color: #667eea;
+      margin-top: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section {
+      margin: 20px 0;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border-left: 4px solid #667eea;
+    }
+    .result {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 6px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+    }
+    .ok {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .warning {
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeaa7;
+    }
+    .info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+    button {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      transition: all 0.3s;
+      margin: 10px 5px;
+    }
+    button:hover {
+      background: #5568d3;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    .icon {
+      font-size: 24px;
+    }
+    pre {
+      background: #2d3748;
+      color: #e2e8f0;
+      padding: 15px;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-size: 13px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+    .badge-ok { background: #28a745; color: white; }
+    .badge-error { background: #dc3545; color: white; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>
+      <span class="icon">🔍</span>
+      Diagnostic Phase4UI
+    </h1>
+    
+    <p>Ce script détecte si <strong>Phase4UI.html</strong> est chargé et entre en conflit avec <strong>AdminMenuFix</strong>.</p>
+    
+    <button onclick="runDiagnostic()">▶️ Lancer le Diagnostic</button>
+    <button onclick="fixIssue()">🔧 Corriger (localStorage)</button>
+    
+    <div id="results"></div>
+  </div>
+
+  <script>
+    function runDiagnostic() {
+      const results = document.getElementById('results');
+      results.innerHTML = '<h2>📊 Résultats du Diagnostic</h2>';
+      
+      let issues = 0;
+      
+      // 1. Vérifier AdminMenuFix
+      const section1 = document.createElement('div');
+      section1.className = 'section';
+      section1.innerHTML = '<h3>1️⃣ AdminMenuFix</h3>';
+      
+      if (window.__ADMIN_FIX_APPLIED__ === true) {
+        section1.innerHTML += '<div class="result ok">✅ AdminMenuFix est ACTIF</div>';
+      } else {
+        section1.innerHTML += '<div class="result error">❌ AdminMenuFix n\'est PAS actif</div>';
+        issues++;
+      }
+      results.appendChild(section1);
+      
+      // 2. Vérifier toggleAdminMode
+      const section2 = document.createElement('div');
+      section2.className = 'section';
+      section2.innerHTML = '<h3>2️⃣ toggleAdminMode()</h3>';
+      
+      if (typeof window.toggleAdminMode === 'function') {
+        section2.innerHTML += '<div class="result ok">✅ toggleAdminMode existe (bloquée par AdminMenuFix)</div>';
+        
+        // Tester si elle est vraiment bloquée
+        const originalConsoleError = console.error;
+        let errorCalled = false;
+        console.error = function() { errorCalled = true; };
+        
+        try {
+          window.toggleAdminMode();
+        } catch(e) {}
+        
+        console.error = originalConsoleError;
+        
+        if (errorCalled) {
+          section2.innerHTML += '<div class="result ok">✅ toggleAdminMode est bien BLOQUÉE</div>';
+        } else {
+          section2.innerHTML += '<div class="result error">❌ toggleAdminMode n\'est PAS bloquée (Phase4UI actif?)</div>';
+          issues++;
+        }
+      } else {
+        section2.innerHTML += '<div class="result warning">⚠️ toggleAdminMode n\'existe pas</div>';
+      }
+      results.appendChild(section2);
+      
+      // 3. Vérifier les listeners sur #btnAdmin
+      const section3 = document.createElement('div');
+      section3.className = 'section';
+      section3.innerHTML = '<h3>3️⃣ Listeners sur #btnAdmin</h3>';
+      
+      const btnAdmin = document.getElementById('btnAdmin');
+      if (btnAdmin) {
+        const listeners = getEventListeners ? getEventListeners(btnAdmin) : null;
+        
+        if (listeners && listeners.click) {
+          const count = listeners.click.length;
+          section3.innerHTML += `<div class="result ${count === 1 ? 'ok' : 'error'}">
+            ${count === 1 ? '✅' : '❌'} ${count} listener(s) détecté(s)
+          </div>`;
+          
+          if (count > 1) {
+            section3.innerHTML += '<div class="result error">❌ PROBLÈME: Plusieurs listeners! Phase4UI est probablement actif.</div>';
+            issues++;
+          }
+        } else {
+          section3.innerHTML += '<div class="result info">ℹ️ Impossible de vérifier les listeners (getEventListeners non disponible)</div>';
+        }
+      } else {
+        section3.innerHTML += '<div class="result error">❌ Bouton #btnAdmin introuvable</div>';
+        issues++;
+      }
+      results.appendChild(section3);
+      
+      // 4. Vérifier les logs Phase4UI
+      const section4 = document.createElement('div');
+      section4.className = 'section';
+      section4.innerHTML = '<h3>4️⃣ Logs Phase4UI</h3>';
+      section4.innerHTML += '<div class="result info">ℹ️ Ouvrez la console (F12) et cherchez "Phase4UI"</div>';
+      section4.innerHTML += '<div class="result warning">⚠️ Si vous voyez "✅ Phase4UI - Utilise simplifierNomComplet", Phase4UI est chargé!</div>';
+      results.appendChild(section4);
+      
+      // 5. Vérifier l'état du bouton Admin
+      const section5 = document.createElement('div');
+      section5.className = 'section';
+      section5.innerHTML = '<h3>5️⃣ État du Bouton Admin</h3>';
+      
+      if (btnAdmin) {
+        const isRed = btnAdmin.classList.contains('bg-red-600');
+        const isGreen = btnAdmin.classList.contains('bg-green-700');
+        const statusText = document.getElementById('adminStatusIndicator')?.textContent || 'N/A';
+        
+        section5.innerHTML += `<div class="result ${isRed ? 'ok' : 'error'}">
+          ${isRed ? '✅' : '❌'} Couleur: ${isRed ? 'ROUGE (correct)' : isGreen ? 'VERT (incorrect!)' : 'Autre'}
+        </div>`;
+        
+        section5.innerHTML += `<div class="result ${statusText === 'OFF' ? 'ok' : 'error'}">
+          ${statusText === 'OFF' ? '✅' : '❌'} Statut: ${statusText}
+        </div>`;
+        
+        if (isGreen || statusText === 'ON') {
+          section5.innerHTML += '<div class="result error">❌ Le menu est déverrouillé au démarrage! Phase4UI est probablement actif.</div>';
+          issues++;
+        }
+      }
+      results.appendChild(section5);
+      
+      // 6. localStorage
+      const section6 = document.createElement('div');
+      section6.className = 'section';
+      section6.innerHTML = '<h3>6️⃣ localStorage</h3>';
+      
+      const adminUnlocked = localStorage.getItem('adminUnlocked');
+      const adminForceMode = localStorage.getItem('adminForceMode');
+      
+      section6.innerHTML += `<div class="result ${adminUnlocked === 'true' ? 'warning' : 'ok'}">
+        adminUnlocked: ${adminUnlocked || 'null'} ${adminUnlocked === 'true' ? '⚠️' : '✅'}
+      </div>`;
+      
+      section6.innerHTML += `<div class="result ${adminForceMode === 'true' ? 'warning' : 'ok'}">
+        adminForceMode: ${adminForceMode || 'null'} ${adminForceMode === 'true' ? '⚠️' : '✅'}
+      </div>`;
+      
+      results.appendChild(section6);
+      
+      // Résumé
+      const summary = document.createElement('div');
+      summary.className = 'section';
+      summary.style.borderLeft = issues === 0 ? '4px solid #28a745' : '4px solid #dc3545';
+      summary.innerHTML = `<h3>📋 Résumé</h3>`;
+      
+      if (issues === 0) {
+        summary.innerHTML += '<div class="result ok">✅ Aucun problème détecté! AdminMenuFix fonctionne correctement.</div>';
+      } else {
+        summary.innerHTML += `<div class="result error">❌ ${issues} problème(s) détecté(s)</div>`;
+        summary.innerHTML += '<div class="result warning">⚠️ Phase4UI.html est probablement encore déployé sur le serveur Apps Script</div>';
+        summary.innerHTML += '<div class="result info"><strong>Solution:</strong><br>1. Ouvrir https://script.google.com<br>2. Trouver et SUPPRIMER Phase4UI.html<br>3. Recharger l\'application</div>';
+      }
+      
+      results.appendChild(summary);
+    }
+    
+    function fixIssue() {
+      if (confirm('Voulez-vous effacer localStorage et recharger la page?')) {
+        localStorage.removeItem('adminUnlocked');
+        localStorage.removeItem('adminForceMode');
+        alert('✅ localStorage effacé! La page va se recharger.');
+        location.reload();
+      }
+    }
+  </script>
+</body>
+</html>

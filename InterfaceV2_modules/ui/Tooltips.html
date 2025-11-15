@@ -1,0 +1,458 @@
+/**
+ * TOOLTIPS - Aide contextuelle pour tous les boutons
+ * Tooltips automatiques avec descriptions et raccourcis clavier
+ */
+
+const Tooltips = {
+  // Configuration des tooltips par élément
+  tooltipsConfig: {
+    // Boutons principaux
+    'config-btn': {
+      text: 'Configurer la structure des classes',
+      shortcut: 'Alt+K',
+      position: 'bottom'
+    },
+    'load-btn': {
+      text: 'Charger les données élèves (CONSOLIDATION ou anciennes classes)',
+      shortcut: 'Alt+O',
+      position: 'bottom'
+    },
+    'optimize-btn': {
+      text: 'Lancer l\'optimisation automatique (Phase 1→4)',
+      shortcut: 'Alt+R',
+      position: 'bottom'
+    },
+    'save-btn': {
+      text: 'Sauvegarder et créer les onglets INT',
+      shortcut: 'Alt+S',
+      position: 'bottom'
+    },
+    'validate-btn': {
+      text: 'Afficher le rapport de validation complet',
+      shortcut: 'Alt+V',
+      position: 'bottom'
+    },
+    'history-btn': {
+      text: 'Afficher l\'historique des versions (snapshots)',
+      shortcut: 'Alt+H',
+      position: 'bottom'
+    },
+    'filters-btn': {
+      text: 'Ouvrir les filtres avancés multi-critères',
+      shortcut: 'Alt+F',
+      position: 'bottom'
+    },
+    'charts-btn': {
+      text: 'Afficher les graphiques et statistiques avancées',
+      shortcut: 'Alt+G',
+      position: 'bottom'
+    },
+    'export-btn': {
+      text: 'Exporter en PDF ou Excel avec prévisualisation',
+      shortcut: 'Alt+E',
+      position: 'bottom'
+    },
+    'help-btn': {
+      text: 'Lancer le tour guidé interactif',
+      shortcut: 'F1',
+      position: 'bottom'
+    },
+    
+    // Modes d'affichage
+    'view-complete': {
+      text: 'Vue complète: nom + LV2/options + scores',
+      shortcut: '1',
+      position: 'bottom'
+    },
+    'view-essential': {
+      text: 'Vue essentielle: nom + badges principaux',
+      shortcut: '2',
+      position: 'bottom'
+    },
+    'view-simple': {
+      text: 'Vue simplifiée: nom uniquement (compact)',
+      shortcut: '3',
+      position: 'bottom'
+    },
+    
+    // Mode swap
+    'swap-mode-btn': {
+      text: 'Activer le mode permutation (cliquer 2 élèves pour échanger)',
+      shortcut: 'S',
+      position: 'bottom'
+    },
+    
+    // Mode admin
+    'admin-mode-btn': {
+      text: 'Mode admin: bypass des contraintes (attention!)',
+      shortcut: 'A',
+      position: 'bottom'
+    },
+    
+    // Mode sombre
+    'dark-mode-toggle': {
+      text: 'Basculer en mode sombre/clair',
+      shortcut: 'D',
+      position: 'left'
+    },
+    
+    // Recherche
+    'search-input': {
+      text: 'Rechercher un élève par nom, prénom ou ID',
+      shortcut: 'Alt+/',
+      position: 'bottom'
+    },
+    
+    // Undo/Redo
+    'undo-btn': {
+      text: 'Annuler la dernière action',
+      shortcut: 'Ctrl+Z',
+      position: 'bottom'
+    },
+    'redo-btn': {
+      text: 'Rétablir l\'action annulée',
+      shortcut: 'Ctrl+Y',
+      position: 'bottom'
+    },
+    
+    // Snapshot
+    'snapshot-btn': {
+      text: 'Créer un snapshot manuel de l\'état actuel',
+      shortcut: 'Alt+Shift+S',
+      position: 'bottom'
+    },
+    
+    // Alertes
+    'alerts-btn': {
+      text: 'Afficher l\'historique des alertes proactives',
+      shortcut: 'Alt+Shift+A',
+      position: 'bottom'
+    },
+    
+    // Stats
+    'stats-panel': {
+      text: 'Statistiques en temps réel (mise à jour automatique)',
+      position: 'left'
+    },
+    
+    // Classes
+    'classes-container': {
+      text: 'Glissez-déposez les élèves entre les classes. Les stats se mettent à jour automatiquement.',
+      position: 'top'
+    }
+  },
+  
+  /**
+   * Initialise tous les tooltips
+   */
+  init() {
+    // Créer le style CSS pour les tooltips
+    this.injectStyles();
+    
+    // Attacher les tooltips à tous les éléments configurés
+    Object.entries(this.tooltipsConfig).forEach(([selector, config]) => {
+      const elements = document.querySelectorAll(`[data-tour="${selector}"], #${selector}, .${selector}`);
+      
+      elements.forEach(element => {
+        this.attachTooltip(element, config);
+      });
+    });
+    
+    // Observer les nouveaux éléments ajoutés dynamiquement
+    this.observeNewElements();
+    
+    console.log('✅ Tooltips initialisés');
+  },
+  
+  /**
+   * Attache un tooltip à un élément
+   */
+  attachTooltip(element, config) {
+    if (!element || element.dataset.tooltipAttached) return;
+    
+    element.dataset.tooltipAttached = 'true';
+    element.style.position = 'relative';
+    
+    // Créer le tooltip
+    const tooltip = document.createElement('div');
+    tooltip.className = 'custom-tooltip';
+    tooltip.innerHTML = `
+      <div class="tooltip-content">
+        <div class="tooltip-text">${config.text}</div>
+        ${config.shortcut ? `<div class="tooltip-shortcut">${config.shortcut}</div>` : ''}
+      </div>
+    `;
+    
+    // Positionner selon config
+    tooltip.dataset.position = config.position || 'top';
+    
+    // Ajouter au DOM
+    element.appendChild(tooltip);
+    
+    // Events
+    element.addEventListener('mouseenter', () => {
+      tooltip.classList.add('visible');
+    });
+    
+    element.addEventListener('mouseleave', () => {
+      tooltip.classList.remove('visible');
+    });
+    
+    // Focus pour accessibilité
+    element.addEventListener('focus', () => {
+      tooltip.classList.add('visible');
+    });
+    
+    element.addEventListener('blur', () => {
+      tooltip.classList.remove('visible');
+    });
+  },
+  
+  /**
+   * Observe les nouveaux éléments ajoutés au DOM
+   */
+  observeNewElements() {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType === 1) { // Element node
+            // Vérifier si le nœud correspond à un sélecteur configuré
+            Object.entries(this.tooltipsConfig).forEach(([selector, config]) => {
+              if (node.matches && (
+                node.matches(`[data-tour="${selector}"]`) ||
+                node.matches(`#${selector}`) ||
+                node.matches(`.${selector}`)
+              )) {
+                this.attachTooltip(node, config);
+              }
+              
+              // Vérifier les enfants
+              const children = node.querySelectorAll(`[data-tour="${selector}"], #${selector}, .${selector}`);
+              children.forEach(child => this.attachTooltip(child, config));
+            });
+          }
+        });
+      });
+    });
+    
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+  },
+  
+  /**
+   * Injecte les styles CSS
+   */
+  injectStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+      .custom-tooltip {
+        position: absolute;
+        z-index: 10000;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+        transform: translateY(5px);
+      }
+      
+      .custom-tooltip.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      
+      .custom-tooltip .tooltip-content {
+        background: rgba(30, 41, 59, 0.95);
+        color: white;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        line-height: 1.4;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(10px);
+        max-width: 250px;
+        white-space: normal;
+      }
+      
+      .custom-tooltip .tooltip-text {
+        margin-bottom: 4px;
+      }
+      
+      .custom-tooltip .tooltip-shortcut {
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 11px;
+        font-family: monospace;
+        margin-top: 4px;
+      }
+      
+      /* Positions */
+      .custom-tooltip[data-position="top"] {
+        bottom: calc(100% + 8px);
+        left: 50%;
+        transform: translateX(-50%) translateY(5px);
+      }
+      
+      .custom-tooltip[data-position="top"].visible {
+        transform: translateX(-50%) translateY(0);
+      }
+      
+      .custom-tooltip[data-position="bottom"] {
+        top: calc(100% + 8px);
+        left: 50%;
+        transform: translateX(-50%) translateY(-5px);
+      }
+      
+      .custom-tooltip[data-position="bottom"].visible {
+        transform: translateX(-50%) translateY(0);
+      }
+      
+      .custom-tooltip[data-position="left"] {
+        right: calc(100% + 8px);
+        top: 50%;
+        transform: translateY(-50%) translateX(5px);
+      }
+      
+      .custom-tooltip[data-position="left"].visible {
+        transform: translateY(-50%) translateX(0);
+      }
+      
+      .custom-tooltip[data-position="right"] {
+        left: calc(100% + 8px);
+        top: 50%;
+        transform: translateY(-50%) translateX(-5px);
+      }
+      
+      .custom-tooltip[data-position="right"].visible {
+        transform: translateY(-50%) translateX(0);
+      }
+      
+      /* Flèches */
+      .custom-tooltip[data-position="top"] .tooltip-content::after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 6px solid transparent;
+        border-top-color: rgba(30, 41, 59, 0.95);
+      }
+      
+      .custom-tooltip[data-position="bottom"] .tooltip-content::after {
+        content: '';
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 6px solid transparent;
+        border-bottom-color: rgba(30, 41, 59, 0.95);
+      }
+      
+      .custom-tooltip[data-position="left"] .tooltip-content::after {
+        content: '';
+        position: absolute;
+        left: 100%;
+        top: 50%;
+        transform: translateY(-50%);
+        border: 6px solid transparent;
+        border-left-color: rgba(30, 41, 59, 0.95);
+      }
+      
+      .custom-tooltip[data-position="right"] .tooltip-content::after {
+        content: '';
+        position: absolute;
+        right: 100%;
+        top: 50%;
+        transform: translateY(-50%);
+        border: 6px solid transparent;
+        border-right-color: rgba(30, 41, 59, 0.95);
+      }
+      
+      /* Mode sombre */
+      body.dark-mode .custom-tooltip .tooltip-content {
+        background: rgba(241, 245, 249, 0.95);
+        color: #1e293b;
+      }
+      
+      body.dark-mode .custom-tooltip[data-position="top"] .tooltip-content::after {
+        border-top-color: rgba(241, 245, 249, 0.95);
+      }
+      
+      body.dark-mode .custom-tooltip[data-position="bottom"] .tooltip-content::after {
+        border-bottom-color: rgba(241, 245, 249, 0.95);
+      }
+      
+      body.dark-mode .custom-tooltip[data-position="left"] .tooltip-content::after {
+        border-left-color: rgba(241, 245, 249, 0.95);
+      }
+      
+      body.dark-mode .custom-tooltip[data-position="right"] .tooltip-content::after {
+        border-right-color: rgba(241, 245, 249, 0.95);
+      }
+      
+      /* Animation d'entrée */
+      @keyframes tooltipFadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(5px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    `;
+    
+    document.head.appendChild(style);
+  },
+  
+  /**
+   * Ajoute un tooltip personnalisé à un élément
+   */
+  add(element, text, shortcut = null, position = 'top') {
+    if (typeof element === 'string') {
+      element = document.querySelector(element);
+    }
+    
+    if (!element) return;
+    
+    this.attachTooltip(element, { text, shortcut, position });
+  },
+  
+  /**
+   * Supprime un tooltip d'un élément
+   */
+  remove(element) {
+    if (typeof element === 'string') {
+      element = document.querySelector(element);
+    }
+    
+    if (!element) return;
+    
+    const tooltip = element.querySelector('.custom-tooltip');
+    if (tooltip) {
+      tooltip.remove();
+      delete element.dataset.tooltipAttached;
+    }
+  }
+};
+
+// Auto-initialisation au chargement
+if (typeof window !== 'undefined') {
+  window.Tooltips = Tooltips;
+  
+  // Initialiser quand le DOM est prêt
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => Tooltips.init());
+  } else {
+    Tooltips.init();
+  }
+}
+
+if (typeof global !== 'undefined') {
+  global.Tooltips = Tooltips;
+}
+
+console.log('✅ Module Tooltips chargé');

@@ -1,0 +1,150 @@
+/**
+ * SPINNER.JS - Gestion des indicateurs de chargement
+ * 
+ * Gère l'affichage et le masquage des spinners de chargement.
+ */
+
+const SpinnerManager = {
+  /**
+   * Affiche le spinner global
+   */
+  show() {
+    const spinner = document.getElementById('loadingSpinner');
+    if (spinner) {
+      spinner.classList.remove('hidden');
+    }
+  },
+
+  /**
+   * Masque le spinner global
+   */
+  hide() {
+    const spinner = document.getElementById('loadingSpinner');
+    if (spinner) {
+      spinner.classList.add('hidden');
+    }
+  },
+
+  /**
+   * Affiche un spinner sur un élément spécifique
+   * @param {HTMLElement|string} element - Élément ou sélecteur
+   * @returns {HTMLElement} Élément spinner créé
+   */
+  showOn(element) {
+    const target = typeof element === 'string' 
+      ? document.querySelector(element) 
+      : element;
+    
+    if (!target) return null;
+
+    // Créer le spinner
+    const spinner = document.createElement('div');
+    spinner.className = 'inline-spinner';
+    spinner.innerHTML = '<div class="spinner"></div>';
+    spinner.style.cssText = `
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: 8px;
+    `;
+
+    target.appendChild(spinner);
+    return spinner;
+  },
+
+  /**
+   * Masque et supprime un spinner d'un élément
+   * @param {HTMLElement} spinner - Élément spinner
+   */
+  hideFrom(spinner) {
+    if (spinner && spinner.parentNode) {
+      spinner.parentNode.removeChild(spinner);
+    }
+  },
+
+  /**
+   * Crée un overlay de chargement avec message
+   * @param {string} message - Message à afficher
+   * @returns {HTMLElement} Overlay créé
+   */
+  createOverlay(message = 'Chargement...') {
+    const overlay = document.createElement('div');
+    overlay.className = 'loading-overlay';
+    overlay.style.cssText = `
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 9999;
+    `;
+
+    overlay.innerHTML = `
+      <div class="spinner"></div>
+      <div style="color: white; margin-top: 16px; font-size: 1.1rem;">
+        ${message}
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+    return overlay;
+  },
+
+  /**
+   * Supprime un overlay de chargement
+   * @param {HTMLElement} overlay - Overlay à supprimer
+   */
+  removeOverlay(overlay) {
+    if (overlay && overlay.parentNode) {
+      overlay.style.opacity = '0';
+      overlay.style.transition = 'opacity 0.3s ease-out';
+      setTimeout(() => {
+        if (overlay.parentNode) {
+          overlay.parentNode.removeChild(overlay);
+        }
+      }, 300);
+    }
+  },
+
+  /**
+   * Exécute une fonction avec spinner
+   * @param {Function} fn - Fonction async à exécuter
+   * @param {string} message - Message optionnel
+   * @returns {Promise} Résultat de la fonction
+   */
+  async withSpinner(fn, message = null) {
+    let overlay = null;
+    
+    try {
+      if (message) {
+        overlay = this.createOverlay(message);
+      } else {
+        this.show();
+      }
+      
+      const result = await fn();
+      return result;
+    } finally {
+      if (overlay) {
+        this.removeOverlay(overlay);
+      } else {
+        this.hide();
+      }
+    }
+  }
+};
+
+// Exposer globalement
+if (typeof window !== 'undefined') {
+  window.SpinnerManager = SpinnerManager;
+  // Fonctions wrapper pour compatibilité
+  window.showSpinner = () => SpinnerManager.show();
+  window.hideSpinner = () => SpinnerManager.hide();
+}
+
+// Export pour modules ES6
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = SpinnerManager;
+}

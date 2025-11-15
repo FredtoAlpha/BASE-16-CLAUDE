@@ -1,0 +1,313 @@
+/**
+ * REACTIVE STATE - Statistiques en temps réel
+ * État réactif avec observers et mise à jour automatique
+ */
+
+const ReactiveState = {
+  // État interne
+  _data: {
+    students: {},
+    classes: {},
+    stats: {},
+    filters: {},
+    history: []
+  },
+  
+  // Observers (callbacks appelés lors des changements)
+  _observers: {
+    students: [],
+    classes: [],
+    stats: [],
+    filters: [],
+    any: []
+  },
+  
+  /**
+   * Initialise l'état réactif
+   */
+  init(initialData = {}) {
+    this._data = {
+      students: initialData.students || {},
+      classes: initialData.classes || {},
+      stats: this.calculateStats(initialData.students, initialData.classes),
+      filters: {},
+      history: []
+    };
+    
+    this.notifyObservers('any');
+  },
+  
+  /**
+   * Enregistre un observer
+   */
+  observe(key, callback) {
+    if (!this._observers[key]) {
+      this._observers[key] = [];
+    }
+    this._observers[key].push(callback);
+    
+    // Retourner fonction de désabonnement
+    return () => {
+      const index = this._observers[key].indexOf(callback);
+      if (index > -1) {
+        this._observers[key].splice(index, 1);
+      }
+    };
+  },
+  
+  /**
+   * Notifie les observers
+   */
+  notifyObservers(key, data = null) {
+    const observers = this._observers[key] || [];
+    observers.forEach(callback => {
+      try {
+        callback(data || this._data[key]);
+      } catch (e) {
+        console.error(`Error in observer for ${key}:`, e);
+      }
+    });
+    
+    // Notifier observers globaux
+    if (key !== 'any') {
+      this._observers.any.forEach(callback => {
+        try {
+          callback({ key, data: data || this._data[key] });
+        } catch (e) {
+          console.error('Error in global observer:', e);
+        }
+      });
+    }
+  },
+  
+  /**
+   * Met à jour les élèves
+   */
+  setStudents(students) {
+    this._data.students = students;
+    this._data.stats = this.calculateStats(students, this._data.classes);
+    
+    this.notifyObservers('students', students);
+    this.notifyObservers('stats', this._data.stats);
+  },
+  
+  /**
+   * Ajoute/modifie un élève
+   */
+  setStudent(id, student) {
+    this._data.students[id] = student;
+    this._data.stats = this.calculateStats(this._data.students, this._data.classes);
+    
+    this.notifyObservers('students', this._data.students);
+    this.notifyObservers('stats', this._data.stats);
+  },
+  
+  /**
+   * Supprime un élève
+   */
+  removeStudent(id) {
+    delete this._data.students[id];
+    this._data.stats = this.calculateStats(this._data.students, this._data.classes);
+    
+    this.notifyObservers('students', this._data.students);
+    this.notifyObservers('stats', this._data.stats);
+  },
+  
+  /**
+   * Déplace un élève
+   */
+  moveStudent(id, fromClass, toClass) {
+    const student = this._data.students[id];
+    if (!student) return;
+    
+    student.classe = toClass;
+    this._data.stats = this.calculateStats(this._data.students, this._data.classes);
+    
+    this.notifyObservers('students', this._data.students);
+    this.notifyObservers('stats', this._data.stats);
+  },
+  
+  /**
+   * Met à jour les classes
+   */
+  setClasses(classes) {
+    this._data.classes = classes;
+    this._data.stats = this.calculateStats(this._data.students, classes);
+    
+    this.notifyObservers('classes', classes);
+    this.notifyObservers('stats', this._data.stats);
+  },
+  
+  /**
+   * Met à jour les filtres
+   */
+  setFilters(filters) {
+    this._data.filters = filters;
+    this.notifyObservers('filters', filters);
+  },
+  
+  /**
+   * Calcule les statistiques
+   */
+  calculateStats(students, classes) {
+    const stats = {
+      total: 0,
+      byClass: {},
+      bySexe: { M: 0, F: 0 },
+      byLV2: {},
+      byOption: {},
+      parity: {},
+      capacity: {}
+    };
+    
+    // Initialiser stats par classe
+    Object.keys(classes).forEach(className => {
+      stats.byClass[className] = {
+        total: 0,
+        M: 0,
+        F: 0,
+        lv2: {},
+        options: {}
+      };
+    });
+    
+    // Calculer stats
+    Object.values(students).forEach(student => {
+      stats.total++;
+      
+      // Sexe
+      if (student.sexe) {
+        stats.bySexe[student.sexe] = (stats.bySexe[student.sexe] || 0) + 1;
+      }
+      
+      // Par classe
+      if (student.classe && stats.byClass[student.classe]) {
+        stats.byClass[student.classe].total++;
+        if (student.sexe) {
+          stats.byClass[student.classe][student.sexe]++;
+        }
+        
+        // LV2
+        if (student.lv2) {
+          stats.byLV2[student.lv2] = (stats.byLV2[student.lv2] || 0) + 1;
+          stats.byClass[student.classe].lv2[student.lv2] = 
+            (stats.byClass[student.classe].lv2[student.lv2] || 0) + 1;
+        }
+        
+        // Options
+        if (student.options) {
+          student.options.forEach(opt => {
+            stats.byOption[opt] = (stats.byOption[opt] || 0) + 1;
+            stats.byClass[student.classe].options[opt] = 
+              (stats.byClass[student.classe].options[opt] || 0) + 1;
+          });
+        }
+      }
+    });
+    
+    // Calculer parité par classe
+    Object.keys(stats.byClass).forEach(className => {
+      const classStats = stats.byClass[className];
+      const diff = Math.abs(classStats.M - classStats.F);
+      stats.parity[className] = {
+        M: classStats.M,
+        F: classStats.F,
+        diff,
+        balanced: diff <= 2
+      };
+    });
+    
+    // Calculer capacité par classe
+    Object.keys(classes).forEach(className => {
+      const capacity = classes[className].capacity || 30;
+      const current = stats.byClass[className].total;
+      stats.capacity[className] = {
+        current,
+        max: capacity,
+        percent: Math.round((current / capacity) * 100),
+        available: capacity - current,
+        full: current >= capacity,
+        warning: current >= capacity * 0.9
+      };
+    });
+    
+    return stats;
+  },
+  
+  /**
+   * Obtient les données
+   */
+  get(key) {
+    return this._data[key];
+  },
+  
+  /**
+   * Obtient toutes les données
+   */
+  getAll() {
+    return { ...this._data };
+  },
+  
+  /**
+   * Sauvegarde snapshot dans l'historique
+   */
+  saveSnapshot(label = '') {
+    const snapshot = {
+      timestamp: Date.now(),
+      label: label || `Snapshot ${this._data.history.length + 1}`,
+      data: JSON.parse(JSON.stringify(this._data))
+    };
+    
+    this._data.history.push(snapshot);
+    
+    // Limiter à 50 snapshots
+    if (this._data.history.length > 50) {
+      this._data.history.shift();
+    }
+    
+    return snapshot;
+  },
+  
+  /**
+   * Restaure un snapshot
+   */
+  restoreSnapshot(index) {
+    if (index < 0 || index >= this._data.history.length) {
+      return { success: false, message: 'Snapshot invalide' };
+    }
+    
+    const snapshot = this._data.history[index];
+    this._data = JSON.parse(JSON.stringify(snapshot.data));
+    
+    // Notifier tous les observers
+    this.notifyObservers('students', this._data.students);
+    this.notifyObservers('classes', this._data.classes);
+    this.notifyObservers('stats', this._data.stats);
+    this.notifyObservers('filters', this._data.filters);
+    
+    return { success: true, snapshot };
+  },
+  
+  /**
+   * Obtient l'historique
+   */
+  getHistory() {
+    return this._data.history.map((s, i) => ({
+      index: i,
+      timestamp: s.timestamp,
+      label: s.label,
+      date: new Date(s.timestamp).toLocaleString()
+    }));
+  }
+};
+
+// Exposition globale
+if (typeof window !== 'undefined') {
+  window.ReactiveState = ReactiveState;
+}
+
+if (typeof global !== 'undefined') {
+  global.ReactiveState = ReactiveState;
+}
+
+console.log('✅ Module ReactiveState chargé');

@@ -1,0 +1,423 @@
+/**
+ * VALIDATION REPORT - Rapport de validation global
+ * Scan complet avant finalisation avec liste exhaustive des violations
+ */
+
+const ValidationReport = {
+  /**
+   * Génère un rapport de validation complet
+   */
+  generate(students, classes, structure) {
+    const report = {
+      timestamp: Date.now(),
+      valid: true,
+      errors: [],
+      warnings: [],
+      info: [],
+      stats: {}
+    };
+    
+    // 1. Vérifier capacités
+    this.checkCapacities(students, classes, structure, report);
+    
+    // 2. Vérifier parité
+    this.checkParity(students, classes, report);
+    
+    // 3. Vérifier contraintes LV2/Options
+    this.checkConstraints(students, classes, structure, report);
+    
+    // 4. Vérifier ASSO/DISSO
+    this.checkAssoDissoCodes(students, classes, report);
+    
+    // 5. Vérifier quotas
+    this.checkQuotas(students, structure, report);
+    
+    // 6. Statistiques globales
+    this.generateStats(students, classes, report);
+    
+    // Déterminer si valide
+    report.valid = report.errors.length === 0;
+    
+    return report;
+  },
+  
+  /**
+   * Vérifie les capacités
+   */
+  checkCapacities(students, classes, structure, report) {
+    Object.entries(classes).forEach(([className, classData]) => {
+      const capacity = classData.capacity || 30;
+      const studentsList = Object.values(students).filter(s => s.classe === className);
+      const count = studentsList.length;
+      
+      if (count > capacity) {
+        report.errors.push({
+          type: 'capacity',
+          level: 'error',
+          className,
+          message: `Classe ${className} dépasse la capacité (${count}/${capacity})`,
+          count,
+          capacity,
+          excess: count - capacity
+        });
+      } else if (count >= capacity * 0.9) {
+        report.warnings.push({
+          type: 'capacity',
+          level: 'warning',
+          className,
+          message: `Classe ${className} presque pleine (${count}/${capacity})`,
+          count,
+          capacity
+        });
+      }
+    });
+  },
+  
+  /**
+   * Vérifie la parité
+   */
+  checkParity(students, classes, report) {
+    Object.keys(classes).forEach(className => {
+      const studentsList = Object.values(students).filter(s => s.classe === className);
+      const males = studentsList.filter(s => s.sexe === 'M').length;
+      const females = studentsList.filter(s => s.sexe === 'F').length;
+      const diff = Math.abs(males - females);
+      
+      if (diff > 4) {
+        report.errors.push({
+          type: 'parity',
+          level: 'error',
+          className,
+          message: `Déséquilibre parité dans ${className} (${males}M / ${females}F)`,
+          males,
+          females,
+          diff
+        });
+      } else if (diff > 2) {
+        report.warnings.push({
+          type: 'parity',
+          level: 'warning',
+          className,
+          message: `Parité à surveiller dans ${className} (${males}M / ${females}F)`,
+          males,
+          females,
+          diff
+        });
+      }
+    });
+  },
+  
+  /**
+   * Vérifie les contraintes LV2/Options
+   */
+  checkConstraints(students, classes, structure, report) {
+    Object.values(students).forEach(student => {
+      if (!student.classe) return;
+      
+      const classInfo = structure.classes?.find(c => c.nom === student.classe);
+      if (!classInfo) return;
+      
+      // Vérifier LV2
+      if (student.lv2 && student.lv2 !== 'ESP') {
+        if (!classInfo.lv2?.includes(student.lv2)) {
+          report.errors.push({
+            type: 'constraint',
+            level: 'error',
+            studentId: student.id,
+            studentName: `${student.nom} ${student.prenom}`,
+            className: student.classe,
+            message: `LV2 ${student.lv2} non disponible dans ${student.classe}`,
+            constraint: 'LV2',
+            value: student.lv2
+          });
+        }
+      }
+      
+      // Vérifier Options
+      if (student.options) {
+        student.options.forEach(opt => {
+          if (!classInfo.options?.includes(opt)) {
+            report.errors.push({
+              type: 'constraint',
+              level: 'error',
+              studentId: student.id,
+              studentName: `${student.nom} ${student.prenom}`,
+              className: student.classe,
+              message: `Option ${opt} non disponible dans ${student.classe}`,
+              constraint: 'OPTION',
+              value: opt
+            });
+          }
+        });
+      }
+    });
+  },
+  
+  /**
+   * Vérifie les codes ASSO/DISSO
+   */
+  checkAssoDissoCodes(students, classes, report) {
+    const studentsByClass = {};
+    
+    // Grouper par classe
+    Object.values(students).forEach(student => {
+      if (!student.classe) return;
+      if (!studentsByClass[student.classe]) {
+        studentsByClass[student.classe] = [];
+      }
+      studentsByClass[student.classe].push(student);
+    });
+    
+    // Vérifier DISSO
+    Object.entries(studentsByClass).forEach(([className, studentsList]) => {
+      const dissoCodes = {};
+      
+      studentsList.forEach(student => {
+        if (student.disso) {
+          if (!dissoCodes[student.disso]) {
+            dissoCodes[student.disso] = [];
+          }
+          dissoCodes[student.disso].push(student);
+        }
+      });
+      
+      // Conflits DISSO
+      Object.entries(dissoCodes).forEach(([code, students]) => {
+        if (students.length > 1) {
+          report.errors.push({
+            type: 'disso',
+            level: 'error',
+            className,
+            message: `Conflit dissociation D${code} dans ${className}`,
+            code,
+            students: students.map(s => `${s.nom} ${s.prenom}`)
+          });
+        }
+      });
+    });
+    
+    // Vérifier ASSO
+    const assoCodes = {};
+    Object.values(students).forEach(student => {
+      if (student.asso) {
+        if (!assoCodes[student.asso]) {
+          assoCodes[student.asso] = [];
+        }
+        assoCodes[student.asso].push(student);
+      }
+    });
+    
+    Object.entries(assoCodes).forEach(([code, students]) => {
+      const classes = [...new Set(students.map(s => s.classe))];
+      if (classes.length > 1) {
+        report.warnings.push({
+          type: 'asso',
+          level: 'warning',
+          message: `Groupe A${code} réparti sur plusieurs classes`,
+          code,
+          classes,
+          students: students.map(s => `${s.nom} ${s.prenom} (${s.classe})`)
+        });
+      }
+    });
+  },
+  
+  /**
+   * Vérifie les quotas
+   */
+  checkQuotas(students, structure, report) {
+    const lv2Counts = {};
+    const optionCounts = {};
+    
+    Object.values(students).forEach(student => {
+      if (student.lv2) {
+        lv2Counts[student.lv2] = (lv2Counts[student.lv2] || 0) + 1;
+      }
+      if (student.options) {
+        student.options.forEach(opt => {
+          optionCounts[opt] = (optionCounts[opt] || 0) + 1;
+        });
+      }
+    });
+    
+    // Vérifier quotas LV2
+    if (structure.quotas?.lv2) {
+      Object.entries(structure.quotas.lv2).forEach(([lv2, quota]) => {
+        const count = lv2Counts[lv2] || 0;
+        if (count > quota.max) {
+          report.warnings.push({
+            type: 'quota',
+            level: 'warning',
+            message: `Quota LV2 ${lv2} dépassé (${count}/${quota.max})`,
+            lv2,
+            count,
+            max: quota.max
+          });
+        }
+      });
+    }
+  },
+  
+  /**
+   * Génère les statistiques
+   */
+  generateStats(students, classes, report) {
+    report.stats = {
+      totalStudents: Object.keys(students).length,
+      totalClasses: Object.keys(classes).length,
+      totalErrors: report.errors.length,
+      totalWarnings: report.warnings.length,
+      errorsByType: {},
+      warningsByType: {}
+    };
+    
+    report.errors.forEach(err => {
+      report.stats.errorsByType[err.type] = (report.stats.errorsByType[err.type] || 0) + 1;
+    });
+    
+    report.warnings.forEach(warn => {
+      report.stats.warningsByType[warn.type] = (report.stats.warningsByType[warn.type] || 0) + 1;
+    });
+  },
+  
+  /**
+   * Affiche le rapport dans un modal
+   */
+  showModal(report) {
+    const modal = document.createElement('div');
+    modal.className = 'modal validation-report-modal';
+    
+    const statusClass = report.valid ? 'success' : 'error';
+    const statusIcon = report.valid ? 'check-circle' : 'exclamation-circle';
+    const statusText = report.valid ? 'Validation réussie' : 'Validation échouée';
+    
+    modal.innerHTML = `
+      <div class="modal-content" style="max-width: 800px;">
+        <div class="modal-header">
+          <h2 class="text-xl font-bold">
+            <i class="fas fa-${statusIcon} text-${statusClass}"></i>
+            Rapport de validation
+          </h2>
+          <button class="close-modal text-gray-400 hover:text-gray-600">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        
+        <div class="modal-body">
+          <!-- Status -->
+          <div class="alert alert-${statusClass} mb-4">
+            <div class="flex items-center gap-3">
+              <i class="fas fa-${statusIcon} text-2xl"></i>
+              <div>
+                <div class="font-bold">${statusText}</div>
+                <div class="text-sm">${report.stats.totalErrors} erreurs, ${report.stats.totalWarnings} avertissements</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Stats -->
+          <div class="grid grid-cols-3 gap-4 mb-4">
+            <div class="border rounded p-3 text-center">
+              <div class="text-2xl font-bold">${report.stats.totalStudents}</div>
+              <div class="text-sm text-gray-600">Élèves</div>
+            </div>
+            <div class="border rounded p-3 text-center">
+              <div class="text-2xl font-bold">${report.stats.totalClasses}</div>
+              <div class="text-sm text-gray-600">Classes</div>
+            </div>
+            <div class="border rounded p-3 text-center">
+              <div class="text-2xl font-bold text-${statusClass}">${report.stats.totalErrors + report.stats.totalWarnings}</div>
+              <div class="text-sm text-gray-600">Problèmes</div>
+            </div>
+          </div>
+          
+          <!-- Erreurs -->
+          ${report.errors.length > 0 ? `
+            <div class="mb-4">
+              <h3 class="font-bold text-lg mb-2 text-red-600">
+                <i class="fas fa-exclamation-circle"></i>
+                Erreurs (${report.errors.length})
+              </h3>
+              <div class="max-h-60 overflow-y-auto border rounded p-2">
+                ${report.errors.map(err => `
+                  <div class="alert alert-error mb-2 text-sm">
+                    <strong>${err.type.toUpperCase()}</strong>: ${err.message}
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
+          
+          <!-- Avertissements -->
+          ${report.warnings.length > 0 ? `
+            <div class="mb-4">
+              <h3 class="font-bold text-lg mb-2 text-orange-600">
+                <i class="fas fa-exclamation-triangle"></i>
+                Avertissements (${report.warnings.length})
+              </h3>
+              <div class="max-h-60 overflow-y-auto border rounded p-2">
+                ${report.warnings.map(warn => `
+                  <div class="alert alert-warning mb-2 text-sm">
+                    <strong>${warn.type.toUpperCase()}</strong>: ${warn.message}
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
+          
+          ${report.valid ? `
+            <div class="alert alert-success">
+              <i class="fas fa-check-circle"></i>
+              Aucun problème détecté. Vous pouvez finaliser la répartition.
+            </div>
+          ` : ''}
+        </div>
+        
+        <div class="modal-footer flex gap-2 justify-end">
+          <button class="btn btn-secondary close-btn">
+            <i class="fas fa-times"></i> Fermer
+          </button>
+          ${report.valid ? `
+            <button class="btn btn-primary finalize-btn">
+              <i class="fas fa-check"></i> Finaliser
+            </button>
+          ` : ''}
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    setTimeout(() => modal.classList.add('active'), 10);
+    
+    // Event listeners
+    const closeBtn = modal.querySelector('.close-btn');
+    const closeModal = () => {
+      modal.classList.add('closing');
+      setTimeout(() => modal.remove(), 200);
+    };
+    
+    closeBtn.addEventListener('click', closeModal);
+    modal.querySelector('.close-modal').addEventListener('click', closeModal);
+    
+    const finalizeBtn = modal.querySelector('.finalize-btn');
+    if (finalizeBtn) {
+      finalizeBtn.addEventListener('click', () => {
+        closeModal();
+        if (typeof window.finalize === 'function') {
+          window.finalize();
+        }
+      });
+    }
+  }
+};
+
+// Exposition globale
+if (typeof window !== 'undefined') {
+  window.ValidationReport = ValidationReport;
+}
+
+if (typeof global !== 'undefined') {
+  global.ValidationReport = ValidationReport;
+}
+
+console.log('✅ Module ValidationReport chargé');

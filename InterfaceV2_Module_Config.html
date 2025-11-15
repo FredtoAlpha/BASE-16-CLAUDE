@@ -1,0 +1,197 @@
+/**
+ * CONFIG.JS - Configuration et constantes de l'application
+ *
+ * Centralise toutes les configurations, constantes et paramètres
+ * utilisés dans l'application InterfaceV2.
+ */
+
+const AppConfig = {
+  // ============================================
+  // MODES DE TRAVAIL
+  // ============================================
+  MODES: {
+    TEST: 'TEST',           // Onglets TEST pour commencer
+    CACHE: 'CACHE',         // Brouillon auto-sauvegardé
+    FIN: 'FIN',             // Classes finalisées
+    PREVIOUS: 'PREVIOUS'    // Année précédente
+  },
+  
+  // ============================================
+  // MODES D'AFFICHAGE
+  // ============================================
+  VIEW_MODES: {
+    COMPLETE: 'complete',   // Vue complète avec tous les détails
+    ESSENTIAL: 'essential', // Vue essentielle (nom + badges essentiels)
+    SIMPLE: 'simple'        // Vue simplifiée (nom uniquement)
+  },
+  
+  // ============================================
+  // TYPES DE MOBILITÉ
+  // ============================================
+  MOBILITE: {
+    LIBRE: 'LIBRE',         // Déplacement libre
+    CONDI: 'CONDI',         // Conditionnel
+    FIXE: 'FIXE',           // Fixe (ne peut pas bouger)
+    PERMUT: 'PERMUT',       // Permutation uniquement
+    SPEC: 'SPEC'            // Spécial (option prioritaire)
+  },
+  
+  // ============================================
+  // TYPES DE SCORES
+  // ============================================
+  SCORES: {
+    COM: { key: 'COM', label: 'Comportement', letter: 'C' },
+    TRA: { key: 'TRA', label: 'Travail', letter: 'T' },
+    PART: { key: 'PART', label: 'Participation', letter: 'P' },
+    ABS: { key: 'ABS', label: 'Absences', letter: 'A' }
+  },
+  
+  // ============================================
+  // LANGUES (LV2)
+  // ============================================
+  LANGUES: {
+    ESP: 'ESP',             // Espagnol (autorisé partout)
+    ITA: 'ITA',             // Italien
+    ALL: 'ALL',             // Allemand
+    LATIN: 'LATIN',         // Latin
+    GRECO: 'GRECO'          // Grec
+  },
+  
+  // Ordre de tri des langues
+  LANGUES_ORDER: ['ESP', 'ITA', 'ALL', 'LATIN', 'GRECO'],
+  
+  // ============================================
+  // TYPES DE NOTIFICATIONS
+  // ============================================
+  TOAST_TYPES: {
+    INFO: 'info',
+    SUCCESS: 'success',
+    ERROR: 'error',
+    WARNING: 'warning'
+  },
+  
+  // ============================================
+  // ICÔNES FONT AWESOME
+  // ============================================
+  ICONS: {
+    INFO: 'fa-info-circle',
+    SUCCESS: 'fa-check-circle',
+    ERROR: 'fa-exclamation-circle',
+    WARNING: 'fa-exclamation-triangle',
+    SEARCH: 'fa-search',
+    SAVE: 'fa-save',
+    UNDO: 'fa-undo',
+    REDO: 'fa-redo',
+    SWAP: 'fa-exchange-alt',
+    STATS: 'fa-chart-bar',
+    SETTINGS: 'fa-cog',
+    ADMIN: 'fa-unlock-alt'
+  },
+  
+  // ============================================
+  // LIMITES ET SEUILS
+  // ============================================
+  LIMITS: {
+    MAX_NAME_LENGTH: 25,        // Longueur max du nom affiché
+    MIN_FONT_SIZE: 16,          // Taille min de police (vue simple)
+    MAX_FONT_SIZE: 32,          // Taille max de police (vue simple)
+    AUTO_SAVE_INTERVAL: 60000,  // Intervalle auto-save (1 minute)
+    TOAST_DURATION: 3000,       // Durée d'affichage des toasts (3s)
+    TOAST_ERROR_DURATION: 4000, // Durée pour les erreurs (4s)
+    STATS_UPDATE_DELAY: 150     // Délai avant mise à jour stats (150ms)
+  },
+  
+  // ============================================
+  // COULEURS
+  // ============================================
+  COLORS: {
+    PRIMARY: '#5b21b6',
+    PRIMARY_DARK: '#4c1d95',
+    SECONDARY: '#06b6d4',
+    SUCCESS: '#10b981',
+    WARNING: '#f59e0b',
+    DANGER: '#ef4444',
+    DARK: '#1e293b',
+    LIGHT: '#f8fafc',
+    
+    // Couleurs sexe
+    FEMALE: '#ec4899',
+    FEMALE_LIGHT: '#fbcde6',
+    MALE: '#3b82f6',
+    MALE_LIGHT: '#d7e8fe',
+    
+    // Couleurs scores
+    SCORE_1: '#ef4444',  // Rouge (mauvais)
+    SCORE_2: '#f59e0b',  // Orange
+    SCORE_3: '#3b82f6',  // Bleu
+    SCORE_4: '#10b981'   // Vert (bon)
+  },
+  
+  // ============================================
+  // MESSAGES
+  // ============================================
+  MESSAGES: {
+    LOADING: 'Chargement en cours...',
+    SAVING: 'Sauvegarde en cours...',
+    SAVED: 'Sauvegarde réussie',
+    ERROR_SAVE: 'Erreur lors de la sauvegarde',
+    ERROR_LOAD: 'Erreur lors du chargement',
+    NO_DATA: 'Aucune donnée trouvée',
+    SWAP_SUCCESS: 'Swap réussi',
+    SWAP_ERROR: 'Swap impossible',
+    MOVE_SUCCESS: 'Déplacement réussi',
+    MOVE_ERROR: 'Déplacement impossible',
+    CAPACITY_WARNING: 'Capacité dépassée',
+    QUOTA_REACHED: 'Quota atteint',
+    CONSTRAINT_VIOLATED: 'Contrainte violée'
+  },
+  
+  // ============================================
+  // MÉTHODES UTILITAIRES
+  // ============================================
+  
+  getScoreColor(score) {
+    const colors = {
+      1: this.COLORS.SCORE_1,
+      2: this.COLORS.SCORE_2,
+      3: this.COLORS.SCORE_3,
+      4: this.COLORS.SCORE_4
+    };
+    return colors[score] || this.COLORS.DARK;
+  },
+  
+  getToastIcon(type) {
+    const icons = {
+      info: this.ICONS.INFO,
+      success: this.ICONS.SUCCESS,
+      error: this.ICONS.ERROR,
+      warning: this.ICONS.WARNING
+    };
+    return icons[type] || this.ICONS.INFO;
+  },
+  
+  isValidMode(mode) {
+    return Object.values(this.MODES).includes(mode);
+  },
+  
+  isValidMobilite(mobilite) {
+    return Object.values(this.MOBILITE).includes(mobilite);
+  },
+  
+  getModeLabel(mode) {
+    const labels = {
+      TEST: '📚 TEST (Classes test)',
+      CACHE: '💾 CACHE (Brouillon)',
+      FIN: '✅ FIN (Classes finales)',
+      PREVIOUS: '📋 PREVIOUS (Année passée)'
+    };
+    return labels[mode] || mode;
+  }
+};
+
+// Exposer globalement
+if (typeof window !== 'undefined') {
+  window.AppConfig = AppConfig;
+}
+
+console.log('✅ Module AppConfig chargé');

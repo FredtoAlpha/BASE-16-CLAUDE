@@ -1,0 +1,333 @@
+/**
+ * PDF PREVIEW - Prévisualisation avant export PDF
+ * Choix de templates et options de formatage
+ */
+
+const PDFPreview = {
+  // Templates disponibles
+  templates: {
+    standard: {
+      name: 'Standard',
+      description: 'Mise en page simple et claire',
+      margins: { top: 20, right: 20, bottom: 20, left: 20 },
+      fontSize: 10,
+      headerHeight: 30,
+      footerHeight: 20
+    },
+    compact: {
+      name: 'Compact',
+      description: 'Maximise le contenu par page',
+      margins: { top: 10, right: 10, bottom: 10, left: 10 },
+      fontSize: 8,
+      headerHeight: 20,
+      footerHeight: 15
+    },
+    detailed: {
+      name: 'Détaillé',
+      description: 'Avec statistiques et graphiques',
+      margins: { top: 25, right: 25, bottom: 25, left: 25 },
+      fontSize: 11,
+      headerHeight: 40,
+      footerHeight: 25
+    }
+  },
+  
+  /**
+   * Affiche le panneau de prévisualisation
+   */
+  show(sheetName, options = {}) {
+    const modal = document.createElement('div');
+    modal.className = 'modal pdf-preview-modal';
+    
+    modal.innerHTML = `
+      <div class="modal-content" style="max-width: 1000px;">
+        <div class="modal-header">
+          <h2 class="text-xl font-bold">
+            <i class="fas fa-file-pdf"></i>
+            Prévisualisation PDF - ${sheetName}
+          </h2>
+          <button class="close-modal text-gray-400 hover:text-gray-600">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        
+        <div class="modal-body">
+          <div class="grid grid-cols-3 gap-4">
+            <!-- Options -->
+            <div class="col-span-1 border-r pr-4">
+              <h3 class="font-bold mb-3">
+                <i class="fas fa-cog"></i> Options
+              </h3>
+              
+              <!-- Template -->
+              <div class="mb-4">
+                <label class="block font-semibold mb-2">Template</label>
+                ${Object.entries(this.templates).map(([key, template]) => `
+                  <label class="flex items-start gap-2 mb-2 p-2 border rounded cursor-pointer hover:bg-gray-50">
+                    <input type="radio" name="template" value="${key}" ${key === 'standard' ? 'checked' : ''}>
+                    <div>
+                      <div class="font-semibold">${template.name}</div>
+                      <div class="text-xs text-gray-600">${template.description}</div>
+                    </div>
+                  </label>
+                `).join('')}
+              </div>
+              
+              <!-- Orientation -->
+              <div class="mb-4">
+                <label class="block font-semibold mb-2">Orientation</label>
+                <label class="flex items-center gap-2 mb-1">
+                  <input type="radio" name="orientation" value="portrait" checked>
+                  <span>Portrait</span>
+                </label>
+                <label class="flex items-center gap-2">
+                  <input type="radio" name="orientation" value="landscape">
+                  <span>Paysage</span>
+                </label>
+              </div>
+              
+              <!-- Taille -->
+              <div class="mb-4">
+                <label class="block font-semibold mb-2">Taille</label>
+                <select name="size" class="w-full border rounded px-2 py-1">
+                  <option value="0">A4</option>
+                  <option value="1">Letter</option>
+                  <option value="2">A3</option>
+                </select>
+              </div>
+              
+              <!-- En-tête personnalisé -->
+              <div class="mb-4">
+                <label class="block font-semibold mb-2">En-tête</label>
+                <input 
+                  type="text" 
+                  name="customHeader" 
+                  placeholder="Titre personnalisé..."
+                  class="w-full border rounded px-2 py-1 text-sm"
+                >
+              </div>
+              
+              <!-- Options supplémentaires -->
+              <div class="mb-4">
+                <label class="block font-semibold mb-2">Options</label>
+                <label class="flex items-center gap-2 mb-1">
+                  <input type="checkbox" name="gridlines" checked>
+                  <span class="text-sm">Grille</span>
+                </label>
+                <label class="flex items-center gap-2 mb-1">
+                  <input type="checkbox" name="printtitle" checked>
+                  <span class="text-sm">Titre</span>
+                </label>
+                <label class="flex items-center gap-2">
+                  <input type="checkbox" name="pageNumbers" checked>
+                  <span class="text-sm">Numéros de page</span>
+                </label>
+              </div>
+            </div>
+            
+            <!-- Prévisualisation -->
+            <div class="col-span-2">
+              <h3 class="font-bold mb-3">
+                <i class="fas fa-eye"></i> Aperçu
+              </h3>
+              
+              <div id="pdfPreviewContainer" class="border rounded p-4 bg-gray-50" style="min-height: 500px;">
+                <div class="bg-white shadow-lg mx-auto" style="width: 210mm; min-height: 297mm; padding: 20mm;">
+                  <!-- Simuler contenu PDF -->
+                  <div class="text-center mb-4 pb-2 border-b-2">
+                    <h1 class="text-2xl font-bold">${sheetName}</h1>
+                    <p class="text-sm text-gray-600">Classe - Année scolaire 2024-2025</p>
+                  </div>
+                  
+                  <div class="preview-content">
+                    <p class="text-gray-500 text-center py-8">
+                      <i class="fas fa-spinner fa-spin text-3xl mb-3"></i><br>
+                      Génération de l'aperçu...
+                    </p>
+                  </div>
+                  
+                  <div class="text-center text-xs text-gray-500 mt-8 pt-2 border-t">
+                    Page 1 / 1
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="modal-footer flex gap-2 justify-between">
+          <button id="refreshPreviewBtn" class="btn btn-secondary">
+            <i class="fas fa-sync"></i> Actualiser aperçu
+          </button>
+          <div class="flex gap-2">
+            <button class="btn btn-secondary close-btn">
+              <i class="fas fa-times"></i> Annuler
+            </button>
+            <button id="exportPDFBtn" class="btn btn-primary">
+              <i class="fas fa-file-pdf"></i> Exporter PDF
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    setTimeout(() => modal.classList.add('active'), 10);
+    
+    // Générer aperçu initial
+    setTimeout(() => this.generatePreview(modal, sheetName), 500);
+    
+    // Event listeners
+    const closeModal = () => {
+      modal.classList.add('closing');
+      setTimeout(() => modal.remove(), 200);
+    };
+    
+    modal.querySelector('.close-btn').addEventListener('click', closeModal);
+    modal.querySelector('.close-modal').addEventListener('click', closeModal);
+    
+    // Actualiser aperçu
+    modal.querySelector('#refreshPreviewBtn').addEventListener('click', () => {
+      this.generatePreview(modal, sheetName);
+    });
+    
+    // Exporter PDF
+    modal.querySelector('#exportPDFBtn').addEventListener('click', () => {
+      this.exportPDF(modal, sheetName);
+      closeModal();
+    });
+    
+    // Actualiser aperçu lors des changements
+    modal.querySelectorAll('input[type="radio"], select').forEach(input => {
+      input.addEventListener('change', () => {
+        this.generatePreview(modal, sheetName);
+      });
+    });
+  },
+  
+  /**
+   * Génère l'aperçu
+   */
+  generatePreview(modal, sheetName) {
+    const container = modal.querySelector('.preview-content');
+    container.innerHTML = '<p class="text-gray-500 text-center py-8"><i class="fas fa-spinner fa-spin"></i> Génération...</p>';
+    
+    // Collecter options
+    const options = this.collectOptions(modal);
+    
+    // Simuler génération (remplacer par vraie logique)
+    setTimeout(() => {
+      container.innerHTML = `
+        <table class="w-full text-sm border-collapse">
+          <thead>
+            <tr class="bg-gray-100">
+              <th class="border p-2 text-left">Nom</th>
+              <th class="border p-2 text-left">Prénom</th>
+              <th class="border p-2 text-center">Sexe</th>
+              <th class="border p-2 text-left">LV2</th>
+              <th class="border p-2 text-left">Options</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${Array(15).fill(0).map((_, i) => `
+              <tr>
+                <td class="border p-2">DUPONT</td>
+                <td class="border p-2">Jean</td>
+                <td class="border p-2 text-center">M</td>
+                <td class="border p-2">ESP</td>
+                <td class="border p-2">-</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        
+        ${options.template === 'detailed' ? `
+          <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
+            <h4 class="font-semibold mb-2">Statistiques</h4>
+            <div class="grid grid-cols-3 gap-2 text-sm">
+              <div>Total: <strong>28</strong></div>
+              <div>Masculin: <strong>14</strong></div>
+              <div>Féminin: <strong>14</strong></div>
+            </div>
+          </div>
+        ` : ''}
+      `;
+    }, 500);
+  },
+  
+  /**
+   * Collecte les options
+   */
+  collectOptions(modal) {
+    const template = modal.querySelector('input[name="template"]:checked')?.value || 'standard';
+    const orientation = modal.querySelector('input[name="orientation"]:checked')?.value === 'landscape';
+    const size = parseInt(modal.querySelector('select[name="size"]')?.value || '0');
+    const customHeader = modal.querySelector('input[name="customHeader"]')?.value || '';
+    const gridlines = modal.querySelector('input[name="gridlines"]')?.checked || false;
+    const printtitle = modal.querySelector('input[name="printtitle"]')?.checked || false;
+    const pageNumbers = modal.querySelector('input[name="pageNumbers"]')?.checked || false;
+    
+    return {
+      template,
+      portrait: !orientation,
+      size,
+      customHeader,
+      gridlines,
+      printtitle,
+      pageNumbers,
+      ...this.templates[template]
+    };
+  },
+  
+  /**
+   * Exporte le PDF
+   */
+  async exportPDF(modal, sheetName) {
+    const options = this.collectOptions(modal);
+    
+    // Afficher toast
+    if (typeof Toast !== 'undefined') {
+      Toast.show('Export PDF en cours...', 'info');
+    }
+    
+    try {
+      // Appeler ExportService
+      if (typeof ExportService !== 'undefined') {
+        const result = await ExportService.exportSheetToPDF(sheetName, options);
+        
+        if (result.success) {
+          if (typeof Toast !== 'undefined') {
+            Toast.show('PDF exporté avec succès', 'success');
+          }
+          
+          // Ouvrir le fichier
+          if (result.url) {
+            window.open(result.url, '_blank');
+          }
+        } else {
+          if (typeof Toast !== 'undefined') {
+            Toast.show(result.message || 'Erreur export PDF', 'error');
+          }
+        }
+      } else {
+        console.error('ExportService non disponible');
+      }
+    } catch (error) {
+      console.error('Erreur export PDF:', error);
+      if (typeof Toast !== 'undefined') {
+        Toast.show('Erreur export PDF', 'error');
+      }
+    }
+  }
+};
+
+// Exposition globale
+if (typeof window !== 'undefined') {
+  window.PDFPreview = PDFPreview;
+}
+
+if (typeof global !== 'undefined') {
+  global.PDFPreview = PDFPreview;
+}
+
+console.log('✅ Module PDFPreview chargé');

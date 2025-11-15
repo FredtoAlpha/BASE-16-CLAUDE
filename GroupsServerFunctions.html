@@ -1,0 +1,236 @@
+<script>
+/**
+ * GROUPS MODULE V4 - FONCTIONS SERVEUR
+ * Fonctions Apps Script pour sauvegarder et charger les groupes dans Google Sheets
+ */
+
+/**
+ * Sauvegarde les groupes dans des onglets Google Sheets (VERSION V4)
+ * @param {Array} groupsData - Tableau d'objets {sheetName, students, metadata}
+ * @param {boolean} isTemp - Si true, créer onglets TEMP, sinon définitifs
+ * @returns {Object} Résultat {success, created, updated, deleted, sheetNames, error}
+ */
+function saveGroupsToSheetsV4(groupsData, isTemp) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const result = {
+      success: true,
+      created: 0,
+      updated: 0,
+      deleted: 0,
+      sheetNames: []
+    };
+
+    // Si finalisation (isTemp = false), supprimer d'abord tous les onglets TEMP
+    if (!isTemp) {
+      const allSheets = ss.getSheets();
+      allSheets.forEach(sheet => {
+        const name = sheet.getName();
+        if (name.includes('TEMP') && name.match(/^6°Grp(B|LV|Op)\d+TEMP$/)) {
+          ss.deleteSheet(sheet);
+          result.deleted++;
+          Logger.log('🗑️ Onglet TEMP supprimé: ' + name);
+        }
+      });
+    }
+
+    // Créer ou mettre à jour chaque onglet de groupe
+    groupsData.forEach(groupData => {
+      const sheetName = groupData.sheetName;
+      let sheet = ss.getSheetByName(sheetName);
+
+      if (sheet) {
+        // Onglet existe → mise à jour
+        sheet.clear();
+        result.updated++;
+        Logger.log('🔄 Mise à jour onglet: ' + sheetName);
+      } else {
+        // Créer nouvel onglet
+        sheet = ss.insertSheet(sheetName);
+        result.created++;
+        Logger.log('✅ Création onglet: ' + sheetName);
+      }
+
+      // Écrire les en-têtes (SOURCE en colonne O = position 15)
+      const headers = ['ID', 'NOM', 'PRENOM', 'SEXE', 'CLASSE', 'SCORE F', 'SCORE M', 'COM', 'TRA', 'PART', 'ABS', 'LV2', 'OPTIONS', '', 'SOURCE'];
+      sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+
+      // Formater les en-têtes
+      sheet.getRange(1, 1, 1, headers.length)
+        .setBackground('#4a90e2')
+        .setFontColor('#ffffff')
+        .setFontWeight('bold')
+        .setHorizontalAlignment('center');
+
+      // Écrire les données des élèves (SOURCE en colonne O = position 15)
+      if (groupData.students.length > 0) {
+        const rows = groupData.students.map(student => [
+          student.id,                                    // A
+          student.nom,                                   // B
+          student.prenom,                                // C
+          student.sexe,                                  // D
+          student.classe,                                // E
+          student.scoreF,                                // F
+          student.scoreM,                                // G
+          student.com,                                   // H
+          student.tra,                                   // I
+          student.part,                                  // J
+          student.abs,                                   // K
+          student.lv2,                                   // L
+          Array.isArray(student.options) ? student.options.join(';') : (student.options || ''), // M
+          '',                                            // N (colonne vide)
+          student.source || student.classe || ''         // O - SOURCE (classe d'origine)
+        ]);
+
+        sheet.getRange(2, 1, rows.length, headers.length).setValues(rows);
+      }
+
+      // Ajouter métadonnées en bas de l'onglet (lignes cachées)
+      const metaRow = groupData.students.length + 3;
+      sheet.getRange(metaRow, 1, 1, 2).setValues([['METADATA', JSON.stringify(groupData.metadata)]]);
+      sheet.getRange(metaRow, 1, 1, 2).setBackground('#f3f4f6').setFontSize(8);
+
+      // Formater les colonnes
+      sheet.autoResizeColumns(1, headers.length);
+      sheet.setFrozenRows(1);
+
+      // Alterner les couleurs des lignes
+      if (groupData.students.length > 0) {
+        for (let i = 2; i <= groupData.students.length + 1; i++) {
+          const color = i % 2 === 0 ? '#f9fafb' : '#ffffff';
+          sheet.getRange(i, 1, 1, headers.length).setBackground(color);
+        }
+      }
+
+      result.sheetNames.push(sheetName);
+    });
+
+    Logger.log('✅ Sauvegarde réussie: ' + JSON.stringify(result));
+    return result;
+
+  } catch (error) {
+    Logger.log('❌ Erreur saveGroupsToSheetsV4: ' + error.toString());
+    return {
+      success: false,
+      error: error.toString()
+    };
+  }
+}
+
+/**
+ * Charge les groupes depuis les onglets Google Sheets (VERSION V4)
+ * Recherche tous les onglets commençant par "6°Grp" (B/LV/Op) avec ou sans TEMP
+ * @returns {Object} Résultat {success, groups, sheetNames, error}
+ */
+function loadGroupsFromSheetsV4() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const allSheets = ss.getSheets();
+    const result = {
+      success: true,
+      groups: [],
+      sheetNames: []
+    };
+
+    // Pattern pour identifier les onglets de groupes
+    const pattern = /^6°Grp(B|LV|Op)(\d+)(TEMP)?$/;
+
+    allSheets.forEach(sheet => {
+      const name = sheet.getName();
+      const match = name.match(pattern);
+
+      if (match) {
+        Logger.log('📂 Chargement onglet: ' + name);
+
+        // Lire les données
+        const dataRange = sheet.getDataRange();
+        const values = dataRange.getValues();
+
+        if (values.length < 2) {
+          Logger.log('⚠️ Onglet vide: ' + name);
+          return;
+        }
+
+        // Extraire les élèves (lignes 2 à n)
+        const students = [];
+        for (let i = 1; i < values.length; i++) {
+          const row = values[i];
+
+          // Si ligne de métadonnées, arrêter
+          if (row[0] === 'METADATA') break;
+
+          // Si ligne vide, continuer
+          if (!row[0]) continue;
+
+          students.push({
+            id: row[0],                        // A
+            lastName: row[1],                  // B
+            firstName: row[2],                 // C
+            sexe: row[3],                      // D
+            class: row[4],                     // E
+            scoreF: parseFloat(row[5]) || 0,   // F
+            scoreM: parseFloat(row[6]) || 0,   // G
+            com: parseFloat(row[7]) || 0,      // H
+            tra: parseFloat(row[8]) || 0,      // I
+            part: parseFloat(row[9]) || 0,     // J
+            abs: parseFloat(row[10]) || 0,     // K
+            lv2: row[11] || 'ESP',             // L
+            options: row[12] ? row[12].split(';') : [], // M
+            SOURCE: row[14] || row[4] || ''    // O - SOURCE (classe d'origine)
+          });
+        }
+
+        // Chercher les métadonnées
+        let metadata = null;
+        for (let i = values.length - 1; i >= 0; i--) {
+          if (values[i][0] === 'METADATA') {
+            try {
+              metadata = JSON.parse(values[i][1]);
+            } catch (e) {
+              Logger.log('⚠️ Métadonnées invalides dans ' + name);
+            }
+            break;
+          }
+        }
+
+        // Si pas de métadonnées, en créer des basiques
+        if (!metadata) {
+          const prefix = match[1];
+          const scenarioMap = { 'B': 'besoins', 'LV': 'lv2', 'Op': 'options' };
+          metadata = {
+            groupId: parseInt(match[2]),
+            groupName: 'Groupe ' + match[2],
+            regroupementName: 'Regroupement',
+            scenario: scenarioMap[prefix] || 'besoins',
+            mode: 'heterogeneous',
+            isTemp: !!match[3],
+            timestamp: new Date().toISOString()
+          };
+        }
+
+        result.groups.push({
+          students: students,
+          metadata: metadata
+        });
+
+        result.sheetNames.push(name);
+      }
+    });
+
+    // Trier les groupes par groupId
+    result.groups.sort((a, b) => a.metadata.groupId - b.metadata.groupId);
+
+    Logger.log('✅ Chargement réussi: ' + result.groups.length + ' groupe(s)');
+    return result;
+
+  } catch (error) {
+    Logger.log('❌ Erreur loadGroupsFromSheetsV4: ' + error.toString());
+    return {
+      success: false,
+      error: error.toString(),
+      groups: [],
+      sheetNames: []
+    };
+  }
+}
+</script>

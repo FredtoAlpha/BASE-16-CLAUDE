@@ -1,0 +1,299 @@
+/**
+ * VALIDATION WARNINGS - V3 Final Polish
+ * Alertes proactives pour capacités, contraintes, actions critiques
+ */
+
+const ValidationWarnings = {
+  /**
+   * Vérifie la capacité d'une classe avant ajout
+   */
+  checkClassCapacity(className, currentCount, maxCapacity) {
+    if (currentCount >= maxCapacity) {
+      return {
+        valid: false,
+        level: 'error',
+        message: `⛔ Classe ${className} pleine (${currentCount}/${maxCapacity})`,
+        action: 'Impossible d\'ajouter plus d\'élèves'
+      };
+    }
+    
+    if (currentCount >= maxCapacity * 0.9) {
+      return {
+        valid: true,
+        level: 'warning',
+        message: `⚠️ Classe ${className} presque pleine (${currentCount}/${maxCapacity})`,
+        action: 'Attention à la capacité restante'
+      };
+    }
+    
+    return { valid: true };
+  },
+
+  /**
+   * Vérifie les contraintes LV2/Options
+   */
+  checkStudentConstraints(student, targetClass, structure) {
+    const warnings = [];
+    
+    // Vérifier LV2
+    if (student.lv2 && student.lv2 !== 'ESP') {
+      const classInfo = structure.classes.find(c => c.nom === targetClass);
+      if (classInfo && !classInfo.lv2?.includes(student.lv2)) {
+        warnings.push({
+          level: 'error',
+          message: `⛔ LV2 ${student.lv2} non disponible dans ${targetClass}`,
+          constraint: 'LV2'
+        });
+      }
+    }
+    
+    // Vérifier Options
+    if (student.options && student.options.length > 0) {
+      const classInfo = structure.classes.find(c => c.nom === targetClass);
+      student.options.forEach(opt => {
+        if (classInfo && !classInfo.options?.includes(opt)) {
+          warnings.push({
+            level: 'error',
+            message: `⛔ Option ${opt} non disponible dans ${targetClass}`,
+            constraint: 'OPTION'
+          });
+        }
+      });
+    }
+    
+    return warnings;
+  },
+
+  /**
+   * Vérifie les contraintes ASSO/DISSO
+   */
+  checkAssoDissoConstraints(student, targetClassStudents) {
+    const warnings = [];
+    
+    // Vérifier DISSO
+    if (student.disso) {
+      const conflict = targetClassStudents.find(s => s.disso === student.disso && s.id !== student.id);
+      if (conflict) {
+        warnings.push({
+          level: 'error',
+          message: `⛔ Conflit dissociation D${student.disso} avec ${conflict.nom}`,
+          constraint: 'DISSO'
+        });
+      }
+    }
+    
+    // Vérifier ASSO
+    if (student.asso) {
+      const assoGroup = targetClassStudents.filter(s => s.asso === student.asso);
+      if (assoGroup.length > 0 && !assoGroup.some(s => s.id === student.id)) {
+        warnings.push({
+          level: 'warning',
+          message: `⚠️ Groupe A${student.asso} incomplet (${assoGroup.length} élèves)`,
+          constraint: 'ASSO'
+        });
+      }
+    }
+    
+    return warnings;
+  },
+
+  /**
+   * Vérifie l'équilibre parité
+   */
+  checkParityBalance(className, maleCount, femaleCount, tolerance = 2) {
+    const diff = Math.abs(maleCount - femaleCount);
+    
+    if (diff > tolerance * 2) {
+      return {
+        level: 'error',
+        message: `⛔ Déséquilibre parité dans ${className} (${maleCount}M / ${femaleCount}F)`,
+        diff
+      };
+    }
+    
+    if (diff > tolerance) {
+      return {
+        level: 'warning',
+        message: `⚠️ Parité à surveiller dans ${className} (${maleCount}M / ${femaleCount}F)`,
+        diff
+      };
+    }
+    
+    return { level: 'ok', diff };
+  },
+
+  /**
+   * Affiche un warning modal
+   */
+  showWarningModal(warnings, options = {}) {
+    const {
+      title = '⚠️ Attention',
+      confirmText = 'Continuer quand même',
+      cancelText = 'Annuler',
+      onConfirm = () => {},
+      onCancel = () => {}
+    } = options;
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal validation-modal';
+    modal.innerHTML = `
+      <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+          <h2 class="text-xl font-bold">${title}</h2>
+          <button class="close-modal text-gray-400 hover:text-gray-600">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          ${warnings.map(w => `
+            <div class="alert alert-${w.level} mb-3">
+              <div class="flex items-start gap-3">
+                <i class="fas fa-${w.level === 'error' ? 'exclamation-circle' : 'exclamation-triangle'} text-xl"></i>
+                <div>
+                  <div class="font-semibold">${w.message}</div>
+                  ${w.action ? `<div class="text-sm mt-1">${w.action}</div>` : ''}
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <div class="modal-footer flex gap-2 justify-end">
+          <button class="btn btn-secondary cancel-btn">
+            <i class="fas fa-times"></i> ${cancelText}
+          </button>
+          ${warnings.every(w => w.level !== 'error') ? `
+            <button class="btn btn-primary confirm-btn">
+              <i class="fas fa-check"></i> ${confirmText}
+            </button>
+          ` : ''}
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Animation d'entrée
+    setTimeout(() => modal.classList.add('active'), 10);
+    
+    // Event listeners
+    const closeBtn = modal.querySelector('.close-modal');
+    const cancelBtn = modal.querySelector('.cancel-btn');
+    const confirmBtn = modal.querySelector('.confirm-btn');
+    
+    const closeModal = () => {
+      modal.classList.add('closing');
+      setTimeout(() => {
+        modal.remove();
+        onCancel();
+      }, 200);
+    };
+    
+    closeBtn?.addEventListener('click', closeModal);
+    cancelBtn?.addEventListener('click', closeModal);
+    
+    confirmBtn?.addEventListener('click', () => {
+      modal.classList.add('closing');
+      setTimeout(() => {
+        modal.remove();
+        onConfirm();
+      }, 200);
+    });
+    
+    // Fermer avec Escape
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        closeModal();
+        document.removeEventListener('keydown', handleEscape);
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+  },
+
+  /**
+   * Affiche un toast de warning rapide
+   */
+  showWarningToast(message, level = 'warning') {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${level}`;
+    toast.innerHTML = `
+      <div class="flex items-center gap-3">
+        <i class="fas fa-${level === 'error' ? 'exclamation-circle' : 'exclamation-triangle'} text-xl"></i>
+        <div>${message}</div>
+      </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => toast.classList.add('removing'), 3000);
+    setTimeout(() => toast.remove(), 3300);
+  },
+
+  /**
+   * Confirmation action critique
+   */
+  confirmCriticalAction(message, onConfirm, onCancel = () => {}) {
+    const modal = document.createElement('div');
+    modal.className = 'modal confirmation-modal';
+    modal.innerHTML = `
+      <div class="modal-content" style="max-width: 450px;">
+        <div class="modal-header">
+          <h2 class="text-xl font-bold">⚠️ Confirmation requise</h2>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-warning">
+            <div class="flex items-start gap-3">
+              <i class="fas fa-exclamation-triangle text-2xl"></i>
+              <div>
+                <div class="font-semibold mb-2">Action irréversible</div>
+                <div>${message}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer flex gap-2 justify-end">
+          <button class="btn btn-secondary cancel-btn">
+            <i class="fas fa-times"></i> Annuler
+          </button>
+          <button class="btn btn-danger confirm-btn">
+            <i class="fas fa-check"></i> Confirmer
+          </button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    setTimeout(() => modal.classList.add('active'), 10);
+    
+    const cancelBtn = modal.querySelector('.cancel-btn');
+    const confirmBtn = modal.querySelector('.confirm-btn');
+    
+    const closeModal = () => {
+      modal.classList.add('closing');
+      setTimeout(() => {
+        modal.remove();
+        onCancel();
+      }, 200);
+    };
+    
+    cancelBtn.addEventListener('click', closeModal);
+    
+    confirmBtn.addEventListener('click', () => {
+      modal.classList.add('closing');
+      setTimeout(() => {
+        modal.remove();
+        onConfirm();
+      }, 200);
+    });
+  }
+};
+
+// Exposition globale
+if (typeof window !== 'undefined') {
+  window.ValidationWarnings = ValidationWarnings;
+}
+
+if (typeof global !== 'undefined') {
+  global.ValidationWarnings = ValidationWarnings;
+}
+
+console.log('✅ Module ValidationWarnings chargé');

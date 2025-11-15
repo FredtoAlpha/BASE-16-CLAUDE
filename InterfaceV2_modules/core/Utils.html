@@ -1,0 +1,407 @@
+/**
+ * UTILS.JS - Fonctions utilitaires générales
+ * 
+ * Regroupe toutes les fonctions utilitaires réutilisables
+ * dans l'application InterfaceV2.
+ */
+
+const AppUtils = {
+  // ============================================
+  // VALIDATION ET VÉRIFICATION
+  // ============================================
+  
+  /**
+   * Vérifie si une classe est une vraie classe (pas POOL, SANS_CLASSE, etc.)
+   * @param {string} className - Nom de la classe
+   * @returns {boolean}
+   */
+  isRealClass(className) {
+    if (!className) return false;
+    const upper = className.toUpperCase();
+    return !['POOL', 'SANS_CLASSE', 'NON_AFFECTE', 'UNASSIGNED'].includes(upper);
+  },
+  
+  /**
+   * Vérifie si un ID est valide
+   * @param {string} id - ID à vérifier
+   * @returns {boolean}
+   */
+  isValidId(id) {
+    return id && typeof id === 'string' && id.trim().length > 0;
+  },
+  
+  /**
+   * Vérifie si un élève a un ID valide
+   * @param {Object} eleve - Élève à vérifier
+   * @returns {boolean}
+   */
+  hasValidId(eleve) {
+    return eleve && this.isValidId(eleve.id);
+  },
+  
+  // ============================================
+  // MANIPULATION DE TEXTE
+  // ============================================
+  
+  /**
+   * Simplifie un nom complet pour l'affichage
+   * VERSION 4.2 - Logique complète de simplification
+   * @param {string} nom - Nom de famille
+   * @param {string} prenom - Prénom
+   * @returns {string} Nom simplifié
+   */
+  simplifierNomComplet(nom, prenom) {
+    if (!nom && !prenom) return '';
+
+    nom = (nom || '').trim().replace(/\s+/g, ' ');
+    prenom = (prenom || '').trim().replace(/\s+/g, ' ');
+
+    const nomParts = nom.split(/[\s-]+/).filter(Boolean);
+    const prenomParts = prenom.split(/[\s-]+/).filter(Boolean);
+
+    const nomPart1 = nomParts[0] || '';
+    const nomPart2 = nomParts[1] || '';
+    const prenomPart1 = prenomParts[0] || '';
+
+    let finalNom = nomPart1;
+    let finalPrenom = '';
+
+    if (prenomPart1) {
+      finalPrenom = prenomPart1;
+    } else if (nomPart2) {
+      // Si pas de prénom fourni, utiliser la deuxième partie du nom comme prénom
+      finalPrenom = nomPart2;
+    }
+
+    let resultat = `${finalNom} ${finalPrenom}`.trim();
+
+    const MAX_LENGTH = 25;
+    if (resultat.length > MAX_LENGTH) {
+      const nomPart = finalNom;
+      const prenomPart = finalPrenom;
+
+      const availableForPrenom = MAX_LENGTH - nomPart.length - 1;
+
+      if (availableForPrenom > 0) {
+        const truncatedPrenom = prenomPart.substring(0, availableForPrenom - 1) + '.';
+        resultat = `${nomPart} ${truncatedPrenom}`.trim();
+      } else {
+        resultat = nomPart.substring(0, MAX_LENGTH - 1) + '.';
+      }
+    }
+
+    return resultat;
+  },
+  
+  /**
+   * Normalise une chaîne pour la comparaison
+   * @param {string} str - Chaîne à normaliser
+   * @returns {string}
+   */
+  normalize(str) {
+    if (!str) return '';
+    return str.toString().trim().toUpperCase();
+  },
+  
+  /**
+   * Tronque un texte à une longueur maximale
+   * @param {string} text - Texte à tronquer
+   * @param {number} maxLength - Longueur maximale
+   * @param {string} suffix - Suffixe à ajouter (défaut: '...')
+   * @returns {string}
+   */
+  truncate(text, maxLength, suffix = '...') {
+    if (!text || text.length <= maxLength) return text;
+    return text.substring(0, maxLength - suffix.length) + suffix;
+  },
+  
+  // ============================================
+  // DÉTECTION ET EXTRACTION
+  // ============================================
+  
+  /**
+   * Détecte automatiquement le niveau à partir des données
+   * @param {Array} data - Données des classes
+   * @returns {string} Niveau détecté
+   */
+  detectNiveau(data) {
+    if (!data || data.length === 0) return '';
+    
+    const classes = data.map(group => group.classe);
+    const niveaux = new Set();
+    
+    classes.forEach(classe => {
+      const match = classe.match(/^(\d°)/);
+      if (match) {
+        niveaux.add(match[1]);
+      }
+    });
+    
+    if (niveaux.size === 1) {
+      return Array.from(niveaux)[0];
+    } else if (niveaux.size > 1) {
+      return `Multi-niveaux (${Array.from(niveaux).join(', ')})`;
+    }
+    
+    return 'Niveau non détecté';
+  },
+  
+  /**
+   * Extrait le niveau et le numéro d'une classe (ex: "6°1" -> {niveau: 6, numero: 1})
+   * @param {string} classe - Nom de la classe
+   * @returns {Object|null} {niveau, numero} ou null
+   */
+  parseClasse(classe) {
+    const match = classe.match(/(\d+)°(\d+)/);
+    if (match) {
+      return {
+        niveau: parseInt(match[1]),
+        numero: parseInt(match[2])
+      };
+    }
+    return null;
+  },
+  
+  // ============================================
+  // MANIPULATION DE TABLEAUX
+  // ============================================
+  
+  /**
+   * Filtre les élèves avec ID valide
+   * @param {Array} eleves - Liste d'élèves
+   * @returns {Array} Élèves filtrés
+   */
+  filterValidStudents(eleves) {
+    return (eleves || []).filter(e => this.hasValidId(e));
+  },
+  
+  /**
+   * Groupe les élèves par une propriété
+   * @param {Array} eleves - Liste d'élèves
+   * @param {string} property - Propriété de regroupement
+   * @returns {Object} Élèves groupés
+   */
+  groupBy(eleves, property) {
+    return (eleves || []).reduce((acc, eleve) => {
+      const key = eleve[property] || 'undefined';
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(eleve);
+      return acc;
+    }, {});
+  },
+  
+  /**
+   * Compte les élèves par sexe
+   * @param {Array} eleves - Liste d'élèves
+   * @returns {Object} {F: number, M: number}
+   */
+  countBySex(eleves) {
+    return {
+      F: (eleves || []).filter(e => e.sexe === 'F').length,
+      M: (eleves || []).filter(e => e.sexe === 'M').length
+    };
+  },
+  
+  // ============================================
+  // TRI
+  // ============================================
+  
+  /**
+   * Compare deux noms pour le tri alphabétique
+   * @param {string} a - Premier nom
+   * @param {string} b - Deuxième nom
+   * @returns {number}
+   */
+  compareNames(a, b) {
+    return (a || '').localeCompare(b || '');
+  },
+  
+  /**
+   * Tri naturel des classes (6°1, 6°2, 5°1, etc.)
+   * @param {string} a - Première classe
+   * @param {string} b - Deuxième classe
+   * @returns {number}
+   */
+  compareClasses(a, b) {
+    const ma = a.match(/(\d+)°(\d+)/);
+    const mb = b.match(/(\d+)°(\d+)/);
+    
+    if (ma && mb) {
+      const nivA = +ma[1], nivB = +mb[1];
+      if (nivA !== nivB) return nivA - nivB;
+      return +ma[2] - +mb[2];
+    }
+    
+    return a.localeCompare(b);
+  },
+  
+  // ============================================
+  // DATES ET TEMPS
+  // ============================================
+  
+  /**
+   * Formate une date en français
+   * @param {Date|string} date - Date à formater
+   * @returns {string}
+   */
+  formatDate(date) {
+    if (!date) return '';
+    const d = date instanceof Date ? date : new Date(date);
+    return d.toLocaleString('fr-FR');
+  },
+  
+  /**
+   * Obtient un timestamp ISO
+   * @returns {string}
+   */
+  getTimestamp() {
+    return new Date().toISOString();
+  },
+  
+  // ============================================
+  // DOM
+  // ============================================
+  
+  /**
+   * Obtient le contenu actuel d'une classe (IDs des élèves)
+   * @param {string} classe - Nom de la classe
+   * @returns {Array<string>} Liste des IDs
+   */
+  getCurrentClassContent(classe) {
+    const dropZone = document.querySelector(`.droppable-zone[data-classe="${classe}"]`);
+    if (!dropZone) return [];
+    
+    return Array.from(dropZone.querySelectorAll('.student-card'))
+      .map(card => card.dataset.id)
+      .filter(Boolean);
+  },
+  
+  /**
+   * Trouve la zone de dépôt d'un élève
+   * @param {string} eleveId - ID de l'élève
+   * @returns {HTMLElement|null}
+   */
+  findStudentZone(eleveId) {
+    const card = document.querySelector(`.student-card[data-id="${eleveId}"]`);
+    return card ? card.closest('.droppable-zone') : null;
+  },
+  
+  /**
+   * Trouve la classe d'un élève
+   * @param {string} eleveId - ID de l'élève
+   * @returns {string|null}
+   */
+  findStudentClass(eleveId) {
+    const zone = this.findStudentZone(eleveId);
+    return zone ? zone.dataset.classe : null;
+  },
+  
+  // ============================================
+  // CALCULS STATISTIQUES
+  // ============================================
+  
+  /**
+   * Calcule la moyenne d'un tableau de nombres
+   * @param {Array<number>} numbers - Nombres
+   * @returns {number}
+   */
+  average(numbers) {
+    if (!numbers || numbers.length === 0) return 0;
+    const sum = numbers.reduce((a, b) => a + b, 0);
+    return sum / numbers.length;
+  },
+  
+  /**
+   * Calcule l'écart-type d'un tableau de nombres
+   * @param {Array<number>} numbers - Nombres
+   * @returns {number}
+   */
+  standardDeviation(numbers) {
+    if (!numbers || numbers.length === 0) return 0;
+    const avg = this.average(numbers);
+    const squareDiffs = numbers.map(value => Math.pow(value - avg, 2));
+    return Math.sqrt(this.average(squareDiffs));
+  },
+  
+  /**
+   * Calcule le coefficient de variation (écart-type / moyenne)
+   * @param {Array<number>} numbers - Nombres
+   * @returns {number}
+   */
+  coefficientOfVariation(numbers) {
+    const avg = this.average(numbers);
+    if (avg === 0) return 0;
+    return this.standardDeviation(numbers) / avg;
+  },
+  
+  // ============================================
+  // DEBOUNCE ET THROTTLE
+  // ============================================
+  
+  /**
+   * Crée une fonction debounced
+   * @param {Function} func - Fonction à debouncer
+   * @param {number} wait - Délai en ms
+   * @returns {Function}
+   */
+  debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  },
+  
+  /**
+   * Crée une fonction throttled
+   * @param {Function} func - Fonction à throttler
+   * @param {number} limit - Limite en ms
+   * @returns {Function}
+   */
+  throttle(func, limit) {
+    let inThrottle;
+    return function(...args) {
+      if (!inThrottle) {
+        func.apply(this, args);
+        inThrottle = true;
+        setTimeout(() => inThrottle = false, limit);
+      }
+    };
+  },
+  
+  // ============================================
+  // GÉNÉRATION
+  // ============================================
+  
+  /**
+   * Génère un ID unique
+   * @returns {string}
+   */
+  generateId() {
+    return `id_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  },
+  
+  /**
+   * Génère une couleur aléatoire
+   * @returns {string} Couleur hexadécimale
+   */
+  randomColor() {
+    return '#' + Math.floor(Math.random()*16777215).toString(16);
+  }
+};
+
+// Exposer globalement
+if (typeof window !== 'undefined') {
+  window.AppUtils = AppUtils;
+  // Exposer simplifierNomComplet globalement pour compatibilité
+  window.simplifierNomComplet = AppUtils.simplifierNomComplet.bind(AppUtils);
+}
+
+// Export pour modules ES6
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = AppUtils;
+}

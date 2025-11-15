@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <base target="_top">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4299E1;
+            --background-color: #F7FAFC;
+            --sidebar-bg: #1A202C;
+            --card-bg: #FFFFFF;
+            --text-primary: #2D3748;
+            --text-secondary: #718096;
+            --border-color: #E2E8F0;
+        }
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            background-color: var(--background-color);
+            display: flex;
+            height: 100vh;
+            color: var(--text-primary);
+        }
+        .sidebar {
+            width: 250px;
+            background-color: var(--sidebar-bg);
+            display: flex;
+            flex-direction: column;
+        }
+        .main-content {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .wizard-content { display: none; }
+        .wizard-content.active { display: block; }
+        .phase-title { font-size: 24px; font-weight: 700; margin-bottom: 20px; color: var(--text-primary); }
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border: 1px solid var(--border-color);
+        }
+        .card-title { font-size: 18px; font-weight: 500; margin-top: 0; margin-bottom: 10px; }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 6px;
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 500;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn:hover:not(:disabled) { background-color: #2B6CB0; }
+        .btn:disabled { background-color: #A0AEC0; cursor: not-allowed; }
+        .btn-secondary { background-color: #718096; }
+        .btn-secondary:hover { background-color: #4A5568; }
+        /* Modal styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal.hidden { display: none; }
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 10px; }
+        .modal-title { font-size: 20px; font-weight: 500; }
+        .modal-close { background: none; border: none; font-size: 24px; cursor: pointer; }
+        .modal-footer { border-top: 1px solid var(--border-color); padding-top: 10px; margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px; }
+        .checklist { list-style: none; padding: 0; }
+        .checklist-item { padding: 8px; border-radius: 4px; margin-bottom: 5px; display: flex; align-items: center; }
+        .checklist-item .icon-container { margin-right: 10px; }
+        .status-ok { background-color: #F0FFF4; }
+        .status-warning { background-color: #FFFBEB; }
+        .status-error { background-color: #FFF5F5; }
+
+        .sidebar-header { padding: 20px; background-color: #1A202C; color: white; }
+        .sidebar-title { font-size: 20px; font-weight: 700; }
+        .sidebar-subtitle { font-size: 12px; opacity: 0.8; }
+        .sidebar-nav { padding-top: 10px; }
+        .nav-item { display: flex; align-items: center; padding: 12px 20px; color: #A0AEC0; text-decoration: none; border-left: 4px solid transparent; transition: all 0.2s; }
+        .nav-item:hover { background-color: #2D3748; color: white; }
+        .nav-item.active { background-color: #2D3748; color: white; border-left-color: #4299E1; }
+        .nav-icon { flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; background-color: #4A5568; color: white; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; margin-right: 15px; }
+        .nav-item.active .nav-icon { background-color: #4299E1; }
+        .nav-text { flex-grow: 1; }
+        .nav-badge { font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 500; }
+        .status-todo { background-color: #E2E8F0; color: #4A5568; }
+        .status-pending { background-color: #F6E05E; color: #744210; }
+        .status-success { background-color: #68D391; color: #276749; }
+        .status-error { background-color: #FC8181; color: #9B2C2C; }
+        .diagnostic-list { list-style: none; padding: 0; margin-top: 15px; }
+        .diagnostic-item { display: flex; align-items: center; padding: 8px; border-radius: 4px; margin-bottom: 5px; }
+        .diagnostic-item.status-ok { background-color: #F0FFF4; }
+        .diagnostic-item.status-warning { background-color: #FFFBEB; }
+        .diagnostic-item.status-error { background-color: #FFF5F5; }
+        .diagnostic-icon { margin-right: 10px; }
+        .confirm-checkbox-label { display: flex; align-items: center; font-size: 12px; color: #4A5568; margin-right: auto; }
+        #confirm-checklist { margin-right: 8px; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h1 class="sidebar-title">Console de Pilotage</h1>
+            <div class="sidebar-subtitle">Version 2.0</div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item active" data-step="1">
+                <span class="nav-icon">1</span>
+                <span class="nav-text">Initialisation</span>
+                <span id="badge-1" class="nav-badge status-pending">En attente</span>
+            </a>
+            <a href="#" class="nav-item" data-step="2">
+                <span class="nav-icon">2</span>
+                <span class="nav-text">Diagnostic</span>
+                <span id="badge-2" class="nav-badge status-todo">À faire</span>
+            </a>
+            <a href="#" class="nav-item" data-step="3">
+                <span class="nav-icon">3</span>
+                <span class="nav-text">Génération</span>
+                <span id="badge-3" class="nav-badge status-todo">À faire</span>
+            </a>
+            <a href="#" class="nav-item" data-step="4">
+                <span class="nav-icon">4</span>
+                <span class="nav-text">Optimisation</span>
+                <span id="badge-4" class="nav-badge status-todo">À faire</span>
+            </a>
+            <a href="#" class="nav-item" data-step="5">
+                <span class="nav-icon">5</span>
+                <span class="nav-text">Swaps Manuels</span>
+                <span id="badge-5" class="nav-badge status-todo">À faire</span>
+            </a>
+            <a href="#" class="nav-item" data-step="6">
+                <span class="nav-icon">6</span>
+                <span class="nav-text">Finalisation</span>
+                <span id="badge-6" class="nav-badge status-todo">À faire</span>
+            </a>
+        </nav>
+    </div>
+    <div class="main-content">
+        <!-- Phase 1: Initialisation -->
+        <div id="phase-1" class="wizard-content active">
+            <h2 class="phase-title">Phase 1: Initialisation</h2>
+            <div class="card">
+                <h3 class="card-title">Configuration Initiale</h3>
+                <p>Cette étape prépare le système pour la répartition. Elle va consolider les données des onglets sources et vérifier la configuration.</p>
+                <button id="btn-run-initialisation" class="btn btn-primary">Lancer l'Initialisation</button>
+            </div>
+        </div>
+        <!-- Phase 2: Diagnostic -->
+        <div id="phase-2" class="wizard-content">
+            <h2 class="phase-title">Phase 2: Diagnostic</h2>
+            <div id="live-diagnostic-panel" class="card">
+                <h3 class="card-title">Live Diagnostic Panel</h3>
+                <ul id="diagnostic-results" class="diagnostic-list">
+                    <!-- Les résultats du diagnostic seront injectés ici -->
+                </ul>
+                <button id="btn-run-diagnostics" class="btn btn-primary">Lancer le Diagnostic</button>
+            </div>
+        </div>
+        <!-- Phase 3: Génération -->
+        <div id="phase-3" class="wizard-content">
+            <h2 class="phase-title">Phase 3: Génération</h2>
+            <div class="card">
+                <h3 class="card-title">Création des Classes</h3>
+                <p>Lance l'algorithme de répartition pour créer les onglets ...TEST avec une première version des classes.</p>
+                <button id="btn-run-generation" class="btn btn-primary">Générer les Classes</button>
+            </div>
+        </div>
+        <!-- Phase 4: Optimisation -->
+        <div id="phase-4" class="wizard-content">
+            <h2 class="phase-title">Phase 4: Optimisation</h2>
+            <div class="card">
+                <h3 class="card-title">Équilibrage Automatique</h3>
+                <p>Applique l'algorithme "JULES-VERNE-NAUTILUS" pour optimiser l'équilibre des classes en fonction des scores et de la parité.</p>
+                <button id="btn-run-optimization" class="btn btn-primary">Lancer l'Optimisation</button>
+            </div>
+        </div>
+        <!-- Phase 5: Swaps Manuels -->
+        <div id="phase-5" class="wizard-content">
+            <h2 class="phase-title">Phase 5: Swaps Manuels</h2>
+            <div class="card">
+                <h3 class="card-title">Ajustements Fins</h3>
+                <p>Ouvre l'Interface V2 dans un nouvel onglet pour effectuer des échanges manuels d'élèves. Les classes ...TEST seront chargées automatiquement.</p>
+                <button id="btn-open-swap-interface" class="btn btn-primary">Ouvrir l'Interface de Swap</button>
+            </div>
+        </div>
+        <!-- Phase 6: Finalisation -->
+        <div id="phase-6" class="wizard-content">
+            <h2 class="phase-title">Phase 6: Finalisation</h2>
+            <div class="card">
+                <h3 class="card-title">Action Finale</h3>
+                <p>Cette action va copier les résultats des onglets ...TEST vers des onglets définitifs ...DEF. Cette opération est irréversible.</p>
+                <button id="btn-finalize-process" class="btn btn-primary">Finaliser le Processus</button>
+            </div>
+        </div>
+    </div>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const navItems = document.querySelectorAll('.nav-item');
+        const contentPanels = document.querySelectorAll('.wizard-content');
+
+        function updateStepStatus(step, status, text) {
+            const badge = document.getElementById(`badge-${step}`);
+            if (badge) {
+                badge.className = 'nav-badge'; // Reset classes
+                badge.classList.add(`status-${status}`);
+                badge.textContent = text;
+            }
+        }
+
+        function updateNavLockState() {
+            let enabledUpTo = 0;
+            navItems.forEach(item => {
+                const step = parseInt(item.getAttribute('data-step'), 10);
+                const badge = document.getElementById(`badge-${step}`);
+                if (badge && badge.classList.contains('status-success')) {
+                    enabledUpTo = Math.max(enabledUpTo, step);
+                }
+            });
+
+            navItems.forEach(item => {
+                const step = parseInt(item.getAttribute('data-step'), 10);
+                if (step > enabledUpTo + 1) {
+                    item.classList.add('disabled');
+                } else {
+                    item.classList.remove('disabled');
+                }
+            });
+        }
+
+        navItems.forEach(item => {
+            item.addEventListener('click', e => {
+                e.preventDefault();
+                if (item.classList.contains('disabled')) return;
+
+                const targetStep = item.getAttribute('data-step');
+
+                // Update navigation
+                navItems.forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+
+                // Update content
+                contentPanels.forEach(panel => {
+                    if (panel.id === `phase-${targetStep}`) {
+                        panel.classList.add('active');
+                    } else {
+                        panel.classList.remove('active');
+                    }
+                });
+            });
+        });
+
+        const reviewModal = document.getElementById('reviewModal');
+        const checklistContainer = document.getElementById('checklist-container');
+        const confirmFinalizeBtn = document.getElementById('btn-confirm-finalize');
+        const cancelFinalizeBtn = document.getElementById('btn-cancel-finalize');
+        const closeModalBtn = document.getElementById('btn-close-modal');
+        const confirmCheckbox = document.getElementById('confirm-checklist');
+
+        confirmCheckbox.addEventListener('change', () => {
+            confirmFinalizeBtn.disabled = !confirmCheckbox.checked;
+        });
+
+        window.openReviewModal = function(diagnosticResults) {
+            // Reset state
+            confirmCheckbox.checked = false;
+            confirmFinalizeBtn.disabled = true;
+            checklistContainer.innerHTML = '';
+
+            // Populate checklist
+            diagnosticResults.forEach(item => {
+                const itemEl = document.createElement('li');
+                itemEl.className = 'checklist-item';
+                let icon = '';
+                if (item.status === 'ok') {
+                    icon = '<div class="icon-container-ok">✅</div>';
+                    itemEl.classList.add('status-ok');
+                } else if (item.status === 'warning') {
+                    icon = '<div class="icon-container-warning">⚠️</div>';
+                    itemEl.classList.add('status-warning');
+                } else {
+                    icon = '<div class="icon-container-error">❌</div>';
+                    itemEl.classList.add('status-error');
+                }
+                itemEl.innerHTML = `${icon}<span>${item.message}</span>`;
+                checklistContainer.appendChild(itemEl);
+            });
+
+            // Show the modal
+            reviewModal.classList.remove('hidden');
+        }
+
+        function closeReviewModal() {
+            reviewModal.classList.add('hidden');
+        }
+
+        document.getElementById('btn-finalize-process').addEventListener('click', () => {
+            updateStepStatus(6, 'pending', 'Vérification');
+            google.script.run
+                .withSuccessHandler(openReviewModal)
+                .withFailureHandler(error => {
+                    alert('Erreur du service de diagnostic: ' + error.message);
+                    updateStepStatus(6, 'error', 'Erreur');
+                })
+                .runGlobalDiagnostics();
+        });
+
+        confirmFinalizeBtn.addEventListener('click', () => {
+            updateStepStatus(6, 'pending', 'En cours');
+            closeReviewModal();
+            google.script.run
+                .withSuccessHandler(response => {
+                    alert(response.message);
+                    updateStepStatus(6, 'success', 'Terminé');
+                    updateNavLockState();
+                })
+                .withFailureHandler(error => {
+                    alert("Erreur de finalisation: " + error.message);
+                    updateStepStatus(6, 'error', 'Erreur');
+                })
+                .finalizeProcess();
+        });
+
+        cancelFinalizeBtn.addEventListener('click', closeReviewModal);
+        closeModalBtn.addEventListener('click', closeReviewModal);
+
+        // --- Live Diagnostic Panel ---
+        const runDiagnosticsBtn = document.getElementById('btn-run-diagnostics');
+        const diagnosticResultsContainer = document.getElementById('diagnostic-results');
+
+        function displayDiagnostics(results) {
+            diagnosticResultsContainer.innerHTML = ''; // Clear previous results
+            results.forEach(item => {
+                const li = document.createElement('li');
+                li.className = `diagnostic-item status-${item.status}`;
+                li.innerHTML = `<span class="diagnostic-icon">${item.status === 'ok' ? '✅' : (item.status === 'warning' ? '⚠️' : '❌')}</span> <span class="diagnostic-message">${item.message}</span>`;
+                diagnosticResultsContainer.appendChild(li);
+            });
+        }
+
+        runDiagnosticsBtn.addEventListener('click', () => {
+            updateStepStatus(2, 'pending', 'En cours');
+            diagnosticResultsContainer.innerHTML = '<li class="diagnostic-item status-pending">Diagnostic en cours...</li>';
+            google.script.run
+                .withSuccessHandler(results => {
+                    displayDiagnostics(results);
+                    const hasErrors = results.some(r => r.status === 'error');
+                    updateStepStatus(2, hasErrors ? 'error' : 'success', hasErrors ? 'Erreur' : 'Terminé');
+                    if (!hasErrors) {
+                        updateNavLockState();
+                    }
+                })
+                .withFailureHandler(error => {
+                    diagnosticResultsContainer.innerHTML = `<li class="diagnostic-item status-error">Erreur: ${error.message}</li>`;
+                    updateStepStatus(2, 'error', 'Erreur');
+                })
+                .runGlobalDiagnostics();
+        });
+
+        // --- Bridge to Interface V2 ---
+        document.getElementById('btn-open-swap-interface').addEventListener('click', () => {
+            updateStepStatus(5, 'pending', 'En cours');
+            google.script.run
+                .withSuccessHandler(() => {
+                    // Open InterfaceV2 in a new tab. The URL will be the script's URL.
+                    window.open(google.script.host.origin + google.script.host.path, '_blank');
+                    updateStepStatus(5, 'success', 'Terminé');
+                    updateNavLockState();
+                })
+                .withFailureHandler(error => {
+                    alert("Erreur lors de la création du pont: " + error.message);
+                    updateStepStatus(5, 'error', 'Erreur');
+                })
+                .setBridgeContext('TEST', ''); // We want to load the ...TEST sheets
+        });
+
+        // --- Phase 1: Initialisation ---
+        document.getElementById('btn-run-initialisation').addEventListener('click', () => {
+            updateStepStatus(1, 'pending', 'En cours');
+            google.script.run
+                .withSuccessHandler(() => {
+                    updateStepStatus(1, 'success', 'Lancé');
+                    updateNavLockState();
+                })
+                .withFailureHandler(error => {
+                    alert("Erreur lors de l'ouverture de l'initialisation: " + error.message);
+                    updateStepStatus(1, 'error', 'Erreur');
+                })
+                .ouvrirInitialisation();
+        });
+
+        // --- Phase 3: Génération ---
+        document.getElementById('btn-run-generation').addEventListener('click', () => {
+            updateStepStatus(3, 'pending', 'En cours');
+            google.script.run
+                .withSuccessHandler(() => {
+                    updateStepStatus(3, 'success', 'Terminé');
+                    updateNavLockState();
+                })
+                .withFailureHandler(error => {
+                    alert("Erreur lors de la génération des classes: " + error.message);
+                    updateStepStatus(3, 'error', 'Erreur');
+                })
+                .legacy_runFullPipeline();
+        });
+
+        // --- Phase 4: Optimisation ---
+        document.getElementById('btn-run-optimization').addEventListener('click', () => {
+            updateStepStatus(4, 'pending', 'En cours');
+            google.script.run
+                .withSuccessHandler(() => {
+                    updateStepStatus(4, 'success', 'Lancé');
+                    updateNavLockState();
+                })
+                .withFailureHandler(error => {
+                    alert("Erreur lors de l'ouverture du panneau d'optimisation: " + error.message);
+                    updateStepStatus(4, 'error', 'Erreur');
+                })
+                .showOptimizationPanel();
+        });
+
+        updateNavLockState(); // Initial lock state
+    });
+</script>
+
+<!-- Modal de Révision -->
+<div id="reviewModal" class="modal hidden">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Révision Finale Avant Finalisation</h2>
+            <button id="btn-close-modal" class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>Veuillez vérifier les diagnostics suivants avant de continuer. Cette action est irréversible.</p>
+            <ul id="checklist-container" class="checklist">
+                <!-- Les éléments de la checklist seront injectés ici par JavaScript -->
+            </ul>
+        </div>
+        <div class="modal-footer">
+            <label class="confirm-checkbox-label">
+                <input type="checkbox" id="confirm-checklist">
+                Je confirme avoir lu et compris les avertissements.
+            </label>
+            <button id="btn-cancel-finalize" class="btn btn-secondary">Annuler</button>
+            <button id="btn-confirm-finalize" class="btn btn-primary" disabled>Confirmer et Finaliser</button>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

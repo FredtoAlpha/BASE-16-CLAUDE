@@ -1,0 +1,468 @@
+/**
+ * ADVANCED FILTERS - Filtres avancés multi-critères
+ * Recherche intelligente avec sauvegarde de vues
+ */
+
+const AdvancedFilters = {
+  // État des filtres
+  state: {
+    active: {},
+    savedViews: {},
+    currentView: null
+  },
+  
+  /**
+   * Applique les filtres sur les élèves
+   */
+  apply(students, filters) {
+    let filtered = Object.values(students);
+    
+    // Filtre par sexe
+    if (filters.sexe && filters.sexe.length > 0) {
+      filtered = filtered.filter(s => filters.sexe.includes(s.sexe));
+    }
+    
+    // Filtre par classe
+    if (filters.classe && filters.classe.length > 0) {
+      filtered = filtered.filter(s => filters.classe.includes(s.classe));
+    }
+    
+    // Filtre par LV2
+    if (filters.lv2 && filters.lv2.length > 0) {
+      filtered = filtered.filter(s => filters.lv2.includes(s.lv2));
+    }
+    
+    // Filtre par options
+    if (filters.options && filters.options.length > 0) {
+      filtered = filtered.filter(s => {
+        if (!s.options) return false;
+        return filters.options.some(opt => s.options.includes(opt));
+      });
+    }
+    
+    // Filtre par scores
+    if (filters.scores) {
+      if (filters.scores.minM !== undefined) {
+        filtered = filtered.filter(s => (s.scores?.M || 0) >= filters.scores.minM);
+      }
+      if (filters.scores.maxM !== undefined) {
+        filtered = filtered.filter(s => (s.scores?.M || 0) <= filters.scores.maxM);
+      }
+      if (filters.scores.minF !== undefined) {
+        filtered = filtered.filter(s => (s.scores?.F || 0) >= filters.scores.minF);
+      }
+      if (filters.scores.maxF !== undefined) {
+        filtered = filtered.filter(s => (s.scores?.F || 0) <= filters.scores.maxF);
+      }
+    }
+    
+    // Filtre par codes ASSO/DISSO
+    if (filters.asso) {
+      filtered = filtered.filter(s => s.asso === filters.asso);
+    }
+    if (filters.disso) {
+      filtered = filtered.filter(s => s.disso === filters.disso);
+    }
+    
+    // Recherche textuelle
+    if (filters.search) {
+      const search = filters.search.toLowerCase();
+      filtered = filtered.filter(s => {
+        const nom = (s.nom || '').toLowerCase();
+        const prenom = (s.prenom || '').toLowerCase();
+        const id = (s.id || '').toLowerCase();
+        return nom.includes(search) || prenom.includes(search) || id.includes(search);
+      });
+    }
+    
+    return filtered;
+  },
+  
+  /**
+   * Recherche intelligente (fuzzy)
+   */
+  smartSearch(students, query) {
+    if (!query || query.length < 2) return Object.values(students);
+    
+    const q = query.toLowerCase();
+    const results = [];
+    
+    Object.values(students).forEach(student => {
+      let score = 0;
+      
+      // Nom exact
+      if ((student.nom || '').toLowerCase() === q) score += 100;
+      // Nom commence par
+      else if ((student.nom || '').toLowerCase().startsWith(q)) score += 50;
+      // Nom contient
+      else if ((student.nom || '').toLowerCase().includes(q)) score += 25;
+      
+      // Prénom exact
+      if ((student.prenom || '').toLowerCase() === q) score += 100;
+      // Prénom commence par
+      else if ((student.prenom || '').toLowerCase().startsWith(q)) score += 50;
+      // Prénom contient
+      else if ((student.prenom || '').toLowerCase().includes(q)) score += 25;
+      
+      // ID
+      if ((student.id || '').toLowerCase().includes(q)) score += 75;
+      
+      // Classe
+      if ((student.classe || '').toLowerCase().includes(q)) score += 10;
+      
+      if (score > 0) {
+        results.push({ student, score });
+      }
+    });
+    
+    // Trier par score
+    results.sort((a, b) => b.score - a.score);
+    
+    return results.map(r => r.student);
+  },
+  
+  /**
+   * Sauvegarde une vue
+   */
+  saveView(name, filters) {
+    this.state.savedViews[name] = {
+      name,
+      filters: JSON.parse(JSON.stringify(filters)),
+      timestamp: Date.now()
+    };
+    
+    // Sauvegarder dans localStorage
+    this.persistViews();
+    
+    return this.state.savedViews[name];
+  },
+  
+  /**
+   * Charge une vue
+   */
+  loadView(name) {
+    const view = this.state.savedViews[name];
+    if (!view) return null;
+    
+    this.state.currentView = name;
+    this.state.active = JSON.parse(JSON.stringify(view.filters));
+    
+    return view;
+  },
+  
+  /**
+   * Supprime une vue
+   */
+  deleteView(name) {
+    delete this.state.savedViews[name];
+    if (this.state.currentView === name) {
+      this.state.currentView = null;
+    }
+    this.persistViews();
+  },
+  
+  /**
+   * Obtient toutes les vues
+   */
+  getViews() {
+    return Object.values(this.state.savedViews).map(view => ({
+      name: view.name,
+      timestamp: view.timestamp,
+      date: new Date(view.timestamp).toLocaleString(),
+      filterCount: Object.keys(view.filters).length
+    }));
+  },
+  
+  /**
+   * Persiste les vues dans localStorage
+   */
+  persistViews() {
+    try {
+      localStorage.setItem('advancedFilters:views', JSON.stringify(this.state.savedViews));
+    } catch (e) {
+      console.error('Erreur sauvegarde vues:', e);
+    }
+  },
+  
+  /**
+   * Charge les vues depuis localStorage
+   */
+  loadViews() {
+    try {
+      const saved = localStorage.getItem('advancedFilters:views');
+      if (saved) {
+        this.state.savedViews = JSON.parse(saved);
+      }
+    } catch (e) {
+      console.error('Erreur chargement vues:', e);
+    }
+  },
+  
+  /**
+   * Affiche le panneau de filtres
+   */
+  showPanel(students, onApply) {
+    const panel = document.createElement('div');
+    panel.className = 'modal filters-panel-modal';
+    
+    const classes = [...new Set(Object.values(students).map(s => s.classe))].filter(Boolean).sort();
+    const lv2s = [...new Set(Object.values(students).map(s => s.lv2))].filter(Boolean).sort();
+    const options = [...new Set(Object.values(students).flatMap(s => s.options || []))].filter(Boolean).sort();
+    
+    panel.innerHTML = `
+      <div class="modal-content" style="max-width: 700px;">
+        <div class="modal-header">
+          <h2 class="text-xl font-bold">
+            <i class="fas fa-filter"></i>
+            Filtres avancés
+          </h2>
+          <button class="close-modal text-gray-400 hover:text-gray-600">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        
+        <div class="modal-body">
+          <!-- Vues sauvegardées -->
+          <div class="mb-4">
+            <label class="block font-semibold mb-2">
+              <i class="fas fa-bookmark"></i> Vues sauvegardées
+            </label>
+            <div class="flex gap-2">
+              <select id="savedViewsSelect" class="flex-1 border rounded px-3 py-2">
+                <option value="">-- Sélectionner une vue --</option>
+                ${this.getViews().map(view => `
+                  <option value="${view.name}">${view.name} (${view.filterCount} filtres)</option>
+                `).join('')}
+              </select>
+              <button id="loadViewBtn" class="btn btn-secondary">
+                <i class="fas fa-folder-open"></i> Charger
+              </button>
+            </div>
+          </div>
+          
+          <hr class="my-4">
+          
+          <!-- Recherche -->
+          <div class="mb-4">
+            <label class="block font-semibold mb-2">
+              <i class="fas fa-search"></i> Recherche
+            </label>
+            <input 
+              type="text" 
+              id="searchInput" 
+              placeholder="Nom, prénom, ID..."
+              class="w-full border rounded px-3 py-2"
+            >
+          </div>
+          
+          <!-- Sexe -->
+          <div class="mb-4">
+            <label class="block font-semibold mb-2">Sexe</label>
+            <div class="flex gap-2">
+              <label class="flex items-center gap-2">
+                <input type="checkbox" name="sexe" value="M" class="filter-checkbox">
+                <span>Masculin</span>
+              </label>
+              <label class="flex items-center gap-2">
+                <input type="checkbox" name="sexe" value="F" class="filter-checkbox">
+                <span>Féminin</span>
+              </label>
+            </div>
+          </div>
+          
+          <!-- Classes -->
+          <div class="mb-4">
+            <label class="block font-semibold mb-2">Classes</label>
+            <div class="grid grid-cols-3 gap-2">
+              ${classes.map(c => `
+                <label class="flex items-center gap-2">
+                  <input type="checkbox" name="classe" value="${c}" class="filter-checkbox">
+                  <span>${c}</span>
+                </label>
+              `).join('')}
+            </div>
+          </div>
+          
+          <!-- LV2 -->
+          <div class="mb-4">
+            <label class="block font-semibold mb-2">LV2</label>
+            <div class="grid grid-cols-3 gap-2">
+              ${lv2s.map(lv2 => `
+                <label class="flex items-center gap-2">
+                  <input type="checkbox" name="lv2" value="${lv2}" class="filter-checkbox">
+                  <span>${lv2}</span>
+                </label>
+              `).join('')}
+            </div>
+          </div>
+          
+          <!-- Options -->
+          ${options.length > 0 ? `
+            <div class="mb-4">
+              <label class="block font-semibold mb-2">Options</label>
+              <div class="grid grid-cols-3 gap-2">
+                ${options.map(opt => `
+                  <label class="flex items-center gap-2">
+                    <input type="checkbox" name="options" value="${opt}" class="filter-checkbox">
+                    <span>${opt}</span>
+                  </label>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
+          
+          <!-- Scores -->
+          <div class="mb-4">
+            <label class="block font-semibold mb-2">Scores</label>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="text-sm">Maths (min-max)</label>
+                <div class="flex gap-2">
+                  <input type="number" id="scoreMinM" min="1" max="4" placeholder="Min" class="w-full border rounded px-2 py-1">
+                  <input type="number" id="scoreMaxM" min="1" max="4" placeholder="Max" class="w-full border rounded px-2 py-1">
+                </div>
+              </div>
+              <div>
+                <label class="text-sm">Français (min-max)</label>
+                <div class="flex gap-2">
+                  <input type="number" id="scoreMinF" min="1" max="4" placeholder="Min" class="w-full border rounded px-2 py-1">
+                  <input type="number" id="scoreMaxF" min="1" max="4" placeholder="Max" class="w-full border rounded px-2 py-1">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="modal-footer flex gap-2 justify-between">
+          <div class="flex gap-2">
+            <button id="saveViewBtn" class="btn btn-secondary">
+              <i class="fas fa-save"></i> Sauvegarder vue
+            </button>
+            <button id="resetBtn" class="btn btn-secondary">
+              <i class="fas fa-redo"></i> Réinitialiser
+            </button>
+          </div>
+          <div class="flex gap-2">
+            <button class="btn btn-secondary close-btn">
+              <i class="fas fa-times"></i> Annuler
+            </button>
+            <button id="applyBtn" class="btn btn-primary">
+              <i class="fas fa-check"></i> Appliquer
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(panel);
+    setTimeout(() => panel.classList.add('active'), 10);
+    
+    // Event listeners
+    const closeModal = () => {
+      panel.classList.add('closing');
+      setTimeout(() => panel.remove(), 200);
+    };
+    
+    panel.querySelector('.close-btn').addEventListener('click', closeModal);
+    panel.querySelector('.close-modal').addEventListener('click', closeModal);
+    
+    // Collecter filtres
+    const collectFilters = () => {
+      const filters = {};
+      
+      // Recherche
+      const search = panel.querySelector('#searchInput').value.trim();
+      if (search) filters.search = search;
+      
+      // Sexe
+      const sexe = Array.from(panel.querySelectorAll('input[name="sexe"]:checked')).map(cb => cb.value);
+      if (sexe.length > 0) filters.sexe = sexe;
+      
+      // Classes
+      const classe = Array.from(panel.querySelectorAll('input[name="classe"]:checked')).map(cb => cb.value);
+      if (classe.length > 0) filters.classe = classe;
+      
+      // LV2
+      const lv2 = Array.from(panel.querySelectorAll('input[name="lv2"]:checked')).map(cb => cb.value);
+      if (lv2.length > 0) filters.lv2 = lv2;
+      
+      // Options
+      const options = Array.from(panel.querySelectorAll('input[name="options"]:checked')).map(cb => cb.value);
+      if (options.length > 0) filters.options = options;
+      
+      // Scores
+      const minM = panel.querySelector('#scoreMinM').value;
+      const maxM = panel.querySelector('#scoreMaxM').value;
+      const minF = panel.querySelector('#scoreMinF').value;
+      const maxF = panel.querySelector('#scoreMaxF').value;
+      
+      if (minM || maxM || minF || maxF) {
+        filters.scores = {};
+        if (minM) filters.scores.minM = parseInt(minM);
+        if (maxM) filters.scores.maxM = parseInt(maxM);
+        if (minF) filters.scores.minF = parseInt(minF);
+        if (maxF) filters.scores.maxF = parseInt(maxF);
+      }
+      
+      return filters;
+    };
+    
+    // Appliquer
+    panel.querySelector('#applyBtn').addEventListener('click', () => {
+      const filters = collectFilters();
+      this.state.active = filters;
+      closeModal();
+      if (onApply) onApply(filters);
+    });
+    
+    // Réinitialiser
+    panel.querySelector('#resetBtn').addEventListener('click', () => {
+      panel.querySelectorAll('.filter-checkbox').forEach(cb => cb.checked = false);
+      panel.querySelector('#searchInput').value = '';
+      panel.querySelector('#scoreMinM').value = '';
+      panel.querySelector('#scoreMaxM').value = '';
+      panel.querySelector('#scoreMinF').value = '';
+      panel.querySelector('#scoreMaxF').value = '';
+    });
+    
+    // Sauvegarder vue
+    panel.querySelector('#saveViewBtn').addEventListener('click', () => {
+      const name = prompt('Nom de la vue:');
+      if (!name) return;
+      
+      const filters = collectFilters();
+      this.saveView(name, filters);
+      
+      closeModal();
+      this.showPanel(students, onApply); // Recharger pour afficher nouvelle vue
+    });
+    
+    // Charger vue
+    panel.querySelector('#loadViewBtn').addEventListener('click', () => {
+      const select = panel.querySelector('#savedViewsSelect');
+      const viewName = select.value;
+      if (!viewName) return;
+      
+      const view = this.loadView(viewName);
+      if (!view) return;
+      
+      // Appliquer filtres de la vue
+      closeModal();
+      if (onApply) onApply(view.filters);
+    });
+  }
+};
+
+// Charger vues au démarrage
+AdvancedFilters.loadViews();
+
+// Exposition globale
+if (typeof window !== 'undefined') {
+  window.AdvancedFilters = AdvancedFilters;
+}
+
+if (typeof global !== 'undefined') {
+  global.AdvancedFilters = AdvancedFilters;
+}
+
+console.log('✅ Module AdvancedFilters chargé');

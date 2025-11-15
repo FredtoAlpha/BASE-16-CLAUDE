@@ -1,0 +1,371 @@
+/**
+ * PROACTIVE ALERTS - Alertes préventives
+ * Notifications proactives pour capacités, quotas, contraintes
+ */
+
+const ProactiveAlerts = {
+  // Configuration
+  config: {
+    capacityWarningThreshold: 0.9,  // 90%
+    capacityErrorThreshold: 1.0,     // 100%
+    parityWarningThreshold: 2,
+    parityErrorThreshold: 4,
+    checkInterval: 5000              // 5 secondes
+  },
+  
+  // État
+  state: {
+    active: false,
+    intervalId: null,
+    lastAlerts: {},
+    alertHistory: []
+  },
+  
+  /**
+   * Démarre la surveillance
+   */
+  start(students, classes, structure) {
+    if (this.state.active) return;
+    
+    this.state.active = true;
+    this.state.intervalId = setInterval(() => {
+      this.check(students, classes, structure);
+    }, this.config.checkInterval);
+    
+    console.log('✅ Alertes proactives démarrées');
+  },
+  
+  /**
+   * Arrête la surveillance
+   */
+  stop() {
+    if (!this.state.active) return;
+    
+    clearInterval(this.state.intervalId);
+    this.state.active = false;
+    this.state.intervalId = null;
+    
+    console.log('⏹️ Alertes proactives arrêtées');
+  },
+  
+  /**
+   * Vérifie et envoie les alertes
+   */
+  check(students, classes, structure) {
+    const alerts = [];
+    
+    // Vérifier capacités
+    alerts.push(...this.checkCapacities(students, classes));
+    
+    // Vérifier parité
+    alerts.push(...this.checkParity(students, classes));
+    
+    // Vérifier quotas
+    alerts.push(...this.checkQuotas(students, structure));
+    
+    // Envoyer nouvelles alertes
+    alerts.forEach(alert => {
+      const key = `${alert.type}-${alert.className || alert.code}`;
+      
+      // Éviter doublons (ne notifier que si changement)
+      if (JSON.stringify(this.state.lastAlerts[key]) !== JSON.stringify(alert)) {
+        this.sendAlert(alert);
+        this.state.lastAlerts[key] = alert;
+        this.state.alertHistory.push({
+          ...alert,
+          timestamp: Date.now()
+        });
+      }
+    });
+  },
+  
+  /**
+   * Vérifie les capacités
+   */
+  checkCapacities(students, classes) {
+    const alerts = [];
+    
+    Object.entries(classes).forEach(([className, classData]) => {
+      const capacity = classData.capacity || 30;
+      const count = Object.values(students).filter(s => s.classe === className).length;
+      const percent = count / capacity;
+      
+      if (percent >= this.config.capacityErrorThreshold) {
+        alerts.push({
+          type: 'capacity',
+          level: 'error',
+          className,
+          message: `⛔ Classe ${className} pleine (${count}/${capacity})`,
+          count,
+          capacity,
+          percent: Math.round(percent * 100)
+        });
+      } else if (percent >= this.config.capacityWarningThreshold) {
+        alerts.push({
+          type: 'capacity',
+          level: 'warning',
+          className,
+          message: `⚠️ Classe ${className} presque pleine (${count}/${capacity})`,
+          count,
+          capacity,
+          percent: Math.round(percent * 100)
+        });
+      }
+    });
+    
+    return alerts;
+  },
+  
+  /**
+   * Vérifie la parité
+   */
+  checkParity(students, classes) {
+    const alerts = [];
+    
+    Object.keys(classes).forEach(className => {
+      const studentsList = Object.values(students).filter(s => s.classe === className);
+      const males = studentsList.filter(s => s.sexe === 'M').length;
+      const females = studentsList.filter(s => s.sexe === 'F').length;
+      const diff = Math.abs(males - females);
+      
+      if (diff >= this.config.parityErrorThreshold) {
+        alerts.push({
+          type: 'parity',
+          level: 'error',
+          className,
+          message: `⛔ Déséquilibre parité ${className} (${males}M / ${females}F)`,
+          males,
+          females,
+          diff
+        });
+      } else if (diff >= this.config.parityWarningThreshold) {
+        alerts.push({
+          type: 'parity',
+          level: 'warning',
+          className,
+          message: `⚠️ Parité à surveiller ${className} (${males}M / ${females}F)`,
+          males,
+          females,
+          diff
+        });
+      }
+    });
+    
+    return alerts;
+  },
+  
+  /**
+   * Vérifie les quotas
+   */
+  checkQuotas(students, structure) {
+    const alerts = [];
+    
+    if (!structure.quotas) return alerts;
+    
+    // Compter LV2
+    const lv2Counts = {};
+    Object.values(students).forEach(student => {
+      if (student.lv2) {
+        lv2Counts[student.lv2] = (lv2Counts[student.lv2] || 0) + 1;
+      }
+    });
+    
+    // Vérifier quotas LV2
+    if (structure.quotas.lv2) {
+      Object.entries(structure.quotas.lv2).forEach(([lv2, quota]) => {
+        const count = lv2Counts[lv2] || 0;
+        const percent = count / quota.max;
+        
+        if (count >= quota.max) {
+          alerts.push({
+            type: 'quota',
+            level: 'error',
+            code: lv2,
+            message: `⛔ Quota LV2 ${lv2} atteint (${count}/${quota.max})`,
+            count,
+            max: quota.max
+          });
+        } else if (percent >= 0.9) {
+          alerts.push({
+            type: 'quota',
+            level: 'warning',
+            code: lv2,
+            message: `⚠️ Quota LV2 ${lv2} presque atteint (${count}/${quota.max})`,
+            count,
+            max: quota.max
+          });
+        }
+      });
+    }
+    
+    return alerts;
+  },
+  
+  /**
+   * Envoie une alerte
+   */
+  sendAlert(alert) {
+    // Toast notification
+    this.showToast(alert);
+    
+    // Log
+    console.log(`[ALERT ${alert.level.toUpperCase()}]`, alert.message);
+    
+    // Callback personnalisé si défini
+    if (typeof this.onAlert === 'function') {
+      this.onAlert(alert);
+    }
+  },
+  
+  /**
+   * Affiche un toast
+   */
+  showToast(alert) {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${alert.level} proactive-alert`;
+    
+    const icon = alert.level === 'error' ? 'exclamation-circle' : 'exclamation-triangle';
+    const color = alert.level === 'error' ? 'text-red-600' : 'text-orange-600';
+    
+    toast.innerHTML = `
+      <div class="flex items-start gap-3">
+        <i class="fas fa-${icon} ${color} text-xl"></i>
+        <div class="flex-1">
+          <div class="font-semibold">${alert.message}</div>
+          ${alert.count !== undefined ? `
+            <div class="text-sm mt-1 opacity-90">
+              ${alert.count} / ${alert.capacity || alert.max}
+              ${alert.percent ? ` (${alert.percent}%)` : ''}
+            </div>
+          ` : ''}
+        </div>
+        <button class="close-toast text-gray-400 hover:text-gray-600">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Auto-dismiss après 5s
+    setTimeout(() => {
+      toast.classList.add('removing');
+      setTimeout(() => toast.remove(), 300);
+    }, 5000);
+    
+    // Bouton fermer
+    toast.querySelector('.close-toast').addEventListener('click', () => {
+      toast.classList.add('removing');
+      setTimeout(() => toast.remove(), 300);
+    });
+  },
+  
+  /**
+   * Obtient l'historique des alertes
+   */
+  getHistory(limit = 50) {
+    return this.state.alertHistory
+      .slice(-limit)
+      .reverse()
+      .map(alert => ({
+        ...alert,
+        date: new Date(alert.timestamp).toLocaleString()
+      }));
+  },
+  
+  /**
+   * Efface l'historique
+   */
+  clearHistory() {
+    this.state.alertHistory = [];
+    this.state.lastAlerts = {};
+  },
+  
+  /**
+   * Affiche le panneau d'historique
+   */
+  showHistoryPanel() {
+    const panel = document.createElement('div');
+    panel.className = 'modal alerts-history-modal';
+    
+    const history = this.getHistory();
+    
+    panel.innerHTML = `
+      <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-header">
+          <h2 class="text-xl font-bold">
+            <i class="fas fa-bell"></i>
+            Historique des alertes
+          </h2>
+          <button class="close-modal text-gray-400 hover:text-gray-600">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        
+        <div class="modal-body">
+          ${history.length === 0 ? `
+            <div class="text-center text-gray-500 py-8">
+              <i class="fas fa-bell-slash text-4xl mb-3"></i>
+              <div>Aucune alerte enregistrée</div>
+            </div>
+          ` : `
+            <div class="max-h-96 overflow-y-auto">
+              ${history.map(alert => `
+                <div class="alert alert-${alert.level} mb-2">
+                  <div class="flex items-start gap-3">
+                    <i class="fas fa-${alert.level === 'error' ? 'exclamation-circle' : 'exclamation-triangle'}"></i>
+                    <div class="flex-1">
+                      <div class="font-semibold">${alert.message}</div>
+                      <div class="text-xs opacity-75 mt-1">${alert.date}</div>
+                    </div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          `}
+        </div>
+        
+        <div class="modal-footer flex gap-2 justify-between">
+          <button class="btn btn-secondary clear-btn">
+            <i class="fas fa-trash"></i> Effacer
+          </button>
+          <button class="btn btn-primary close-btn">
+            <i class="fas fa-times"></i> Fermer
+          </button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(panel);
+    setTimeout(() => panel.classList.add('active'), 10);
+    
+    // Event listeners
+    const closeModal = () => {
+      panel.classList.add('closing');
+      setTimeout(() => panel.remove(), 200);
+    };
+    
+    panel.querySelector('.close-btn').addEventListener('click', closeModal);
+    panel.querySelector('.close-modal').addEventListener('click', closeModal);
+    
+    panel.querySelector('.clear-btn').addEventListener('click', () => {
+      this.clearHistory();
+      closeModal();
+      this.showToast({
+        level: 'info',
+        message: 'Historique effacé'
+      });
+    });
+  }
+};
+
+// Exposition globale
+if (typeof window !== 'undefined') {
+  window.ProactiveAlerts = ProactiveAlerts;
+}
+
+if (typeof global !== 'undefined') {
+  global.ProactiveAlerts = ProactiveAlerts;
+}
+
+console.log('✅ Module ProactiveAlerts chargé');

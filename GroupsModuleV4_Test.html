@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Module Groupes V4</title>
+
+  <!-- Font Awesome pour les icônes -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f3f4f6;
+    }
+
+    .test-header {
+      background: #1f2937;
+      color: white;
+      padding: 16px 24px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .test-header h1 {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .test-controls {
+      background: white;
+      padding: 16px 24px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .test-btn {
+      padding: 10px 20px;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+
+    .test-btn:hover {
+      background: #2563eb;
+    }
+
+    .test-btn-secondary {
+      background: #6b7280;
+    }
+
+    .test-btn-secondary:hover {
+      background: #4b5563;
+    }
+
+    #test-console {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 200px;
+      background: #1f2937;
+      color: #d1d5db;
+      padding: 16px;
+      overflow-y: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      border-top: 2px solid #374151;
+      z-index: 10001;
+    }
+
+    #test-console .log-entry {
+      margin-bottom: 8px;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+
+    #test-console .log-info {
+      color: #60a5fa;
+    }
+
+    #test-console .log-success {
+      color: #34d399;
+    }
+
+    #test-console .log-error {
+      color: #f87171;
+      background: rgba(248, 113, 113, 0.1);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header de test -->
+  <div class="test-header">
+    <h1>🧪 Test Module Groupes V4 - Triptyque</h1>
+  </div>
+
+  <!-- Contrôles de test -->
+  <div class="test-controls">
+    <button class="test-btn" onclick="openModule()">
+      <i class="fas fa-play"></i> Ouvrir le module
+    </button>
+    <button class="test-btn-secondary test-btn" onclick="loadTestData()">
+      <i class="fas fa-database"></i> Charger données de test
+    </button>
+    <button class="test-btn-secondary test-btn" onclick="clearConsole()">
+      <i class="fas fa-eraser"></i> Effacer console
+    </button>
+    <div style="margin-left: auto; color: #6b7280; font-size: 14px;">
+      <span id="status-indicator">⚪ En attente</span>
+    </div>
+  </div>
+
+  <!-- Container pour le module -->
+  <div id="module-container"></div>
+
+  <!-- Console de test -->
+  <div id="test-console">
+    <div class="log-entry log-info">
+      Console de test prête. Cliquez sur "Charger données de test" puis "Ouvrir le module".
+    </div>
+  </div>
+
+  <!-- Scripts du module V4 -->
+  <script src="GroupsAlgorithmV4.js"></script>
+  <script src="GroupsInterfaceV4.js"></script>
+
+  <!-- Script de test -->
+  <script>
+    'use strict';
+
+    // Simuler window.STATE
+    window.STATE = {
+      students: {},
+      rules: {},
+      aGroups: {}
+    };
+
+    // Console de test personnalisée
+    const testConsole = {
+      log: function(...args) {
+        addLogEntry('info', args.join(' '));
+        console.log(...args);
+      },
+      error: function(...args) {
+        addLogEntry('error', args.join(' '));
+        console.error(...args);
+      },
+      success: function(...args) {
+        addLogEntry('success', args.join(' '));
+        console.log(...args);
+      }
+    };
+
+    function addLogEntry(type, message) {
+      const consoleEl = document.getElementById('test-console');
+      const entry = document.createElement('div');
+      entry.className = `log-entry log-${type}`;
+      const timestamp = new Date().toLocaleTimeString('fr-FR');
+      entry.textContent = `[${timestamp}] ${message}`;
+      consoleEl.appendChild(entry);
+      consoleEl.scrollTop = consoleEl.scrollHeight;
+    }
+
+    function clearConsole() {
+      const consoleEl = document.getElementById('test-console');
+      consoleEl.innerHTML = '<div class="log-entry log-info">Console effacée.</div>';
+    }
+
+    function updateStatus(status, color) {
+      const indicator = document.getElementById('status-indicator');
+      indicator.textContent = `${color} ${status}`;
+    }
+
+    // Charger des données de test
+    function loadTestData() {
+      testConsole.log('Chargement des données de test...');
+
+      // Créer des élèves fictifs
+      const classes = ['6°1', '6°2', '5°1', '5°2'];
+      const firstNames = ['Alice', 'Bob', 'Charlie', 'Diana', 'Eve', 'Frank', 'Grace', 'Henry'];
+      const lastNames = ['Martin', 'Bernard', 'Dubois', 'Thomas', 'Robert', 'Petit', 'Durand', 'Leroy'];
+      const lv2Options = ['Espagnol', 'Allemand', 'Italien'];
+
+      let studentId = 1;
+      window.STATE.students = {};
+
+      classes.forEach(className => {
+        // Générer 20-25 élèves par classe
+        const numStudents = 20 + Math.floor(Math.random() * 6);
+
+        for (let i = 0; i < numStudents; i++) {
+          const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+          const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+          const gender = Math.random() > 0.5 ? 'F' : 'M';
+          const score = Math.floor(Math.random() * 4) + 1; // Score entre 1 et 4
+          const lv2 = Math.random() > 0.3 ? lv2Options[Math.floor(Math.random() * lv2Options.length)] : null;
+
+          window.STATE.students[studentId] = {
+            id: studentId,
+            firstName,
+            lastName,
+            class: className,
+            classe: className,
+            gender,
+            sexe: gender,
+            score,
+            lv2,
+            options: []
+          };
+
+          studentId++;
+        }
+      });
+
+      const totalStudents = Object.keys(window.STATE.students).length;
+      testConsole.success(`✅ ${totalStudents} élèves chargés dans ${classes.length} classes`);
+      updateStatus('Données chargées', '🟢');
+    }
+
+    // Ouvrir le module
+    function openModule() {
+      if (!window.STATE.students || Object.keys(window.STATE.students).length === 0) {
+        testConsole.error('❌ Aucune donnée chargée. Cliquez sur "Charger données de test" d\'abord.');
+        return;
+      }
+
+      testConsole.log('Ouverture du module Groupes V4...');
+
+      // Vérifier les dépendances
+      if (!window.GroupsInterfaceV4) {
+        testConsole.error('❌ GroupsInterfaceV4 non chargé');
+        return;
+      }
+
+      if (!window.GroupsAlgorithmV4) {
+        testConsole.error('❌ GroupsAlgorithmV4 non chargé');
+        return;
+      }
+
+      const container = document.getElementById('module-container');
+      container.innerHTML = '';
+
+      // Créer le container du module
+      const moduleContainer = document.createElement('div');
+      moduleContainer.style.cssText = `
+        position: fixed;
+        top: 60px;
+        left: 0;
+        right: 0;
+        bottom: 200px;
+        z-index: 1000;
+        background: white;
+      `;
+
+      // Bouton fermer
+      const closeBtn = document.createElement('button');
+      closeBtn.innerHTML = '<i class="fas fa-times"></i> Fermer';
+      closeBtn.style.cssText = `
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        z-index: 10000;
+        padding: 8px 16px;
+        background: #ef4444;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+      `;
+      closeBtn.addEventListener('click', () => {
+        moduleContainer.remove();
+        testConsole.log('Module fermé');
+        updateStatus('Module fermé', '⚪');
+      });
+
+      moduleContainer.appendChild(closeBtn);
+      container.appendChild(moduleContainer);
+
+      // Rendre l'interface
+      window.GroupsInterfaceV4.renderInitialStructure(moduleContainer);
+
+      testConsole.success('✅ Module ouvert avec succès');
+      updateStatus('Module ouvert', '🟢');
+
+      // Écouter les événements
+      document.addEventListener('groups:generate', handleGenerate);
+      document.addEventListener('groups:generated', handleGenerated);
+      document.addEventListener('groups:error', handleError);
+    }
+
+    // Gestion des événements
+    function handleGenerate(event) {
+      testConsole.log('🎯 Événement groups:generate reçu');
+      testConsole.log(`Scénario: ${event.detail.scenario}, Mode: ${event.detail.mode}`);
+
+      try {
+        const { scenario, mode, regroupements } = event.detail;
+
+        // Pour chaque regroupement
+        const allResults = regroupements.map(regroupement => {
+          // Récupérer tous les élèves
+          const students = Object.values(window.STATE.students);
+
+          testConsole.log(`Génération pour "${regroupement.name}" : ${students.length} élèves, ${regroupement.numGroups} groupes`);
+
+          // Appeler l'algorithme
+          const result = window.GroupsAlgorithmV4.distribute({
+            students,
+            mode,
+            numGroups: regroupement.numGroups,
+            scenario
+          });
+
+          return {
+            regroupement: regroupement.name,
+            result
+          };
+        });
+
+        // Combiner les résultats
+        const combinedResults = {
+          groups: allResults.flatMap(r => r.result.groups),
+          stats: allResults.flatMap(r => r.result.stats),
+          metadata: {
+            scenario,
+            mode,
+            totalRegroupements: regroupements.length,
+            totalStudents: allResults.reduce((sum, r) => sum + r.result.metadata.totalStudents, 0),
+            timestamp: new Date().toISOString()
+          }
+        };
+
+        // Émettre l'événement de succès
+        const successEvent = new CustomEvent('groups:generated', {
+          detail: combinedResults
+        });
+        document.dispatchEvent(successEvent);
+
+        testConsole.success('✅ Groupes générés avec succès');
+
+      } catch (error) {
+        testConsole.error('❌ Erreur: ' + error.message);
+
+        const errorEvent = new CustomEvent('groups:error', {
+          detail: { message: error.message }
+        });
+        document.dispatchEvent(errorEvent);
+      }
+    }
+
+    function handleGenerated(event) {
+      testConsole.success(`📊 Résultats générés: ${event.detail.stats.length} groupes`);
+
+      // Afficher les résultats dans l'interface
+      if (window.GroupsInterfaceV4) {
+        window.GroupsInterfaceV4.displayResults(event.detail);
+      }
+    }
+
+    function handleError(event) {
+      testConsole.error('❌ Erreur: ' + event.detail.message);
+    }
+
+    // Initialisation
+    window.addEventListener('DOMContentLoaded', () => {
+      testConsole.success('✅ Page de test chargée');
+      updateStatus('Prêt', '🟢');
+    });
+  </script>
+
+</body>
+</html>

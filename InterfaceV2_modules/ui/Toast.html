@@ -1,0 +1,178 @@
+/**
+ * TOAST.JS - Système de notifications toast
+ * 
+ * Gère l'affichage des notifications temporaires dans l'application.
+ */
+
+const ToastManager = {
+  /**
+   * Affiche une notification toast
+   * @param {string} message - Message à afficher
+   * @param {string} type - Type de notification (info, success, error, warning)
+   * @param {Object} options - Options supplémentaires
+   */
+  show(message, type = 'info', options = {}) {
+    const {
+      duration = type === 'error' ? 4000 : 3000,
+      position = 'bottom-right',
+      centered = type === 'error',
+      icon = null
+    } = options;
+
+    const icons = {
+      info: 'fa-info-circle',
+      success: 'fa-check-circle',
+      error: 'fa-exclamation-circle',
+      warning: 'fa-exclamation-triangle'
+    };
+
+    const toast = document.createElement('div');
+    
+    if (centered) {
+      // Toast centré pour les erreurs importantes
+      toast.className = `toast ${type} fade-in`;
+      toast.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 9999;
+        font-size: 1.5rem;
+        padding: 24px 40px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        border-radius: 12px;
+        background: ${this.getBackgroundColor(type)};
+        color: white;
+        border: none;
+        font-weight: 600;
+        min-width: 400px;
+        text-align: center;
+      `;
+    } else {
+      // Toast normal en coin
+      const positionClass = this.getPositionClass(position);
+      toast.className = `toast ${type} ${positionClass} z-50 fade-in`;
+    }
+
+    const iconClass = icon || icons[type];
+    const iconSize = centered ? 'text-2xl mr-3' : 'text-lg';
+
+    toast.innerHTML = `
+      <i class="fas ${iconClass} ${iconSize}"></i>
+      <span>${message}</span>
+    `;
+
+    document.body.appendChild(toast);
+
+    // Animation d'entrée
+    requestAnimationFrame(() => {
+      toast.style.opacity = '1';
+    });
+
+    // Suppression automatique
+    setTimeout(() => {
+      this.hide(toast);
+    }, duration);
+
+    return toast;
+  },
+
+  /**
+   * Masque un toast
+   * @param {HTMLElement} toast - Élément toast à masquer
+   */
+  hide(toast) {
+    if (!toast) return;
+    
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s ease-out';
+    
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.parentNode.removeChild(toast);
+      }
+    }, 300);
+  },
+
+  /**
+   * Affiche un toast d'information
+   * @param {string} message - Message
+   */
+  info(message, options = {}) {
+    return this.show(message, 'info', options);
+  },
+
+  /**
+   * Affiche un toast de succès
+   * @param {string} message - Message
+   */
+  success(message, options = {}) {
+    return this.show(message, 'success', options);
+  },
+
+  /**
+   * Affiche un toast d'erreur
+   * @param {string} message - Message
+   */
+  error(message, options = {}) {
+    return this.show(message, 'error', { ...options, centered: true });
+  },
+
+  /**
+   * Affiche un toast d'avertissement
+   * @param {string} message - Message
+   */
+  warning(message, options = {}) {
+    return this.show(message, 'warning', options);
+  },
+
+  /**
+   * Obtient la couleur de fond selon le type
+   * @param {string} type - Type de toast
+   * @returns {string}
+   */
+  getBackgroundColor(type) {
+    const colors = {
+      info: '#3b82f6',
+      success: '#10b981',
+      error: '#dc2626',
+      warning: '#f59e0b'
+    };
+    return colors[type] || colors.info;
+  },
+
+  /**
+   * Obtient la classe de position
+   * @param {string} position - Position (top-left, top-right, bottom-left, bottom-right)
+   * @returns {string}
+   */
+  getPositionClass(position) {
+    const positions = {
+      'top-left': 'fixed top-4 left-4',
+      'top-right': 'fixed top-4 right-4',
+      'bottom-left': 'fixed bottom-4 left-4',
+      'bottom-right': 'fixed bottom-4 right-4'
+    };
+    return positions[position] || positions['bottom-right'];
+  },
+
+  /**
+   * Supprime tous les toasts actifs
+   */
+  clearAll() {
+    const toasts = document.querySelectorAll('.toast');
+    toasts.forEach(toast => this.hide(toast));
+  }
+};
+
+// Exposer globalement
+if (typeof window !== 'undefined') {
+  window.ToastManager = ToastManager;
+  // Fonction wrapper pour compatibilité
+  window.toast = (message, type) => ToastManager.show(message, type);
+}
+
+// Export pour modules ES6
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = ToastManager;
+}

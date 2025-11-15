@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PRIME LEGACY - Interface Moderne</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f3f4f6;
+    }
+    @import url('https://rsms.me/inter/inter.css');
+    .step { transition: all 0.3s ease; }
+    .step.active {
+      background-color: #3b82f6;
+      color: white;
+      border-color: #2563eb;
+    }
+    .step.completed {
+      background-color: #16a34a;
+      color: white;
+      border-color: #15803d;
+    }
+    .step-icon { transition: transform 0.3s ease; }
+    .step.active .step-icon { transform: rotate(180deg); }
+    .step.completed .step-icon { transform: scale(1.2); }
+  </style>
+</head>
+<body class="p-8">
+
+  <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-8">
+
+    <!-- En-tête -->
+    <div class="flex items-center justify-between pb-6 border-b border-gray-200">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-800">Interface Pipeline LEGACY</h1>
+        <p class="text-gray-500 mt-1">Lancement et suivi du pipeline de répartition depuis les sources.</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <i class="fas fa-cogs text-3xl text-purple-600"></i>
+        <span class="px-3 py-1 bg-purple-100 text-purple-800 text-sm font-semibold rounded-full">LEGACY</span>
+      </div>
+    </div>
+
+    <!-- Contenu Principal -->
+    <div id="mainContent" class="mt-6">
+
+      <!-- Section Contexte Initial -->
+      <div id="initialContext" class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+        <h2 class="text-xl font-semibold text-gray-700 mb-4">Contexte Initial</h2>
+        <div id="loadingContext" class="flex items-center gap-3 text-gray-500">
+          <i class="fas fa-spinner fa-spin"></i>
+          <span>Chargement des informations...</span>
+        </div>
+        <div id="contextDetails" class="hidden space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="font-medium text-gray-600">Classes Sources</span>
+            <span id="sourceCount" class="font-bold text-lg text-blue-600">0</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="font-medium text-gray-600">Total Élèves</span>
+            <span id="studentCount" class="font-bold text-lg text-blue-600">0</span>
+          </div>
+          <div id="sourceListWrapper" class="pt-2">
+            <p class="text-sm font-medium text-gray-600">Liste des classes détectées :</p>
+            <div id="sourceList" class="text-sm text-gray-500 mt-1 max-h-24 overflow-y-auto"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bouton de Lancement -->
+      <div class="mt-8 text-center">
+        <button id="runPipelineBtn" class="bg-blue-600 text-white font-bold py-4 px-8 rounded-lg shadow-md hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:scale-100" disabled>
+          <i class="fas fa-rocket mr-2"></i>
+          Lancer le Pipeline Complet
+        </button>
+      </div>
+
+      <!-- Section Progression -->
+      <div id="progressSection" class="mt-8 hidden">
+        <h2 class="text-xl font-semibold text-gray-700 mb-4">Progression du Pipeline</h2>
+        <div class="space-y-4">
+          <!-- Étape 1 -->
+          <div id="step-1" class="step border border-gray-300 p-4 rounded-lg flex items-center justify-between">
+            <div class="flex items-center gap-4">
+              <div class="step-icon w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 text-gray-600">
+                <i class="fas fa-cogs"></i>
+              </div>
+              <div>
+                <div class="font-semibold">Phase 1: Options & LV2</div>
+                <div class="text-sm opacity-80">Répartition initiale des élèves à contraintes fortes.</div>
+              </div>
+            </div>
+            <div id="status-1" class="font-semibold text-sm">En attente</div>
+          </div>
+          <!-- Étape 2 -->
+          <div id="step-2" class="step border border-gray-300 p-4 rounded-lg flex items-center justify-between">
+             <div class="flex items-center gap-4">
+              <div class="step-icon w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 text-gray-600">
+                 <i class="fas fa-link"></i>
+              </div>
+              <div>
+                <div class="font-semibold">Phase 2: ASSO/DISSO</div>
+                <div class="text-sm opacity-80">Application des contraintes d'association et de dissociation.</div>
+              </div>
+            </div>
+            <div id="status-2" class="font-semibold text-sm">En attente</div>
+          </div>
+          <!-- Étape 3 -->
+          <div id="step-3" class="step border border-gray-300 p-4 rounded-lg flex items-center justify-between">
+             <div class="flex items-center gap-4">
+              <div class="step-icon w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 text-gray-600">
+                <i class="fas fa-balance-scale"></i>
+              </div>
+              <div>
+                <div class="font-semibold">Phase 3: Effectifs & Parité</div>
+                <div class="text-sm opacity-80">Remplissage des classes et équilibrage de la parité.</div>
+              </div>
+            </div>
+            <div id="status-3" class="font-semibold text-sm">En attente</div>
+          </div>
+          <!-- Étape 4 -->
+          <div id="step-4" class="step border border-gray-300 p-4 rounded-lg flex items-center justify-between">
+             <div class="flex items-center gap-4">
+              <div class="step-icon w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 text-gray-600">
+                <i class="fas fa-chart-bar"></i>
+              </div>
+              <div>
+                <div class="font-semibold">Phase 4: Équilibrage des Scores</div>
+                <div class="text-sm opacity-80">Optimisation de la répartition des scores.</div>
+              </div>
+            </div>
+            <div id="status-4" class="font-semibold text-sm">En attente</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section Résultat -->
+      <div id="resultSection" class="hidden mt-8 text-center">
+         <div class="p-6 bg-green-50 border-2 border-green-200 rounded-lg">
+           <h2 class="text-2xl font-bold text-green-800">Pipeline Terminé !</h2>
+           <p class="text-green-700 mt-2" id="resultMessage">Les onglets ...TEST ont été créés avec succès.</p>
+           <div class="mt-6">
+             <button onclick="google.script.host.close()" class="bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700 transition">
+               <i class="fas fa-times mr-2"></i>
+               Fermer cette fenêtre
+             </button>
+           </div>
+         </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const loadingContext = document.getElementById('loadingContext');
+      const contextDetails = document.getElementById('contextDetails');
+      const sourceCount = document.getElementById('sourceCount');
+      const studentCount = document.getElementById('studentCount');
+      const sourceList = document.getElementById('sourceList');
+      const runPipelineBtn = document.getElementById('runPipelineBtn');
+      const progressSection = document.getElementById('progressSection');
+      const resultSection = document.getElementById('resultSection');
+      const resultMessage = document.getElementById('resultMessage');
+
+      // --- Initialisation ---
+      google.script.run
+        .withSuccessHandler(onContextLoaded)
+        .withFailureHandler(onContextError)
+        .legacy_getUiContext();
+
+      function onContextLoaded(context) {
+        loadingContext.classList.add('hidden');
+        if (context.success) {
+          sourceCount.textContent = context.sourceCount;
+          studentCount.textContent = context.studentCount;
+          sourceList.innerHTML = context.sources.map(s => `<div>- ${s.name} (${s.count} élèves)</div>`).join('');
+          contextDetails.classList.remove('hidden');
+          if (context.sourceCount > 0) {
+            runPipelineBtn.disabled = false;
+          } else {
+            sourceList.innerHTML = "<div class='text-red-500 font-medium'>Aucune classe source trouvée. Veuillez créer des onglets au format '6°1', '5°2', etc.</div>";
+          }
+        } else {
+          onContextError({ message: context.error });
+        }
+      }
+
+      function onContextError(error) {
+        loadingContext.innerHTML = `<div class='text-red-500 font-semibold'>Erreur: ${error.message}</div>`;
+      }
+
+      // --- Lancement du Pipeline ---
+      runPipelineBtn.addEventListener('click', () => {
+        runPipelineBtn.disabled = true;
+        runPipelineBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Exécution en cours...';
+        progressSection.classList.remove('hidden');
+        runAllPhases();
+      });
+
+      async function runAllPhases() {
+        const phases = ['phase1', 'phase2', 'phase3', 'phase4'];
+        for (let i = 0; i < phases.length; i++) {
+          const phaseName = phases[i];
+          const stepIndex = i + 1;
+
+          updateStep(stepIndex, 'active', 'En cours...');
+
+          try {
+            const result = await new Promise((resolve, reject) => {
+              google.script.run
+                .withSuccessHandler(resolve)
+                .withFailureHandler(reject)
+                .legacy_runPhase_fromUI(phaseName);
+            });
+
+            if (result.success) {
+              updateStep(stepIndex, 'completed', 'Terminé');
+            } else {
+              throw new Error(result.error);
+            }
+          } catch (error) {
+            updateStep(stepIndex, 'error', `Erreur: ${error.message}`);
+            showResult(false, `Le pipeline a échoué à la phase ${stepIndex}.`);
+            return; // Arrêter le processus
+          }
+        }
+
+        showResult(true, `Les onglets ...TEST ont été créés avec succès pour ${studentCount.textContent} élèves.`);
+      }
+
+      function updateStep(stepIndex, status, message) {
+        const step = document.getElementById(`step-${stepIndex}`);
+        const statusEl = document.getElementById(`status-${stepIndex}`);
+        const iconContainer = step.querySelector('.step-icon');
+        const icon = iconContainer.querySelector('i');
+
+        step.classList.remove('active', 'completed', 'error');
+        iconContainer.classList.remove('bg-gray-200', 'bg-blue-500', 'bg-green-500', 'bg-red-500');
+
+        statusEl.textContent = message;
+
+        if (status === 'active') {
+          step.classList.add('active');
+          icon.className = 'fas fa-spinner fa-spin';
+        } else if (status === 'completed') {
+          step.classList.add('completed');
+          icon.className = 'fas fa-check';
+        } else if (status === 'error') {
+          step.classList.add('error');
+          statusEl.classList.add('text-red-500');
+          icon.className = 'fas fa-exclamation-triangle';
+        }
+      }
+
+      function showResult(success, message) {
+        progressSection.classList.add('hidden');
+        resultSection.classList.remove('hidden');
+        resultMessage.textContent = message;
+
+        const resultBox = resultSection.querySelector('div');
+        resultBox.classList.remove('bg-green-50', 'border-green-200', 'bg-red-50', 'border-red-200');
+
+        if(success) {
+           resultBox.classList.add('bg-green-50', 'border-green-200');
+           resultBox.querySelector('h2').classList.add('text-green-800');
+           resultBox.querySelector('p').classList.add('text-green-700');
+        } else {
+           resultBox.classList.add('bg-red-50', 'border-red-200');
+           resultBox.querySelector('h2').textContent = "Erreur du Pipeline";
+           resultBox.querySelector('h2').classList.add('text-red-800');
+           resultBox.querySelector('p').classList.add('text-red-700');
+        }
+      }
+    });
+  </script>
+</body>
+</html>

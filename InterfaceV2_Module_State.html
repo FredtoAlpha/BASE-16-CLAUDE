@@ -1,0 +1,134 @@
+/**
+ * STATE.JS - Gestion de l'état global de l'application
+ *
+ * Ce module centralise tout l'état de l'application InterfaceV2.
+ * Il fournit un point d'accès unique et cohérent pour toutes les données.
+ */
+
+const AppState = {
+  // ============================================
+  // CONFIGURATION ET MODES
+  // ============================================
+  viewMode: 'complete',        // 'complete' | 'essential' | 'simple'
+  currentMode: null,           // 'TEST' | 'CACHE' | 'FIN' | 'PREVIOUS'
+  niveau: '',                  // Niveau détecté (ex: '6°', '5°')
+  
+  // ============================================
+  // DONNÉES
+  // ============================================
+  students: {},                // Dictionnaire des élèves par ID
+  rules: {},                   // Règles de répartition par classe
+  aGroups: {},                 // Groupes d'association (A1, A2, etc.)
+  originalData: null,          // Données brutes du serveur
+  
+  // ============================================
+  // HISTORIQUE
+  // ============================================
+  history: [],                 // Pile d'actions pour undo
+  historyTimeline: [],         // Timeline complète pour le panneau
+  future: [],                  // Pile d'actions pour redo
+  
+  // ============================================
+  // MODES D'INTERACTION
+  // ============================================
+  swapMode: false,             // Mode permutation activé
+  swapFirst: null,             // Premier élève sélectionné pour swap
+  adminMode: false,            // Mode admin (bypass contraintes)
+  
+  // ============================================
+  // UI ET AFFICHAGE
+  // ============================================
+  searchTerm: '',              // Terme de recherche actif
+  darkMode: false,             // Mode sombre
+  zoomMode: false,             // Zoom sur les cartes
+  fullscreenStats: false,      // Statistiques en plein écran
+  anchoredStats: false,        // Statistiques ancrées
+  sortOrder: {},               // Ordre de tri par classe
+  
+  // ============================================
+  // DRAG & DROP
+  // ============================================
+  draggingElement: null,       // Élément en cours de déplacement
+  dragStartZone: null,         // Zone de départ du drag
+  
+  // ============================================
+  // SAUVEGARDE
+  // ============================================
+  lastSaveError: false,        // Indicateur d'erreur de sauvegarde
+  
+  // ============================================
+  // MÉTHODES UTILITAIRES
+  // ============================================
+  
+  reset() {
+    this.students = {};
+    this.rules = {};
+    this.aGroups = {};
+    this.history = [];
+    this.historyTimeline = [];
+    this.future = [];
+    this.swapFirst = null;
+    this.searchTerm = '';
+    this.sortOrder = {};
+    this.draggingElement = null;
+    this.dragStartZone = null;
+  },
+  
+  getStudent(id) {
+    return this.students[id] || null;
+  },
+  
+  getRules(classe) {
+    return this.rules[classe] || {};
+  },
+  
+  getAssociationGroup(groupId) {
+    return this.aGroups[groupId] || [];
+  },
+  
+  hasClass(classe) {
+    return classe in this.rules;
+  },
+  
+  getTotalStudents() {
+    return Object.keys(this.students).length;
+  },
+  
+  getAllClasses() {
+    return Object.keys(this.rules);
+  },
+  
+  exportState() {
+    return {
+      viewMode: this.viewMode,
+      currentMode: this.currentMode,
+      niveau: this.niveau,
+      students: this.students,
+      rules: this.rules,
+      aGroups: this.aGroups,
+      sortOrder: this.sortOrder,
+      timestamp: new Date().toISOString()
+    };
+  },
+  
+  importState(state) {
+    if (!state) return;
+    
+    this.viewMode = state.viewMode || 'complete';
+    this.currentMode = state.currentMode || null;
+    this.niveau = state.niveau || '';
+    this.students = state.students || {};
+    this.rules = state.rules || {};
+    this.aGroups = state.aGroups || {};
+    this.sortOrder = state.sortOrder || {};
+  }
+};
+
+// Exposer globalement pour compatibilité
+if (typeof window !== 'undefined') {
+  window.AppState = AppState;
+  // Alias pour compatibilité avec le code existant - IMPORTANT !
+  window.STATE = AppState;
+}
+
+console.log('✅ Module AppState chargé - STATE alias créé');

@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <base target="_top">
+    <meta charset="UTF-8">
+    <title>Console de Pilotage - FINALE</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            font-size: 18px; /* GROS - PAS 12px ! */
+            line-height: 1.7;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #1f2937;
+            padding: 20px;
+        }
+
+        .header-bar {
+            position: sticky;
+            top: 0;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            margin: -20px -20px 30px -20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            font-size: 32px; /* GROS TITRE */
+            font-weight: 900;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .btn-close-interface {
+            padding: 16px 32px;
+            font-size: 18px; /* GROS BOUTON */
+            font-weight: 700;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-close-interface:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(239, 68, 68, 0.6);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+
+        .section {
+            margin-bottom: 40px;
+            padding: 30px;
+            background: #f9fafb;
+            border-radius: 16px;
+            border: 2px solid #e5e7eb;
+        }
+
+        .section-title {
+            font-size: 28px; /* GROS */
+            font-weight: 800;
+            margin-bottom: 20px;
+            color: #1f2937;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            font-size: 18px; /* GROS */
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #374151;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 16px; /* GROS PADDING */
+            font-size: 18px; /* GROS TEXTE */
+            border: 2px solid #d1d5db;
+            border-radius: 12px;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn-primary {
+            padding: 20px 40px; /* GROS BOUTON */
+            font-size: 20px; /* GROS TEXTE */
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-primary:active {
+            transform: translateY(-1px);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .info-text {
+            font-size: 16px;
+            color: #6b7280;
+            margin-top: 10px;
+        }
+
+        .success-message {
+            padding: 20px;
+            background: #d1fae5;
+            border: 2px solid #10b981;
+            border-radius: 12px;
+            color: #065f46;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .success-message.show { display: block; }
+    </style>
+</head>
+<body>
+    <!-- HEADER AVEC BOUTON FERMER -->
+    <div class="header-bar">
+        <h1 class="header-title">🚀 Console de Pilotage FINALE</h1>
+        <button class="btn-close-interface" onclick="fermerInterface()">
+            ✖ FERMER ET RETOURNER À GOOGLE SHEETS
+        </button>
+    </div>
+
+    <div class="container">
+        <div class="success-message" id="successMessage">
+            ✅ Configuration sauvegardée avec succès !
+        </div>
+
+        <!-- FORMULAIRE UNIQUE - TOUT EN UN -->
+        <form id="configForm" onsubmit="return false;">
+
+            <!-- SECTION 1 : PARAMÈTRES GÉNÉRAUX -->
+            <div class="section">
+                <h2 class="section-title">⚙️ 1. Paramètres Généraux</h2>
+
+                <div class="grid">
+                    <div class="form-group">
+                        <label>🎓 Niveau Scolaire</label>
+                        <select id="niveau" required>
+                            <option value="">-- Choisissez --</option>
+                            <option value="6°">6ème</option>
+                            <option value="5°">5ème</option>
+                            <option value="4°">4ème</option>
+                            <option value="3°">3ème</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>➡️ Nombre de Classes Sources</label>
+                        <input type="number" id="nbSources" min="1" max="20" value="6" required>
+                        <div class="info-text">Entre 1 et 20</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>🎯 Nombre de Classes Destinations</label>
+                        <input type="number" id="nbDest" min="1" max="15" value="6" required>
+                        <div class="info-text">Entre 1 et 15</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 2 : LANGUES & OPTIONS -->
+            <div class="section">
+                <h2 class="section-title">📚 2. Langues & Options</h2>
+
+                <div class="form-group">
+                    <label>🌍 Langues Vivantes 2 (LV2)</label>
+                    <input type="text" id="lv2" placeholder="ESP, ITA, ALL" value="ESP, ITA">
+                    <div class="info-text">Sigles séparés par des virgules</div>
+                </div>
+
+                <div class="form-group">
+                    <label>⭐ Options Spécifiques</label>
+                    <input type="text" id="options" placeholder="LATIN, GREC, CHAV" value="LATIN, GREC, CHAV">
+                    <div class="info-text">Sigles séparés par des virgules</div>
+                </div>
+            </div>
+
+            <!-- SECTION 3 : PARAMÈTRES AVANCÉS -->
+            <div class="section">
+                <h2 class="section-title">🎛️ 3. Paramètres Avancés</h2>
+
+                <div class="grid">
+                    <div class="form-group">
+                        <label>Max Swaps</label>
+                        <input type="number" id="maxSwaps" min="10" max="200" value="50">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tolérance Parité</label>
+                        <input type="number" id="parityTolerance" min="0" max="5" value="2">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Suffixe TEST</label>
+                        <input type="text" id="testSuffix" value="TEST">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Suffixe DEF</label>
+                        <input type="text" id="defSuffix" value="DEF">
+                    </div>
+                </div>
+            </div>
+
+            <!-- BOUTON PRINCIPAL -->
+            <button type="button" class="btn-primary" onclick="lancerInitialisation()">
+                🚀 SAUVEGARDER ET LANCER L'INITIALISATION
+            </button>
+        </form>
+    </div>
+
+    <script>
+        // FONCTION POUR FERMER L'INTERFACE COMPLÈTEMENT
+        function fermerInterface() {
+            if (confirm('Voulez-vous vraiment fermer cette interface ?\n\nVous pourrez la rouvrir depuis le menu.')) {
+                google.script.host.close();
+            }
+        }
+
+        // FONCTION POUR LANCER L'INITIALISATION
+        function lancerInitialisation() {
+            // Validation
+            const niveau = document.getElementById('niveau').value;
+            if (!niveau) {
+                alert('⚠️ Veuillez sélectionner un niveau scolaire');
+                return;
+            }
+
+            // Récupérer toutes les données
+            const config = {
+                niveau: niveau,
+                nbSources: parseInt(document.getElementById('nbSources').value),
+                nbDest: parseInt(document.getElementById('nbDest').value),
+                lv2: document.getElementById('lv2').value,
+                options: document.getElementById('options').value,
+                maxSwaps: parseInt(document.getElementById('maxSwaps').value),
+                parityTolerance: parseInt(document.getElementById('parityTolerance').value),
+                testSuffix: document.getElementById('testSuffix').value,
+                defSuffix: document.getElementById('defSuffix').value
+            };
+
+            // Sauvegarder dans localStorage
+            localStorage.setItem('console_config', JSON.stringify(config));
+
+            // Afficher message de succès
+            document.getElementById('successMessage').classList.add('show');
+
+            // Appeler le backend Google Apps Script
+            google.script.run
+                .withSuccessHandler(function(result) {
+                    alert('✅ SUCCÈS !\n\nL\'initialisation a été lancée avec succès.\n\nVous pouvez maintenant fermer cette interface et accéder à vos onglets Google Sheets.');
+                })
+                .withFailureHandler(function(error) {
+                    alert('❌ ERREUR\n\n' + error.message);
+                })
+                .v3_runInitialisation();
+        }
+
+        // Charger la configuration sauvegardée au démarrage
+        window.addEventListener('DOMContentLoaded', function() {
+            const saved = localStorage.getItem('console_config');
+            if (saved) {
+                try {
+                    const config = JSON.parse(saved);
+                    document.getElementById('niveau').value = config.niveau || '';
+                    document.getElementById('nbSources').value = config.nbSources || 6;
+                    document.getElementById('nbDest').value = config.nbDest || 6;
+                    document.getElementById('lv2').value = config.lv2 || 'ESP, ITA';
+                    document.getElementById('options').value = config.options || 'LATIN, GREC, CHAV';
+                    document.getElementById('maxSwaps').value = config.maxSwaps || 50;
+                    document.getElementById('parityTolerance').value = config.parityTolerance || 2;
+                    document.getElementById('testSuffix').value = config.testSuffix || 'TEST';
+                    document.getElementById('defSuffix').value = config.defSuffix || 'DEF';
+                } catch(e) {
+                    console.error('Erreur chargement config:', e);
+                }
+            }
+        });
+
+        // Raccourci clavier : Échap pour fermer
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                fermerInterface();
+            }
+        });
+    </script>
+</body>
+</html>

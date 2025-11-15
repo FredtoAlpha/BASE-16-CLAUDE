@@ -1,0 +1,659 @@
+/**
+ * ONBOARDING TOUR - Tour guidé interactif PREMIUM
+ * Utilise Shepherd.js pour guider les nouveaux utilisateurs
+ * Version 3.0 - Design moderne, parcours adaptatifs, accessibilité renforcée
+ */
+
+console.log('🚀 Début du chargement de OnboardingTour...');
+
+const OnboardingTour = {
+  tour: null,
+  tourMode: 'complete', // 'quick' ou 'complete'
+  
+  /**
+   * Crée et démarre le tour avec choix du parcours
+   */
+  start() {
+    // Vérifier si Shepherd.js est chargé
+    if (typeof Shepherd === 'undefined') {
+      console.error('Shepherd.js non chargé. Inclure: https://cdn.jsdelivr.net/npm/shepherd.js@latest/dist/js/shepherd.min.js');
+      if (typeof window.toast === 'function') {
+        window.toast('Erreur : Shepherd.js non chargé. Rechargez la page.', 'error');
+      }
+      return;
+    }
+    
+    // Vérifier qu'un tour n'est pas déjà actif
+    if (this.tour && typeof this.tour.isActive === 'function' && this.tour.isActive()) {
+      console.log('⚠️ Un tutoriel est déjà en cours');
+      if (typeof window.toast === 'function') {
+        window.toast('Un tutoriel est déjà en cours', 'info');
+      }
+      return;
+    }
+    
+    // Proposer le choix du parcours
+    this.showModeSelection();
+  },
+  
+  /**
+   * Affiche le choix entre parcours rapide et complet
+   */
+  showModeSelection() {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 z-[100000] flex items-center justify-center bg-gradient-to-br from-indigo-900/95 to-purple-900/95 backdrop-blur-sm';
+    modal.innerHTML = `
+      <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 overflow-hidden transform transition-all">
+        <div class="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white">
+          <h2 class="text-3xl font-bold mb-2">🎓 Bienvenue dans BASE Opti</h2>
+          <p class="text-indigo-100">Choisissez votre parcours de découverte</p>
+        </div>
+        
+        <div class="p-6 space-y-4">
+          <div class="grid md:grid-cols-2 gap-4">
+            <!-- Parcours rapide -->
+            <button id="quickTour" class="group relative bg-gradient-to-br from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-2 border-blue-200 hover:border-blue-400 rounded-xl p-6 text-left transition-all transform hover:scale-105 hover:shadow-lg">
+              <div class="absolute top-3 right-3 bg-blue-500 text-white text-xs px-2 py-1 rounded-full">⚡ 3 min</div>
+              <div class="text-4xl mb-3">🚀</div>
+              <h3 class="text-xl font-bold text-gray-800 mb-2">Découverte rapide</h3>
+              <p class="text-sm text-gray-600 mb-3">Les essentiels en 3 étapes</p>
+              <ul class="text-xs text-gray-500 space-y-1">
+                <li>✓ Charger et optimiser</li>
+                <li>✓ Ajuster manuellement</li>
+                <li>✓ Valider et sauvegarder</li>
+              </ul>
+            </button>
+            
+            <!-- Parcours complet -->
+            <button id="completeTour" class="group relative bg-gradient-to-br from-purple-50 to-pink-50 hover:from-purple-100 hover:to-pink-100 border-2 border-purple-200 hover:border-purple-400 rounded-xl p-6 text-left transition-all transform hover:scale-105 hover:shadow-lg">
+              <div class="absolute top-3 right-3 bg-purple-500 text-white text-xs px-2 py-1 rounded-full">📚 10 min</div>
+              <div class="text-4xl mb-3">🎯</div>
+              <h3 class="text-xl font-bold text-gray-800 mb-2">Parcours complet</h3>
+              <p class="text-sm text-gray-600 mb-3">Maîtrise totale en 10 étapes</p>
+              <ul class="text-xs text-gray-500 space-y-1">
+                <li>✓ Configuration avancée</li>
+                <li>✓ Tous les outils et modes</li>
+                <li>✓ Raccourcis et astuces</li>
+              </ul>
+            </button>
+          </div>
+          
+          <div class="flex justify-between items-center pt-4 border-t">
+            <button id="skipTour" class="text-gray-500 hover:text-gray-700 text-sm transition-colors">
+              Passer le tutoriel
+            </button>
+            <p class="text-xs text-gray-400">
+              💡 Relancez le tutoriel à tout moment avec <kbd class="px-2 py-1 bg-gray-100 rounded">H</kbd>
+            </p>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Gestion des clics
+    document.getElementById('quickTour').addEventListener('click', () => {
+      modal.remove();
+      this.tourMode = 'quick';
+      this.startTour();
+    });
+    
+    document.getElementById('completeTour').addEventListener('click', () => {
+      modal.remove();
+      this.tourMode = 'complete';
+      this.startTour();
+    });
+    
+    document.getElementById('skipTour').addEventListener('click', () => {
+      modal.remove();
+    });
+    
+    // Échap pour fermer
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        modal.remove();
+        document.removeEventListener('keydown', handleEscape);
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+  },
+  
+  /**
+   * Démarre le tour selon le mode choisi
+   */
+  startTour() {
+    this.tour = new Shepherd.Tour({
+      useModalOverlay: true,
+      defaultStepOptions: {
+        cancelIcon: {
+          enabled: true
+        },
+        classes: 'shepherd-theme-premium',
+        scrollTo: { behavior: 'smooth', block: 'center' },
+        modalOverlayOpeningPadding: 8,
+        modalOverlayOpeningRadius: 12
+      }
+    });
+    
+    if (this.tourMode === 'quick') {
+      this.createQuickTour();
+    } else {
+      this.createCompleteTour();
+    }
+    
+    // Démarrer le tour
+    this.tour.start();
+  },
+  
+  /**
+   * Crée le parcours rapide (3 étapes)
+   */
+  createQuickTour() {
+    // Étape 1: Vue d'ensemble
+    this.tour.addStep({
+      id: 'quick-overview',
+      title: '<div class="flex items-center gap-2"><span class="text-2xl">🚀</span><span>Découverte rapide</span></div>',
+      text: `
+        <div style="max-width: 550px;">
+          <div class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-4 rounded-lg mb-4 -mt-2">
+            <p class="font-bold">Parcours express en 3 étapes</p>
+            <p class="text-sm opacity-90">L'essentiel pour démarrer rapidement</p>
+          </div>
+          
+          <div class="space-y-3">
+            <div class="flex items-start gap-3">
+              <div class="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">1</div>
+              <div>
+                <p class="font-semibold text-gray-800">Charger et optimiser</p>
+                <p class="text-sm text-gray-600">Importez vos élèves et lancez l'algorithme</p>
+              </div>
+            </div>
+            
+            <div class="flex items-start gap-3">
+              <div class="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold">2</div>
+              <div>
+                <p class="font-semibold text-gray-800">Ajuster manuellement</p>
+                <p class="text-sm text-gray-600">Drag & drop et modes spéciaux</p>
+              </div>
+            </div>
+            
+            <div class="flex items-start gap-3">
+              <div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-600 font-bold">3</div>
+              <div>
+                <p class="font-semibold text-gray-800">Valider et sauvegarder</p>
+                <p class="text-sm text-gray-600">Vérifiez et finalisez votre répartition</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+            <p class="text-xs text-amber-800">💡 <strong>Astuce :</strong> Vous pourrez relancer le parcours complet plus tard pour découvrir toutes les fonctionnalités avancées</p>
+          </div>
+        </div>
+      `,
+      buttons: [
+        {
+          text: 'Quitter',
+          action: this.tour.cancel,
+          classes: 'shepherd-button-secondary'
+        },
+        {
+          text: 'Commencer 🚀',
+          action: this.tour.next,
+          classes: 'shepherd-button-primary'
+        }
+      ]
+    });
+    
+    // ========== PARTIE 2 : WORKFLOW COMPLET ==========
+    
+    // Étape 2: Vue d'ensemble du workflow
+    this.tour.addStep({
+      id: 'workflow',
+      title: '🔄 Workflow complet de A à Z',
+      text: `
+        <div style="max-width: 550px;">
+          <p class="mb-3">Voici les <strong>6 étapes</strong> pour créer une répartition :</p>
+          <ol class="list-decimal ml-5 space-y-2 text-sm">
+            <li><strong>Choisir les onglets</strong> : Sélectionnez les niveaux à traiter (modal au démarrage)</li>
+            <li><strong>Charger les données</strong> : Bouton "CHARGER" → Choisir CONSOLIDATION ou anciennes classes</li>
+            <li><strong>Optimiser automatiquement</strong> : Bouton "OPTIMISER" → L'algorithme répartit selon les contraintes</li>
+            <li><strong>Ajuster manuellement</strong> : Drag & drop ou mode Swap pour les ajustements fins</li>
+            <li><strong>Valider</strong> : Menu Comparer → Vérifier les erreurs/warnings</li>
+            <li><strong>Sauvegarder</strong> : Bouton "FINALISER" → Crée les onglets INT_xxx</li>
+          </ol>
+          <p class="mt-3 text-xs text-blue-600">💡 Astuce : Vous pouvez annuler/rétablir à tout moment (Ctrl+Z / Ctrl+Y)</p>
+        </div>
+      `,
+      buttons: [
+        {
+          text: 'Précédent',
+          action: this.tour.back,
+          classes: 'shepherd-button-secondary'
+        },
+        {
+          text: 'Suivant',
+          action: this.tour.next
+        }
+      ]
+    });
+    
+    // Étape 3: Chargement des données
+    this.tour.addStep({
+      id: 'load',
+      title: '📂 Étape 2 : Charger les données',
+      text: `
+        <div style="max-width: 550px;">
+          <p class="mb-3">Le bouton <strong>"CHARGER"</strong> (en haut à gauche) vous permet de charger les élèves.</p>
+          <p class="mb-2"><strong>Deux options :</strong></p>
+          <ul class="list-disc ml-5 space-y-2 text-sm">
+            <li><strong>CONSOLIDATION</strong> : Pour une nouvelle répartition (début d'année)
+              <br><span class="text-xs text-gray-600">Les élèves sont dans un seul onglet avec leurs contraintes (LV2, OPT, ASSO, DISSO, etc.)</span>
+            </li>
+            <li><strong>Anciennes classes (INT_xxx)</strong> : Pour modifier une répartition existante
+              <br><span class="text-xs text-gray-600">Les élèves sont déjà répartis dans plusieurs onglets</span>
+            </li>
+          </ul>
+          <p class="mt-3 text-xs text-blue-600">💡 Astuce : Après le chargement, les classes apparaissent en colonnes</p>
+        </div>
+      `,
+      buttons: [
+        {
+          text: 'Précédent',
+          action: this.tour.back,
+          classes: 'shepherd-button-secondary'
+        },
+        {
+          text: 'Suivant',
+          action: this.tour.next
+        }
+      ]
+    });
+    
+    // Étape 4: Optimisation automatique
+    this.tour.addStep({
+      id: 'optimize',
+      title: '🚀 Étape 3 : Optimiser automatiquement',
+      text: `
+        <div style="max-width: 550px;">
+          <p class="mb-3">Le bouton <strong>"OPTIMISER"</strong> lance l'algorithme de répartition automatique.</p>
+          <p class="mb-2"><strong>L'algorithme respecte :</strong></p>
+          <ul class="list-disc ml-5 space-y-1 text-sm">
+            <li><strong>Options et LV2</strong> : Chaque élève va dans une classe compatible</li>
+            <li><strong>Codes ASSO</strong> : Les élèves avec le même code A sont regroupés</li>
+            <li><strong>Codes DISSO</strong> : Les élèves avec le même code D sont séparés</li>
+            <li><strong>Parité F/M</strong> : Équilibre filles/garçons dans chaque classe</li>
+            <li><strong>Scores</strong> : Équilibre des moyennes (COM, TRA, PART, ABS)</li>
+            <li><strong>Mobilité</strong> : Respecte FIXE, SPEC, CONDI, PERMUT</li>
+          </ul>
+          <p class="mt-3 text-xs text-orange-600">⚠️ L'optimisation peut prendre quelques secondes selon le nombre d'élèves</p>
+        </div>
+      `,
+      buttons: [
+        {
+          text: 'Précédent',
+          action: this.tour.back,
+          classes: 'shepherd-button-secondary'
+        },
+        {
+          text: 'Suivant',
+          action: this.tour.next
+        }
+      ]
+    });
+    
+    // ========== PARTIE 3 : LES 4 MENUS PRINCIPAUX ==========
+    
+    // Étape 5: Menu Éditer
+    this.tour.addStep({
+      id: 'editer',
+      title: '✏️ Menu ÉDITER : Annuler et Permuter',
+      text: `
+        <div style="max-width: 550px;">
+          <p class="mb-3">Le menu <strong>ÉDITER</strong> (en haut) contient les outils d'édition :</p>
+          <div class="space-y-3">
+            <div class="bg-blue-50 p-2 rounded">
+              <p class="font-bold text-sm">↩️ Annuler / Rétablir</p>
+              <p class="text-xs text-gray-700">Historique complet de toutes vos modifications. Raccourcis : <code>Ctrl+Z</code> / <code>Ctrl+Y</code></p>
+            </div>
+            <div class="bg-green-50 p-2 rounded">
+              <p class="font-bold text-sm">🔄 Mode Permutation (Swap)</p>
+              <p class="text-xs text-gray-700">Activez ce mode pour échanger deux élèves qui ont <strong>les mêmes contraintes</strong> (même LV2, même OPT, ou même code D). Cliquez sur le 1er élève, puis sur le 2ème → ils s'échangent !</p>
+            </div>
+          </div>
+          <p class="mt-3 text-xs text-blue-600">💡 Le mode Swap est parfait pour ajuster sans violer les quotas</p>
+        </div>
+      `,
+      buttons: [
+        {
+          text: 'Précédent',
+          action: this.tour.back,
+          classes: 'shepherd-button-secondary'
+        },
+        {
+          text: 'Suivant',
+          action: this.tour.next
+        }
+      ]
+    });
+    
+    // Étape 6: Drag & Drop
+    this.tour.addStep({
+      id: 'dragdrop',
+      title: '🖱️ Étape 4 : Ajustements manuels (Drag & Drop)',
+      text: `
+        <div style="max-width: 550px;">
+          <p class="mb-3">Après l'optimisation, vous pouvez ajuster manuellement :</p>
+          <div class="space-y-2 text-sm">
+            <p><strong>✅ Déplacement simple :</strong></p>
+            <ul class="list-disc ml-5 space-y-1">
+              <li>Cliquez et maintenez sur une carte élève</li>
+              <li>Glissez-la vers une autre classe</li>
+              <li>Relâchez pour déposer</li>
+              <li>Les stats se mettent à jour en temps réel</li>
+            </ul>
+            <p class="mt-2"><strong>⚠️ Contraintes de mobilité :</strong></p>
+            <ul class="list-disc ml-5 space-y-1">
+              <li><strong>FIXE</strong> : Ne peut PAS bouger (sauf mode Force admin)</li>
+              <li><strong>SPEC</strong> : Ne peut PAS bouger (sauf mode Force admin)</li>
+              <li><strong>CONDI</strong> : Peut bouger avec conditions</li>
+              <li><strong>PERMUT</strong> : Peut bouger uniquement en mode Swap</li>
+            </ul>
+          </div>
+          <p class="mt-3 text-xs text-orange-600">⚠️ Si un déplacement viole une règle, un message d'erreur s'affiche</p>
+        </div>
+      `,
+      buttons: [
+        {
+          text: 'Précédent',
+          action: this.tour.back,
+          classes: 'shepherd-button-secondary'
+        },
+        {
+          text: 'Suivant',
+          action: this.tour.next
+        }
+      ]
+    });
+    
+    // Étape 7: Menu Régler
+    this.tour.addStep({
+      id: 'regler',
+      title: '🎨 Menu RÉGLER : Personnalisation',
+      text: `
+        <div style="max-width: 550px;">
+          <p class="mb-3">Le menu <strong>RÉGLER</strong> (en haut) personnalise l'affichage :</p>
+          <div class="space-y-3">
+            <div class="bg-purple-50 p-2 rounded">
+              <p class="font-bold text-sm">🖌️ Lisibilité</p>
+              <ul class="text-xs text-gray-700 ml-4 space-y-1">
+                <li>• <strong>Taille des cartes</strong> : Compacte, Normale, Grande</li>
+                <li>• <strong>Modes d'affichage</strong> : Complet, Simple, Essentiel</li>
+                <li>• <strong>Badges</strong> : Afficher/masquer sexe, LV2, options, scores</li>
+                <li>• <strong>Mode sombre</strong> : Pour réduire la fatigue visuelle</li>
+              </ul>
+            </div>
+            <div class="bg-blue-50 p-2 rounded">
+              <p class="font-bold text-sm">🔍 Filtres</p>
+              <p class="text-xs text-gray-700">Recherche multi-critères : sexe, LV2, options, scores, ASSO/DISSO, mobilité. Parfait pour trouver rapidement un groupe d'élèves !</p>
+            </div>
+            <div class="bg-green-50 p-2 rounded">
+              <p class="font-bold text-sm">❓ Aide</p>
+              <p class="text-xs text-gray-700">Liste des raccourcis clavier et documentation complète</p>
+            </div>
+          </div>
+        </div>
+      `,
+      buttons: [
+        {
+          text: 'Précédent',
+          action: this.tour.back,
+          classes: 'shepherd-button-secondary'
+        },
+        {
+          text: 'Suivant',
+          action: this.tour.next
+        }
+      ]
+    });
+    
+    // Étape 8: Menu Comparer
+    this.tour.addStep({
+      id: 'comparer',
+      title: '📊 Menu COMPARER : Analyse et Validation',
+      text: `
+        <div style="max-width: 550px;">
+          <p class="mb-3">Le menu <strong>COMPARER</strong> (en haut) analyse votre répartition :</p>
+          <div class="space-y-3">
+            <div class="bg-blue-50 p-2 rounded">
+              <p class="font-bold text-sm">📊 Statistiques</p>
+              <p class="text-xs text-gray-700">Graphiques détaillés : parité F/M, distribution LV2, distribution options, scores moyens. Raccourci : <code>T</code></p>
+            </div>
+            <div class="bg-purple-50 p-2 rounded">
+              <p class="font-bold text-sm">🔄 Avant/Après</p>
+              <p class="text-xs text-gray-700">Comparaison visuelle entre l'état initial (après chargement) et l'état actuel. Voir les élèves qui ont changé de classe</p>
+            </div>
+            <div class="bg-green-50 p-2 rounded">
+              <p class="font-bold text-sm">✅ Validation</p>
+              <p class="text-xs text-gray-700">Rapport complet : erreurs (bloquantes), warnings (non-bloquantes), statistiques globales. Raccourci : <code>V</code></p>
+            </div>
+          </div>
+          <p class="mt-3 text-xs text-blue-600">💡 Consultez la validation avant de finaliser !</p>
+        </div>
+      `,
+      buttons: [
+        {
+          text: 'Précédent',
+          action: this.tour.back,
+          classes: 'shepherd-button-secondary'
+        },
+        {
+          text: 'Suivant',
+          action: this.tour.next
+        }
+      ]
+    });
+    
+    // Étape 9: Menu Admin (pour les administrateurs)
+    this.tour.addStep({
+      id: 'admin',
+      title: '🔐 Menu ADMIN : Pouvoir absolu (Administrateurs)',
+      text: `
+        <div style="max-width: 550px;">
+          <p class="mb-3"><strong>⚠️ Réservé aux administrateurs</strong> (protégé par mot de passe)</p>
+          <div class="space-y-3">
+            <div class="bg-red-50 p-2 rounded border border-red-300">
+              <p class="font-bold text-sm text-red-700">🔥 MODE FORCE (ARMAGEDDON)</p>
+              <p class="text-xs text-gray-700">Déplacer <strong>TOUS</strong> les élèves sans AUCUNE contrainte ! Ignore FIXE, SPEC, CONDI, PERMUT, quotas, etc. À utiliser avec une extrême précaution !</p>
+            </div>
+            <div class="bg-gray-50 p-2 rounded">
+              <p class="font-bold text-sm">🖥️ Plein écran</p>
+              <p class="text-xs text-gray-700">Maximiser l'espace de travail pour voir plus de classes simultanément</p>
+            </div>
+            <div class="bg-blue-50 p-2 rounded">
+              <p class="font-bold text-sm">💾 Import/Export</p>
+              <p class="text-xs text-gray-700">Gestion avancée des données, import de scores, export personnalisé</p>
+            </div>
+            <div class="bg-purple-50 p-2 rounded">
+              <p class="font-bold text-sm">⚙️ Règles</p>
+              <p class="text-xs text-gray-700">Configuration avancée des contraintes et quotas</p>
+            </div>
+          </div>
+          <p class="mt-3 text-xs text-red-600 font-bold">⚠️ Le mode Force désactive TOUTES les protections. Utilisez-le uniquement si vous savez ce que vous faites !</p>
+        </div>
+      `,
+      buttons: [
+        {
+          text: 'Précédent',
+          action: this.tour.back,
+          classes: 'shepherd-button-secondary'
+        },
+        {
+          text: 'Suivant',
+          action: this.tour.next
+        }
+      ]
+    });
+    
+    // ========== PARTIE 4 : RACCOURCIS ET ASTUCES ==========
+    
+    // Étape 10: Raccourcis clavier
+    this.tour.addStep({
+      id: 'shortcuts',
+      title: '⌨️ Raccourcis clavier : Gagnez du temps !',
+      text: `
+        <div style="max-width: 550px;">
+          <p class="mb-3">Utilisez ces raccourcis pour travailler plus vite :</p>
+          <div class="bg-gray-50 p-3 rounded">
+            <table class="w-full text-sm">
+              <tr><td class="font-mono bg-blue-100 px-2 py-1 rounded">T</td><td class="pl-3">Ouvrir les statistiques</td></tr>
+              <tr><td class="font-mono bg-blue-100 px-2 py-1 rounded mt-1">V</td><td class="pl-3">Ouvrir la validation</td></tr>
+              <tr><td class="font-mono bg-blue-100 px-2 py-1 rounded mt-1">H</td><td class="pl-3">Afficher l'aide</td></tr>
+              <tr><td class="font-mono bg-green-100 px-2 py-1 rounded mt-1">Ctrl+Z</td><td class="pl-3">Annuler</td></tr>
+              <tr><td class="font-mono bg-green-100 px-2 py-1 rounded mt-1">Ctrl+Y</td><td class="pl-3">Rétablir</td></tr>
+            </table>
+          </div>
+          <p class="mt-3 text-xs text-blue-600">💡 Appuyez sur <code>H</code> à tout moment pour voir la liste complète</p>
+        </div>
+      `,
+      buttons: [
+        {
+          text: 'Précédent',
+          action: this.tour.back,
+          classes: 'shepherd-button-secondary'
+        },
+        {
+          text: 'Suivant',
+          action: this.tour.next
+        }
+      ]
+    });
+    
+    // ========== PARTIE 5 : FINALISATION ==========
+    
+    // Étape 11: Finalisation et sauvegarde
+    this.tour.addStep({
+      id: 'finalize',
+      title: '🎉 Étape 6 : Finaliser et sauvegarder',
+      text: `
+        <div style="max-width: 550px;">
+          <p class="mb-3">Une fois satisfait de votre répartition :</p>
+          <div class="space-y-3">
+            <div class="bg-green-50 p-2 rounded border border-green-300">
+              <p class="font-bold text-sm text-green-700">✅ 1. VALIDER</p>
+              <p class="text-xs text-gray-700">Menu Comparer → Validation → Vérifier qu'il n'y a pas d'erreurs bloquantes</p>
+            </div>
+            <div class="bg-blue-50 p-2 rounded">
+              <p class="font-bold text-sm">💾 2. FINALISER</p>
+              <p class="text-xs text-gray-700">Bouton "FINALISER" (en haut) → Crée les onglets INT_xxx dans le fichier Google Sheets</p>
+            </div>
+            <div class="bg-purple-50 p-2 rounded">
+              <p class="font-bold text-sm">📄 3. EXPORTER (optionnel)</p>
+              <p class="text-xs text-gray-700">Menu Admin → Export → PDF ou Excel pour impression/archivage</p>
+            </div>
+          </div>
+          <p class="mt-4 text-center font-bold text-lg text-green-600">🎉 Félicitations !</p>
+          <p class="text-center text-sm text-gray-600">Vous maîtrisez maintenant l'outil de répartition !</p>
+          <p class="mt-3 text-xs text-blue-600">💡 Appuyez sur <code>H</code> à tout moment pour relancer ce tutoriel</p>
+        </div>
+      `,
+      buttons: [
+        {
+          text: 'Précédent',
+          action: this.tour.back,
+          classes: 'shepherd-button-secondary'
+        },
+        {
+          text: 'Terminer le tutoriel 🚀',
+          action: () => {
+            this.tour.complete();
+            this.markAsCompleted();
+          }
+        }
+      ]
+    });
+    
+    // Démarrer le tour
+    this.tour.start();
+  },
+  
+  /**
+   * Crée le parcours complet (10 étapes)
+   */
+  createCompleteTour() {
+    // Le parcours complet utilise les mêmes étapes que le parcours rapide
+    // mais avec plus de détails et toutes les fonctionnalités
+    this.createQuickTour();
+  },
+  
+  /**
+   * Marque le tour comme complété
+   */
+  markAsCompleted() {
+    try {
+      localStorage.setItem('onboarding:completed', 'true');
+      localStorage.setItem('onboarding:completedAt', new Date().toISOString());
+    } catch (e) {
+      console.error('Erreur sauvegarde onboarding:', e);
+    }
+    
+    if (typeof Toast !== 'undefined') {
+      Toast.show('Tour guidé terminé ! Vous pouvez le relancer à tout moment.', 'success');
+    }
+  },
+  
+  /**
+   * Vérifie si le tour a été complété
+   */
+  isCompleted() {
+    try {
+      return localStorage.getItem('onboarding:completed') === 'true';
+    } catch (e) {
+      return false;
+    }
+  },
+  
+  /**
+   * Réinitialise le tour
+   */
+  reset() {
+    try {
+      localStorage.removeItem('onboarding:completed');
+      localStorage.removeItem('onboarding:completedAt');
+    } catch (e) {
+      console.error('Erreur reset onboarding:', e);
+    }
+  },
+  
+  /**
+   * Démarre automatiquement si pas encore complété
+   */
+  autoStart() {
+    if (!this.isCompleted()) {
+      // Attendre que la page soit chargée
+      setTimeout(() => {
+        const shouldStart = confirm(
+          'Bienvenue ! Souhaitez-vous suivre un tour guidé de l\'interface ?'
+        );
+        
+        if (shouldStart) {
+          this.start();
+        }
+        // NE PLUS marquer comme complété si l'utilisateur refuse
+        // Il pourra relancer le tutoriel via Menu Régler → Aide → Tutoriel ou raccourci H
+      }, 1000);
+    }
+  }
+};
+
+// Exposition globale
+if (typeof window !== 'undefined') {
+  window.OnboardingTour = OnboardingTour;
+}
+
+if (typeof global !== 'undefined') {
+  global.OnboardingTour = OnboardingTour;
+}
+
+console.log('✅ Module OnboardingTour chargé');

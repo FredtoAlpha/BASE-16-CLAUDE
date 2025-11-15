@@ -1,0 +1,358 @@
+/**
+ * SNAPSHOT TIMELINE - Timeline visuelle des snapshots
+ * Versioning avec rollback one-click
+ */
+
+const SnapshotTimeline = {
+  /**
+   * Affiche la timeline des snapshots
+   */
+  show(history, onRestore) {
+    const modal = document.createElement('div');
+    modal.className = 'modal snapshot-timeline-modal';
+    
+    modal.innerHTML = `
+      <div class="modal-content" style="max-width: 900px;">
+        <div class="modal-header">
+          <h2 class="text-xl font-bold">
+            <i class="fas fa-history"></i>
+            Historique des versions
+          </h2>
+          <button class="close-modal text-gray-400 hover:text-gray-600">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        
+        <div class="modal-body">
+          ${history.length === 0 ? `
+            <div class="text-center text-gray-500 py-8">
+              <i class="fas fa-clock text-4xl mb-3"></i>
+              <div>Aucun snapshot enregistré</div>
+              <div class="text-sm mt-2">Les snapshots sont créés automatiquement avant les actions critiques</div>
+            </div>
+          ` : `
+            <div class="timeline">
+              ${history.map((snapshot, index) => `
+                <div class="timeline-item" data-index="${snapshot.index}">
+                  <div class="timeline-marker ${index === 0 ? 'current' : ''}">
+                    <i class="fas fa-${index === 0 ? 'star' : 'circle'}"></i>
+                  </div>
+                  <div class="timeline-content">
+                    <div class="flex items-start justify-between">
+                      <div class="flex-1">
+                        <div class="font-semibold text-lg">
+                          ${snapshot.label}
+                          ${index === 0 ? '<span class="badge badge-primary ml-2">Actuel</span>' : ''}
+                        </div>
+                        <div class="text-sm text-gray-600 mt-1">
+                          <i class="fas fa-clock"></i> ${snapshot.date}
+                        </div>
+                      </div>
+                      <div class="flex gap-2">
+                        ${index !== 0 ? `
+                          <button class="btn btn-sm btn-secondary compare-btn" data-index="${snapshot.index}">
+                            <i class="fas fa-exchange-alt"></i> Comparer
+                          </button>
+                          <button class="btn btn-sm btn-primary restore-btn" data-index="${snapshot.index}">
+                            <i class="fas fa-undo"></i> Restaurer
+                          </button>
+                        ` : ''}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          `}
+        </div>
+        
+        <div class="modal-footer flex gap-2 justify-end">
+          <button class="btn btn-secondary close-btn">
+            <i class="fas fa-times"></i> Fermer
+          </button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    setTimeout(() => modal.classList.add('active'), 10);
+    
+    // Styles timeline
+    const style = document.createElement('style');
+    style.textContent = `
+      .timeline {
+        position: relative;
+        padding-left: 40px;
+      }
+      
+      .timeline::before {
+        content: '';
+        position: absolute;
+        left: 15px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+      }
+      
+      .timeline-item {
+        position: relative;
+        margin-bottom: 2rem;
+      }
+      
+      .timeline-marker {
+        position: absolute;
+        left: -40px;
+        top: 0;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: white;
+        border: 3px solid #667eea;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #667eea;
+        font-size: 14px;
+        z-index: 1;
+      }
+      
+      .timeline-marker.current {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-color: #667eea;
+        color: white;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      }
+      
+      .timeline-content {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+      }
+      
+      .timeline-content:hover {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+      }
+      
+      body.dark-mode .timeline-content {
+        background: #1e293b;
+        border-color: #334155;
+      }
+    `;
+    document.head.appendChild(style);
+    
+    // Event listeners
+    const closeModal = () => {
+      modal.classList.add('closing');
+      setTimeout(() => {
+        modal.remove();
+        style.remove();
+      }, 200);
+    };
+    
+    modal.querySelector('.close-btn').addEventListener('click', closeModal);
+    modal.querySelector('.close-modal').addEventListener('click', closeModal);
+    
+    // Restaurer
+    modal.querySelectorAll('.restore-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const index = parseInt(btn.dataset.index);
+        
+        if (confirm(`Restaurer cette version ?\n\nToutes les modifications non sauvegardées seront perdues.`)) {
+          closeModal();
+          if (onRestore) onRestore(index);
+        }
+      });
+    });
+    
+    // Comparer
+    modal.querySelectorAll('.compare-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const index = parseInt(btn.dataset.index);
+        this.showComparison(history[0], history.find(h => h.index === index));
+      });
+    });
+  },
+  
+  /**
+   * Affiche la comparaison entre deux snapshots
+   */
+  showComparison(current, target) {
+    const modal = document.createElement('div');
+    modal.className = 'modal comparison-modal';
+    
+    // Calculer différences
+    const diff = this.calculateDiff(current, target);
+    
+    modal.innerHTML = `
+      <div class="modal-content" style="max-width: 800px;">
+        <div class="modal-header">
+          <h2 class="text-xl font-bold">
+            <i class="fas fa-exchange-alt"></i>
+            Comparaison de versions
+          </h2>
+          <button class="close-modal text-gray-400 hover:text-gray-600">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        
+        <div class="modal-body">
+          <!-- En-têtes -->
+          <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="border rounded p-3">
+              <div class="font-semibold text-green-600">
+                <i class="fas fa-star"></i> Version actuelle
+              </div>
+              <div class="text-sm text-gray-600">${current.label}</div>
+              <div class="text-xs text-gray-500">${current.date}</div>
+            </div>
+            <div class="border rounded p-3">
+              <div class="font-semibold text-blue-600">
+                <i class="fas fa-history"></i> Version cible
+              </div>
+              <div class="text-sm text-gray-600">${target.label}</div>
+              <div class="text-xs text-gray-500">${target.date}</div>
+            </div>
+          </div>
+          
+          <!-- Différences -->
+          <div class="border rounded p-4">
+            <h3 class="font-bold mb-3">
+              <i class="fas fa-list"></i> Différences
+            </h3>
+            
+            ${diff.students.added.length > 0 ? `
+              <div class="mb-3">
+                <div class="text-sm font-semibold text-green-600 mb-1">
+                  + ${diff.students.added.length} élèves ajoutés
+                </div>
+                <div class="text-xs text-gray-600">
+                  ${diff.students.added.slice(0, 5).join(', ')}
+                  ${diff.students.added.length > 5 ? ` et ${diff.students.added.length - 5} autres` : ''}
+                </div>
+              </div>
+            ` : ''}
+            
+            ${diff.students.removed.length > 0 ? `
+              <div class="mb-3">
+                <div class="text-sm font-semibold text-red-600 mb-1">
+                  - ${diff.students.removed.length} élèves supprimés
+                </div>
+                <div class="text-xs text-gray-600">
+                  ${diff.students.removed.slice(0, 5).join(', ')}
+                  ${diff.students.removed.length > 5 ? ` et ${diff.students.removed.length - 5} autres` : ''}
+                </div>
+              </div>
+            ` : ''}
+            
+            ${diff.students.moved.length > 0 ? `
+              <div class="mb-3">
+                <div class="text-sm font-semibold text-blue-600 mb-1">
+                  ↔ ${diff.students.moved.length} élèves déplacés
+                </div>
+                <div class="text-xs text-gray-600">
+                  ${diff.students.moved.slice(0, 3).map(m => `${m.name}: ${m.from} → ${m.to}`).join(', ')}
+                  ${diff.students.moved.length > 3 ? ` et ${diff.students.moved.length - 3} autres` : ''}
+                </div>
+              </div>
+            ` : ''}
+            
+            ${diff.students.added.length === 0 && diff.students.removed.length === 0 && diff.students.moved.length === 0 ? `
+              <div class="text-center text-gray-500 py-4">
+                <i class="fas fa-check-circle text-2xl mb-2"></i>
+                <div>Aucune différence détectée</div>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+        
+        <div class="modal-footer flex gap-2 justify-end">
+          <button class="btn btn-secondary close-btn">
+            <i class="fas fa-times"></i> Fermer
+          </button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    setTimeout(() => modal.classList.add('active'), 10);
+    
+    // Event listeners
+    const closeModal = () => {
+      modal.classList.add('closing');
+      setTimeout(() => modal.remove(), 200);
+    };
+    
+    modal.querySelector('.close-btn').addEventListener('click', closeModal);
+    modal.querySelector('.close-modal').addEventListener('click', closeModal);
+  },
+  
+  /**
+   * Calcule les différences entre deux snapshots
+   */
+  calculateDiff(current, target) {
+    const diff = {
+      students: {
+        added: [],
+        removed: [],
+        moved: []
+      }
+    };
+    
+    // Récupérer données (simulé - adapter selon structure réelle)
+    const currentData = current.data || {};
+    const targetData = target.data || {};
+    
+    const currentStudents = currentData.students || {};
+    const targetStudents = targetData.students || {};
+    
+    // Élèves ajoutés
+    Object.keys(currentStudents).forEach(id => {
+      if (!targetStudents[id]) {
+        const s = currentStudents[id];
+        diff.students.added.push(`${s.nom} ${s.prenom}`);
+      }
+    });
+    
+    // Élèves supprimés
+    Object.keys(targetStudents).forEach(id => {
+      if (!currentStudents[id]) {
+        const s = targetStudents[id];
+        diff.students.removed.push(`${s.nom} ${s.prenom}`);
+      }
+    });
+    
+    // Élèves déplacés
+    Object.keys(currentStudents).forEach(id => {
+      if (targetStudents[id]) {
+        const current = currentStudents[id];
+        const target = targetStudents[id];
+        
+        if (current.classe !== target.classe) {
+          diff.students.moved.push({
+            name: `${current.nom} ${current.prenom}`,
+            from: target.classe,
+            to: current.classe
+          });
+        }
+      }
+    });
+    
+    return diff;
+  }
+};
+
+// Exposition globale
+if (typeof window !== 'undefined') {
+  window.SnapshotTimeline = SnapshotTimeline;
+}
+
+if (typeof global !== 'undefined') {
+  global.SnapshotTimeline = SnapshotTimeline;
+}
+
+console.log('✅ Module SnapshotTimeline chargé');

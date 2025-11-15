@@ -1,0 +1,495 @@
+/**
+ * ADVANCED CHARTS - Graphiques avancés avec Chart.js
+ * Comparaisons inter-classes et évolution temporelle
+ */
+
+const AdvancedCharts = {
+  /**
+   * Crée un graphique de comparaison inter-classes
+   */
+  createClassComparison(students, classes, container) {
+    const ctx = container.getContext('2d');
+    
+    // Préparer données
+    const classNames = Object.keys(classes).sort();
+    const data = {
+      labels: classNames,
+      datasets: [
+        {
+          label: 'Masculin',
+          data: classNames.map(c => Object.values(students).filter(s => s.classe === c && s.sexe === 'M').length),
+          backgroundColor: 'rgba(59, 130, 246, 0.7)',
+          borderColor: 'rgb(59, 130, 246)',
+          borderWidth: 2
+        },
+        {
+          label: 'Féminin',
+          data: classNames.map(c => Object.values(students).filter(s => s.classe === c && s.sexe === 'F').length),
+          backgroundColor: 'rgba(236, 72, 153, 0.7)',
+          borderColor: 'rgb(236, 72, 153)',
+          borderWidth: 2
+        }
+      ]
+    };
+    
+    return new Chart(ctx, {
+      type: 'bar',
+      data: data,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Répartition par sexe et classe',
+            font: { size: 16, weight: 'bold' }
+          },
+          legend: {
+            position: 'top'
+          },
+          tooltip: {
+            callbacks: {
+              afterLabel: (context) => {
+                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                const percent = ((context.parsed.y / total) * 100).toFixed(1);
+                return `${percent}% du total`;
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { stepSize: 1 }
+          }
+        }
+      }
+    });
+  },
+  
+  /**
+   * Crée un graphique de parité
+   */
+  createParityChart(students, classes, container) {
+    const ctx = container.getContext('2d');
+    
+    const classNames = Object.keys(classes).sort();
+    const parityData = classNames.map(className => {
+      const classStudents = Object.values(students).filter(s => s.classe === className);
+      const males = classStudents.filter(s => s.sexe === 'M').length;
+      const females = classStudents.filter(s => s.sexe === 'F').length;
+      return Math.abs(males - females);
+    });
+    
+    return new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: classNames,
+        datasets: [{
+          label: 'Différence M/F',
+          data: parityData,
+          borderColor: 'rgb(102, 126, 234)',
+          backgroundColor: 'rgba(102, 126, 234, 0.1)',
+          fill: true,
+          tension: 0.4,
+          pointRadius: 6,
+          pointHoverRadius: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Équilibre de parité par classe',
+            font: { size: 16, weight: 'bold' }
+          },
+          annotation: {
+            annotations: {
+              line1: {
+                type: 'line',
+                yMin: 2,
+                yMax: 2,
+                borderColor: 'rgb(251, 191, 36)',
+                borderWidth: 2,
+                borderDash: [5, 5],
+                label: {
+                  content: 'Seuil warning (2)',
+                  enabled: true,
+                  position: 'end'
+                }
+              },
+              line2: {
+                type: 'line',
+                yMin: 4,
+                yMax: 4,
+                borderColor: 'rgb(239, 68, 68)',
+                borderWidth: 2,
+                borderDash: [5, 5],
+                label: {
+                  content: 'Seuil error (4)',
+                  enabled: true,
+                  position: 'end'
+                }
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Différence absolue'
+            }
+          }
+        }
+      }
+    });
+  },
+  
+  /**
+   * Crée un graphique de capacité
+   */
+  createCapacityChart(students, classes, container) {
+    const ctx = container.getContext('2d');
+    
+    const classNames = Object.keys(classes).sort();
+    const data = classNames.map(className => {
+      const capacity = classes[className].capacity || 30;
+      const current = Object.values(students).filter(s => s.classe === className).length;
+      return {
+        className,
+        current,
+        capacity,
+        percent: (current / capacity) * 100
+      };
+    });
+    
+    return new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: classNames,
+        datasets: [
+          {
+            label: 'Élèves',
+            data: data.map(d => d.current),
+            backgroundColor: data.map(d => {
+              if (d.percent >= 100) return 'rgba(239, 68, 68, 0.7)';
+              if (d.percent >= 90) return 'rgba(251, 191, 36, 0.7)';
+              return 'rgba(16, 185, 129, 0.7)';
+            }),
+            borderColor: data.map(d => {
+              if (d.percent >= 100) return 'rgb(239, 68, 68)';
+              if (d.percent >= 90) return 'rgb(251, 191, 36)';
+              return 'rgb(16, 185, 129)';
+            }),
+            borderWidth: 2
+          },
+          {
+            label: 'Capacité max',
+            data: data.map(d => d.capacity),
+            type: 'line',
+            borderColor: 'rgb(148, 163, 184)',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            pointRadius: 0,
+            fill: false
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Capacité des classes',
+            font: { size: 16, weight: 'bold' }
+          },
+          tooltip: {
+            callbacks: {
+              afterLabel: (context) => {
+                const d = data[context.dataIndex];
+                return `${d.percent.toFixed(1)}% de capacité`;
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Nombre d\'élèves'
+            }
+          }
+        }
+      }
+    });
+  },
+  
+  /**
+   * Crée un graphique de distribution LV2
+   */
+  createLV2Distribution(students, container) {
+    const ctx = container.getContext('2d');
+    
+    const lv2Counts = {};
+    Object.values(students).forEach(s => {
+      if (s.lv2) {
+        lv2Counts[s.lv2] = (lv2Counts[s.lv2] || 0) + 1;
+      }
+    });
+    
+    const labels = Object.keys(lv2Counts).sort();
+    const colors = [
+      'rgba(102, 126, 234, 0.7)',
+      'rgba(236, 72, 153, 0.7)',
+      'rgba(16, 185, 129, 0.7)',
+      'rgba(251, 191, 36, 0.7)',
+      'rgba(139, 92, 246, 0.7)'
+    ];
+    
+    return new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: labels.map(lv2 => lv2Counts[lv2]),
+          backgroundColor: colors,
+          borderColor: colors.map(c => c.replace('0.7', '1')),
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Distribution des LV2',
+            font: { size: 16, weight: 'bold' }
+          },
+          legend: {
+            position: 'right'
+          },
+          tooltip: {
+            callbacks: {
+              label: (context) => {
+                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                const percent = ((context.parsed / total) * 100).toFixed(1);
+                return `${context.label}: ${context.parsed} (${percent}%)`;
+              }
+            }
+          }
+        }
+      }
+    });
+  },
+  
+  /**
+   * Crée un graphique d'évolution temporelle
+   */
+  createTimelineChart(snapshots, container) {
+    const ctx = container.getContext('2d');
+    
+    const data = snapshots.map(snapshot => {
+      const students = snapshot.data?.students || {};
+      const total = Object.keys(students).length;
+      const males = Object.values(students).filter(s => s.sexe === 'M').length;
+      const females = Object.values(students).filter(s => s.sexe === 'F').length;
+      
+      return {
+        timestamp: snapshot.timestamp,
+        label: new Date(snapshot.timestamp).toLocaleTimeString(),
+        total,
+        males,
+        females
+      };
+    });
+    
+    return new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: data.map(d => d.label),
+        datasets: [
+          {
+            label: 'Total',
+            data: data.map(d => d.total),
+            borderColor: 'rgb(102, 126, 234)',
+            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+            fill: true,
+            tension: 0.4
+          },
+          {
+            label: 'Masculin',
+            data: data.map(d => d.males),
+            borderColor: 'rgb(59, 130, 246)',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            fill: true,
+            tension: 0.4
+          },
+          {
+            label: 'Féminin',
+            data: data.map(d => d.females),
+            borderColor: 'rgb(236, 72, 153)',
+            backgroundColor: 'rgba(236, 72, 153, 0.1)',
+            fill: true,
+            tension: 0.4
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Évolution temporelle',
+            font: { size: 16, weight: 'bold' }
+          },
+          legend: {
+            position: 'top'
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Nombre d\'élèves'
+            }
+          },
+          x: {
+            title: {
+              display: true,
+              text: 'Temps'
+            }
+          }
+        }
+      }
+    });
+  },
+  
+  /**
+   * Affiche le dashboard de graphiques
+   */
+  showDashboard(students, classes, snapshots = []) {
+    const modal = document.createElement('div');
+    modal.className = 'modal charts-dashboard-modal';
+    
+    modal.innerHTML = `
+      <div class="modal-content" style="max-width: 1200px;">
+        <div class="modal-header">
+          <h2 class="text-xl font-bold">
+            <i class="fas fa-chart-bar"></i>
+            Tableaux de bord
+          </h2>
+          <button class="close-modal text-gray-400 hover:text-gray-600">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        
+        <div class="modal-body">
+          <div class="grid grid-cols-2 gap-4">
+            <!-- Comparaison classes -->
+            <div class="border rounded p-4">
+              <canvas id="chartClassComparison" height="300"></canvas>
+            </div>
+            
+            <!-- Parité -->
+            <div class="border rounded p-4">
+              <canvas id="chartParity" height="300"></canvas>
+            </div>
+            
+            <!-- Capacité -->
+            <div class="border rounded p-4">
+              <canvas id="chartCapacity" height="300"></canvas>
+            </div>
+            
+            <!-- LV2 Distribution -->
+            <div class="border rounded p-4">
+              <canvas id="chartLV2" height="300"></canvas>
+            </div>
+            
+            ${snapshots.length > 1 ? `
+              <!-- Évolution temporelle -->
+              <div class="border rounded p-4 col-span-2">
+                <canvas id="chartTimeline" height="200"></canvas>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+        
+        <div class="modal-footer flex gap-2 justify-end">
+          <button id="exportChartsBtn" class="btn btn-secondary">
+            <i class="fas fa-download"></i> Exporter (PNG)
+          </button>
+          <button class="btn btn-primary close-btn">
+            <i class="fas fa-times"></i> Fermer
+          </button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    setTimeout(() => modal.classList.add('active'), 10);
+    
+    // Créer graphiques
+    setTimeout(() => {
+      this.createClassComparison(students, classes, document.getElementById('chartClassComparison'));
+      this.createParityChart(students, classes, document.getElementById('chartParity'));
+      this.createCapacityChart(students, classes, document.getElementById('chartCapacity'));
+      this.createLV2Distribution(students, document.getElementById('chartLV2'));
+      
+      if (snapshots.length > 1) {
+        this.createTimelineChart(snapshots, document.getElementById('chartTimeline'));
+      }
+    }, 100);
+    
+    // Event listeners
+    const closeModal = () => {
+      modal.classList.add('closing');
+      setTimeout(() => modal.remove(), 200);
+    };
+    
+    modal.querySelector('.close-btn').addEventListener('click', closeModal);
+    modal.querySelector('.close-modal').addEventListener('click', closeModal);
+    
+    // Export charts
+    modal.querySelector('#exportChartsBtn').addEventListener('click', () => {
+      this.exportCharts(modal);
+    });
+  },
+  
+  /**
+   * Exporte les graphiques en PNG
+   */
+  exportCharts(modal) {
+    const canvases = modal.querySelectorAll('canvas');
+    
+    canvases.forEach((canvas, index) => {
+      const link = document.createElement('a');
+      link.download = `chart-${index + 1}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    });
+    
+    if (typeof Toast !== 'undefined') {
+      Toast.show(`${canvases.length} graphiques exportés`, 'success');
+    }
+  }
+};
+
+// Exposition globale
+if (typeof window !== 'undefined') {
+  window.AdvancedCharts = AdvancedCharts;
+}
+
+if (typeof global !== 'undefined') {
+  global.AdvancedCharts = AdvancedCharts;
+}
+
+console.log('✅ Module AdvancedCharts chargé');
