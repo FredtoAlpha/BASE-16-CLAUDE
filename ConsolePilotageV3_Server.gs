@@ -365,3 +365,106 @@ function showV3Metrics() {
     ui.ButtonSet.OK
   );
 }
+
+/**
+ * ===================================================================
+ * FONCTIONS SUPPLÉMENTAIRES POUR CONSOLE V3
+ * ===================================================================
+ */
+
+/**
+ * Ouvre l'interface ConfigurationComplete pour configurer la structure des classes
+ */
+function ouvrirConfigurationComplete() {
+  const html = HtmlService.createHtmlOutputFromFile('ConfigurationComplete')
+    .setWidth(900)
+    .setHeight(700)
+    .setTitle('⚙️ Configuration Complète - Structure & Options');
+
+  SpreadsheetApp.getUi().showModalDialog(html, '⚙️ Configuration Complète');
+}
+
+/**
+ * Wrapper pour genererNomPrenomEtID() avec retour de succès/erreur
+ */
+function v3_genererNomPrenomEtID() {
+  try {
+    // Appeler la fonction existante
+    genererNomPrenomEtID();
+
+    return {
+      success: true,
+      message: 'NOM_PRENOM et ID_ELEVE générés avec succès dans tous les onglets sources'
+    };
+  } catch (e) {
+    Logger.log(`Erreur dans v3_genererNomPrenomEtID: ${e.message}`);
+    return {
+      success: false,
+      error: e.message || 'Erreur lors de la génération des NOM_PRENOM et ID_ELEVE'
+    };
+  }
+}
+
+/**
+ * Lit l'onglet _STRUCTURE pour calculer le nombre total de places disponibles
+ * @returns {Object} {success: boolean, totalPlaces: number, classes: Array, error?: string}
+ */
+function v3_getStructureInfo() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const structureSheet = ss.getSheetByName('_STRUCTURE');
+
+    if (!structureSheet) {
+      return {
+        success: false,
+        error: 'Onglet _STRUCTURE non trouvé. Lancez d\'abord l\'initialisation.'
+      };
+    }
+
+    const lastRow = structureSheet.getLastRow();
+    if (lastRow <= 1) {
+      return {
+        success: false,
+        error: 'L\'onglet _STRUCTURE est vide'
+      };
+    }
+
+    // Lire les données (à partir de la ligne 2 jusqu'à la fin)
+    const data = structureSheet.getRange(2, 1, lastRow - 1, 5).getValues();
+
+    let totalPlaces = 0;
+    const classes = [];
+
+    data.forEach(row => {
+      const classe = row[0]; // Colonne A: CLASSE
+      const effectif = parseInt(row[1], 10) || 0; // Colonne B: EFFECTIF
+      const lv2 = row[2]; // Colonne C: LV2
+      const opt = row[3]; // Colonne D: OPT
+      const commentaire = row[4]; // Colonne E: COMMENTAIRE
+
+      if (classe && classe.toString().trim() !== '') {
+        totalPlaces += effectif;
+        classes.push({
+          classe: classe,
+          effectif: effectif,
+          lv2: lv2,
+          opt: opt,
+          commentaire: commentaire
+        });
+      }
+    });
+
+    return {
+      success: true,
+      totalPlaces: totalPlaces,
+      classes: classes,
+      nbClasses: classes.length
+    };
+  } catch (e) {
+    Logger.log(`Erreur dans v3_getStructureInfo: ${e.message}`);
+    return {
+      success: false,
+      error: e.message || 'Erreur lors de la lecture de _STRUCTURE'
+    };
+  }
+}
