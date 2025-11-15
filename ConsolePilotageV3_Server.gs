@@ -52,6 +52,90 @@ function v3_runInitialisation(config) {
 }
 
 /**
+ * Initialise le système avec les données du formulaire INTÉGRÉ
+ * ZÉRO POPUP - Tout est géré via le formulaire de la console
+ *
+ * @param {Object} formData - Les données du formulaire
+ * @param {string} formData.adminPassword - Mot de passe admin
+ * @param {string} formData.niveau - Niveau scolaire (6°, 5°, 4°, 3°)
+ * @param {number} formData.nbSources - Nombre de sources
+ * @param {number} formData.nbDest - Nombre de destinations
+ * @param {string} formData.lv2 - LV2 (séparées par virgules)
+ * @param {string} formData.opt - Options (séparées par virgules)
+ * @returns {Object} {success: boolean, message?: string, error?: string}
+ */
+function v3_runInitializationWithForm(formData) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const config = getConfig();
+
+    // 1. Vérifier le mot de passe
+    if (formData.adminPassword !== config.ADMIN_PASSWORD) {
+      return {
+        success: false,
+        error: "Mot de passe administrateur incorrect"
+      };
+    }
+
+    // 2. Valider les données
+    const niveauxValides = ["6°", "5°", "4°", "3°"];
+    if (!niveauxValides.includes(formData.niveau)) {
+      return {
+        success: false,
+        error: "Niveau invalide. Valeurs acceptées: 6°, 5°, 4°, 3°"
+      };
+    }
+
+    if (formData.nbSources < 1 || formData.nbSources > 20) {
+      return {
+        success: false,
+        error: "Nombre de sources invalide (1-20)"
+      };
+    }
+
+    if (formData.nbDest < 1 || formData.nbDest > 15) {
+      return {
+        success: false,
+        error: "Nombre de destinations invalide (1-15)"
+      };
+    }
+
+    // 3. Nettoyer les LV2 et Options
+    const lv2Array = nettoyerListeInput(formData.lv2);
+    const optArray = nettoyerListeInput(formData.opt);
+
+    Logger.log(`V3 Init - Niveau: ${formData.niveau}`);
+    Logger.log(`V3 Init - Sources: ${formData.nbSources}`);
+    Logger.log(`V3 Init - Destinations: ${formData.nbDest}`);
+    Logger.log(`V3 Init - LV2: ${lv2Array.join(', ')}`);
+    Logger.log(`V3 Init - Options: ${optArray.join(', ')}`);
+
+    // 4. Vérifier si déjà initialisé (silencieux, pas de popup)
+    const structureSheet = ss.getSheetByName(config.SHEETS.STRUCTURE);
+    if (structureSheet) {
+      Logger.log("ATTENTION: Le système est déjà initialisé. Réinitialisation en cours...");
+    }
+
+    // 5. Appeler la fonction d'initialisation principale SANS POPUPS
+    // On appelle directement initialiserSysteme() au lieu de ouvrirInitialisation()
+    initialiserSysteme(formData.niveau, formData.nbSources, formData.nbDest, lv2Array, optArray);
+
+    return {
+      success: true,
+      message: `Système initialisé avec succès pour ${formData.niveau} (${formData.nbSources} sources → ${formData.nbDest} destinations)`
+    };
+
+  } catch (e) {
+    Logger.log(`Erreur dans v3_runInitializationWithForm: ${e.message}`);
+    Logger.log(e.stack);
+    return {
+      success: false,
+      error: e.message || "Erreur lors de l'initialisation"
+    };
+  }
+}
+
+/**
  * ===================================================================
  * PHASE 2 : DIAGNOSTIC
  * ===================================================================

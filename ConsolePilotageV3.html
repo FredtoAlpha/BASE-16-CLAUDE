@@ -1424,6 +1424,27 @@
     <!-- Toast Container -->
     <div class="toast-container" id="toast-container"></div>
 
+    <!-- Bouton de Minimisation/Maximisation Flottant -->
+    <button class="console-toggle-btn" id="console-toggle-btn" onclick="toggleConsoleMinimize()" title="Minimiser/Restaurer la Console">
+        <i class="fas fa-chevron-down"></i>
+    </button>
+
+    <!-- Barre Minimisée (visible quand la console est minimisée) -->
+    <div class="console-minimized-bar">
+        <div class="minimized-bar-content">
+            <div class="minimized-bar-logo">
+                <i class="fas fa-rocket"></i>
+                <div class="minimized-bar-title">Console de Pilotage V3</div>
+            </div>
+            <div class="minimized-bar-status">
+                <div style="color: rgba(255,255,255,0.7); font-size: 14px;">
+                    <i class="fas fa-check-circle" style="color: var(--success); margin-right: 5px;"></i>
+                    Système prêt
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- App Container -->
     <div class="app-container">
 
@@ -1661,6 +1682,28 @@
                             <label style="display: block; font-weight: 700; margin-bottom: var(--space-sm); color: var(--text-primary); font-size: 14px;">Suffixe DEF</label>
                             <input type="text" id="config-def-suffix" value="DEF" style="width: 100%; padding: 12px 16px; border: 2px solid var(--border-light); border-radius: var(--radius-lg); font-size: 15px; font-weight: 500;">
                         </div>
+                    </div>
+                </div>
+
+                <!-- SÉCURITÉ : MOT DE PASSE ADMIN -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fas fa-shield-halved"></i>
+                        </div>
+                        <div>
+                            <h2 class="card-title">🔐 Authentification Administrateur</h2>
+                        </div>
+                    </div>
+                    <div style="max-width: 400px;">
+                        <label style="display: block; font-weight: 700; margin-bottom: var(--space-sm); color: var(--text-primary); font-size: 14px;">
+                            <i class="fas fa-key" style="margin-right: 8px; color: var(--danger);"></i>
+                            Mot de passe Administrateur
+                        </label>
+                        <input type="password" id="config-admin-password" placeholder="Requis pour lancer l'initialisation" style="width: 100%; padding: 12px 16px; border: 2px solid var(--border-light); border-radius: var(--radius-lg); font-size: 15px; font-weight: 500; transition: all var(--transition-base);">
+                        <small style="color: var(--text-secondary); font-size: 12px; margin-top: 4px; display: block;">
+                            🔒 Nécessaire pour valider toute modification de configuration
+                        </small>
                     </div>
                 </div>
 
@@ -1994,6 +2037,33 @@
         }
 
         // ===================================================================
+        // MINIMISATION / MAXIMISATION
+        // ===================================================================
+        function toggleConsoleMinimize() {
+            const isCurrentlyMinimized = document.body.classList.contains('console-minimized');
+
+            if (isCurrentlyMinimized) {
+                // RESTAURER la console
+                document.body.classList.remove('console-minimized');
+                localStorage.setItem('console_v3_minimized', 'false');
+                showToast('info', '📊 Console restaurée');
+            } else {
+                // MINIMISER la console
+                document.body.classList.add('console-minimized');
+                localStorage.setItem('console_v3_minimized', 'true');
+                showToast('info', '📉 Console minimisée - Accès complet à Google Sheets');
+            }
+        }
+
+        // Restaurer l'état de minimisation au chargement
+        function restoreMinimizedState() {
+            const wasMinimized = localStorage.getItem('console_v3_minimized') === 'true';
+            if (wasMinimized) {
+                document.body.classList.add('console-minimized');
+            }
+        }
+
+        // ===================================================================
         // NAVIGATION
         // ===================================================================
         function goToPhase(phaseNum) {
@@ -2254,6 +2324,9 @@
             // Initialize theme
             initTheme();
 
+            // Restore minimized state
+            restoreMinimizedState();
+
             // Theme toggle
             document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
 
@@ -2307,6 +2380,41 @@
             // Mise à jour dynamique du label "Classes Sources"
             configNiveau.addEventListener('change', () => {
                 sourceLabel.textContent = getNiveauSource(configNiveau.value);
+                autoSaveConfig(); // Sauvegarde auto
+            });
+
+            // ===================================================================
+            // SAUVEGARDE AUTOMATIQUE EN TEMPS RÉEL
+            // ===================================================================
+            let autoSaveTimeout;
+
+            function autoSaveConfig() {
+                // Debounce : attendre 500ms après la dernière modification
+                clearTimeout(autoSaveTimeout);
+                autoSaveTimeout = setTimeout(() => {
+                    const config = {
+                        niveau: configNiveau.value,
+                        nbSources: parseInt(configNbSources.value),
+                        nbDest: parseInt(configNbDest.value),
+                        lv2: configLv2.value,
+                        opt: configOpt.value,
+                        maxSwaps: parseInt(configMaxSwaps.value),
+                        parityTolerance: parseInt(configParityTolerance.value),
+                        testSuffix: configTestSuffix.value,
+                        defSuffix: configDefSuffix.value
+                    };
+
+                    // Sauvegarder localement (silencieux, pas de toast)
+                    localStorage.setItem('console_v3_config', JSON.stringify(config));
+                    console.log('✅ Configuration auto-sauvegardée');
+                }, 500);
+            }
+
+            // Ajouter les event listeners pour la sauvegarde auto sur tous les champs
+            [configNiveau, configNbSources, configNbDest, configLv2, configOpt,
+             configMaxSwaps, configParityTolerance, configTestSuffix, configDefSuffix].forEach(field => {
+                field.addEventListener('input', autoSaveConfig);
+                field.addEventListener('change', autoSaveConfig);
             });
 
             // Charger la configuration sauvegardée
@@ -2369,21 +2477,32 @@
 
             // Phase 1: Initialisation (avec données du formulaire)
             document.getElementById('btn-run-initialisation').addEventListener('click', () => {
+                // Récupérer le mot de passe admin
+                const adminPassword = document.getElementById('config-admin-password').value;
+
+                // Validation du mot de passe
+                if (!adminPassword || adminPassword.trim() === '') {
+                    showToast('error', '🔒 Veuillez entrer le mot de passe administrateur');
+                    document.getElementById('config-admin-password').focus();
+                    return;
+                }
+
                 // Récupérer les données du formulaire
-                const config = {
+                const formData = {
+                    adminPassword: adminPassword,
                     niveau: configNiveau.value,
                     nbSources: parseInt(configNbSources.value),
                     nbDest: parseInt(configNbDest.value),
-                    lv2: configLv2.value.split(',').map(s => s.trim().toUpperCase()).filter(Boolean),
-                    opt: configOpt.value.split(',').map(s => s.trim().toUpperCase()).filter(Boolean)
+                    lv2: configLv2.value,
+                    opt: configOpt.value
                 };
 
                 // Validation basique
-                if (config.nbSources < 1 || config.nbSources > 20) {
+                if (formData.nbSources < 1 || formData.nbSources > 20) {
                     showToast('error', 'Le nombre de sources doit être entre 1 et 20');
                     return;
                 }
-                if (config.nbDest < 1 || config.nbDest > 15) {
+                if (formData.nbDest < 1 || formData.nbDest > 15) {
                     showToast('error', 'Le nombre de destinations doit être entre 1 et 15');
                     return;
                 }
@@ -2391,11 +2510,11 @@
                 updatePhaseStatus(1, 'active');
                 showLoading('Initialisation en cours...');
 
-                // Sauvegarder automatiquement avant l'initialisation
+                // Sauvegarder automatiquement avant l'initialisation (SANS le mot de passe)
                 localStorage.setItem('console_v3_config', JSON.stringify({
-                    niveau: config.niveau,
-                    nbSources: config.nbSources,
-                    nbDest: config.nbDest,
+                    niveau: formData.niveau,
+                    nbSources: formData.nbSources,
+                    nbDest: formData.nbDest,
                     lv2: configLv2.value,
                     opt: configOpt.value,
                     maxSwaps: parseInt(configMaxSwaps.value),
@@ -2404,12 +2523,13 @@
                     defSuffix: configDefSuffix.value
                 }));
 
+                // Appeler la NOUVELLE fonction backend sans popups
                 google.script.run
                     .withSuccessHandler(response => {
                         hideLoading();
                         if (response.success) {
                             updatePhaseStatus(1, 'completed');
-                            showToast('success', 'Initialisation terminée avec succès !');
+                            showToast('success', '✅ Initialisation terminée avec succès !');
                             showAlert('success', response.message || 'Le système a été initialisé avec succès. Vous pouvez passer au diagnostic.');
                         } else {
                             updatePhaseStatus(1, 'error');
