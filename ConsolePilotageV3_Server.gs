@@ -20,23 +20,28 @@
  */
 
 /**
- * Wrapper pour ouvrirInitialisation() qui retourne un objet de succès
- * La fonction originale affiche des dialogs UI et ne retourne rien.
+ * Lance l'initialisation complète à partir des données de la console.
+ * Remplace l'ancienne fonction `ouvrirInitialisation`.
  *
- * ⚠️ DEPRECATED : Utilisez v3_runInitializationWithForm() à la place
- *
+ * @param {Object} config - L'objet de configuration venant du frontend.
  * @returns {Object} {success: boolean, message?: string, error?: string}
  */
-function v3_runInitialisation() {
+function v3_runInitialisation(config) {
   try {
-    // Appeler la fonction d'initialisation originale
-    ouvrirInitialisation();
+    // Valider la configuration reçue
+    if (!config || !config.niveau || !config.nbSources || !config.nbDest || !config.lv2 || !config.opt) {
+      throw new Error("La configuration reçue est incomplète.");
+    }
 
-    // Si aucune exception n'est levée, on considère que c'est un succès
-    return {
-      success: true,
-      message: "Initialisation lancée avec succès. Veuillez suivre les étapes dans les boîtes de dialogue."
-    };
+    // Appeler la fonction d'initialisation principale avec les données de la console
+    return initialiserSysteme(
+      config.niveau,
+      config.nbSources,
+      config.nbDest,
+      config.lv2,
+      config.opt
+    );
+
   } catch (e) {
     Logger.log(`Erreur dans v3_runInitialisation: ${e.message}`);
     return {
@@ -276,9 +281,7 @@ function ouvrirConsolePilotageV3() {
     .setHeight(900)
     .setTitle('Console de Pilotage V3 - Expert Edition');
 
-  // UTILISE showModelessDialog au lieu de showModalDialog
-  // Cela permet de ne PAS bloquer l'accès à Google Sheets !
-  SpreadsheetApp.getUi().showModelessDialog(html, '🚀 Console de Pilotage V3 - Non-Bloquante');
+  SpreadsheetApp.getUi().showModelessDialog(html, 'Console de Pilotage V3');
 }
 
 /**

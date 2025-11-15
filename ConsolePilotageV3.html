@@ -2543,11 +2543,38 @@
                         showToast('error', 'Erreur lors de l\'initialisation');
                         showAlert('error', error.message);
                     })
-                    .v3_runInitializationWithForm(formData);
+                    .v3_runInitialisation(config);
+            });
+
+            // Sauvegarde automatique lors de la modification d'un champ
+            const configFields = [
+                configNiveau, configNbSources, configNbDest, configLv2, configOpt,
+                configMaxSwaps, configParityTolerance, configTestSuffix, configDefSuffix
+            ];
+
+            configFields.forEach(field => {
+                field.addEventListener('input', () => {
+                    const config = {
+                        niveau: configNiveau.value,
+                        nbSources: parseInt(configNbSources.value),
+                        nbDest: parseInt(configNbDest.value),
+                        lv2: configLv2.value,
+                        opt: configOpt.value,
+                        maxSwaps: parseInt(configMaxSwaps.value),
+                        parityTolerance: parseInt(configParityTolerance.value),
+                        testSuffix: configTestSuffix.value,
+                        defSuffix: configDefSuffix.value
+                    };
+                    localStorage.setItem('console_v3_config', JSON.stringify(config));
+                    showToast('info', '💾 brouillon sauvegardé...');
+                });
             });
 
             // Charger la configuration au démarrage
             loadSavedConfig();
+
+            // Initialiser le label source dès le début
+            sourceLabel.textContent = getNiveauSource(configNiveau.value);
 
             // Phase 2: Diagnostic
             document.getElementById('btn-run-diagnostics').addEventListener('click', () => {
