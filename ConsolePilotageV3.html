@@ -1424,20 +1424,17 @@
     <!-- Toast Container -->
     <div class="toast-container" id="toast-container"></div>
 
-    <!-- Bandeau d'instructions NON-BLOQUANT -->
-    <div style="position: fixed; top: 0; left: 0; right: 0; background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 12px 20px; z-index: 100000; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 15px; font-size: 14px; font-weight: 600;">
-        <i class="fas fa-info-circle" style="font-size: 24px;"></i>
+    <!-- Bandeau d'instructions COMPACT -->
+    <div id="info-banner" style="position: fixed; top: 0; left: 0; right: 0; background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 8px 20px; z-index: 100000; box-shadow: 0 2px 10px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 12px; font-size: 13px; font-weight: 600;">
+        <i class="fas fa-info-circle" style="font-size: 18px;"></i>
         <div style="flex: 1;">
-            ✅ <strong>CONSOLE NON-BLOQUANTE</strong> : Vous pouvez cliquer sur Google Sheets pendant que cette fenêtre est ouverte !
-            Déplacez-la sur le côté droit de votre écran avec votre souris. Redimensionnez-la en tirant les bords.
+            <strong>Interface NON-BLOQUANTE</strong> : Cliquez sur Google Sheets derrière. <strong>Redimensionnez</strong> cette fenêtre avec les bords (↔️).
         </div>
-        <button onclick="this.parentElement.style.display='none'" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
-            J'ai compris
-        </button>
+        <button onclick="document.getElementById('info-banner').style.display='none'" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 12px;">✕</button>
     </div>
 
-    <!-- App Container avec marge pour le bandeau -->
-    <div class="app-container" style="margin-top: 60px;">
+    <!-- App Container avec marge réduite -->
+    <div class="app-container" style="margin-top: 42px;">
 
         <!-- =====================================================================
          * SIDEBAR - Left Navigation
@@ -1713,6 +1710,38 @@
                     <p style="margin-top: var(--space-md); font-size: 13px; color: var(--text-secondary); text-align: center;">
                         💾 La configuration est automatiquement sauvegardée dans votre navigateur et dans la feuille _CONFIG
                     </p>
+                </div>
+            </div>
+
+            <!-- ÉTAPE INTERMÉDIAIRE : CONSOLIDATION -->
+            <div id="phase-1-5" class="phase" style="display: none;">
+                <div class="content-header">
+                    <h1 class="page-title">📋 Étape 1.5 : Consolidation des Données</h1>
+                    <p class="page-subtitle">⚠️ <strong style="color: #f59e0b;">IMPORTANT</strong> : Remplissez d'abord vos onglets sources avec les données élèves !</p>
+                </div>
+
+                <div class="card" style="background: linear-gradient(135deg, #fffbeb, #fef3c7); border: 2px solid #f59e0b;">
+                    <div class="card-header">
+                        <div class="card-icon" style="background: #f59e0b;">
+                            <i class="fas fa-clipboard-check" style="color: white;"></i>
+                        </div>
+                        <div>
+                            <h2 class="card-title" style="color: #92400e;">Instructions Obligatoires</h2>
+                        </div>
+                    </div>
+                    <div style="padding: 20px; background: white; border-radius: 8px; margin: 20px 0;">
+                        <h3 style="color: #92400e; margin-bottom: 15px;">📝 AVANT de consolider :</h3>
+                        <ol style="color: #78350f; line-height: 2; padding-left: 25px; font-weight: 600;">
+                            <li>Ouvrez <strong>vos onglets sources</strong> dans Google Sheets (derrière cette fenêtre)</li>
+                            <li>Remplissez les colonnes : <strong>NOM, Prénom, SEXE, LV2, Options</strong>, etc.</li>
+                            <li>Vérifiez que tous les élèves sont saisis</li>
+                            <li>Revenez ici et cliquez sur <strong>"Consolider les Données"</strong></li>
+                        </ol>
+                    </div>
+                    <button id="btn-consolidate" class="btn btn-primary" style="width: 100%; background: #f59e0b; font-size: 16px; padding: 16px;">
+                        <i class="btn-icon fas fa-database"></i>
+                        <span>Consolider les Données Sources → CONSOLIDATION</span>
+                    </button>
                 </div>
             </div>
 
@@ -2521,7 +2550,13 @@
                         if (response.success) {
                             updatePhaseStatus(1, 'completed');
                             showToast('success', '✅ Initialisation terminée avec succès !');
-                            showAlert('success', response.message || 'Le système a été initialisé avec succès. Vous pouvez passer au diagnostic.');
+
+                            // AFFICHER LA PHASE DE CONSOLIDATION
+                            document.querySelectorAll('.phase').forEach(p => p.classList.remove('active'));
+                            document.getElementById('phase-1-5').style.display = 'block';
+                            document.getElementById('phase-1-5').classList.add('active');
+
+                            showAlert('success', `✅ ${response.message || 'Système initialisé !'}\n\n📋 ÉTAPE SUIVANTE : Remplissez vos onglets sources dans Google Sheets, puis revenez ici pour consolider les données.`);
                         } else {
                             updatePhaseStatus(1, 'error');
                             showToast('error', 'Erreur lors de l\'initialisation');
@@ -2539,6 +2574,38 @@
 
             // Charger la configuration au démarrage
             loadSavedConfig();
+
+            // Phase 1.5: CONSOLIDATION
+            document.getElementById('btn-consolidate').addEventListener('click', () => {
+                showLoading('Consolidation des données en cours...');
+
+                google.script.run
+                    .withSuccessHandler(response => {
+                        hideLoading();
+                        if (response.success) {
+                            showToast('success', '✅ Consolidation terminée !');
+                            showAlert('success', response.message || 'Les données ont été consolidées avec succès.');
+
+                            // Afficher la phase 2 (Diagnostic)
+                            document.querySelectorAll('.phase').forEach(p => p.classList.remove('active'));
+                            document.getElementById('phase-2').classList.add('active');
+
+                            // Mettre à jour les métriques si disponibles
+                            if (response.stats && response.stats.nbEleves) {
+                                updateMetrics({ students: response.stats.nbEleves });
+                            }
+                        } else {
+                            showToast('error', 'Erreur lors de la consolidation');
+                            showAlert('error', response.error || 'Une erreur est survenue lors de la consolidation.');
+                        }
+                    })
+                    .withFailureHandler(error => {
+                        hideLoading();
+                        showToast('error', 'Erreur lors de la consolidation');
+                        showAlert('error', error.message);
+                    })
+                    .v3_runConsolidation();
+            });
 
             // Phase 2: Diagnostic
             document.getElementById('btn-run-diagnostics').addEventListener('click', () => {

@@ -138,6 +138,56 @@ function v3_runInitializationWithForm(formData) {
 
 /**
  * ===================================================================
+ * PHASE 1.5 : CONSOLIDATION
+ * ===================================================================
+ */
+
+/**
+ * Consolide les données sources vers CONSOLIDATION SANS POPUPS
+ * @returns {Object} {success: boolean, message?: string, error?: string, stats?: Object}
+ */
+function v3_runConsolidation() {
+  try {
+    Logger.log('V3 Consolidation - Début...');
+
+    // Appeler la fonction de consolidation existante
+    const result = consoliderDonnees();
+
+    // Si la fonction retourne une erreur (string), c'est un échec
+    if (typeof result === 'string' && (result.includes('problème') || result.includes('Aucun'))) {
+      return {
+        success: false,
+        error: result
+      };
+    }
+
+    // Compter les élèves consolidés
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const consolidationSheet = ss.getSheetByName('CONSOLIDATION');
+    const nbEleves = consolidationSheet ? consolidationSheet.getLastRow() - 1 : 0;
+
+    Logger.log(`V3 Consolidation - ${nbEleves} élèves consolidés`);
+
+    return {
+      success: true,
+      message: `✅ Consolidation réussie : ${nbEleves} élèves consolidés dans l'onglet CONSOLIDATION`,
+      stats: {
+        nbEleves: nbEleves
+      }
+    };
+
+  } catch (e) {
+    Logger.log(`Erreur dans v3_runConsolidation: ${e.message}`);
+    Logger.log(e.stack);
+    return {
+      success: false,
+      error: e.message || "Erreur lors de la consolidation"
+    };
+  }
+}
+
+/**
+ * ===================================================================
  * PHASE 2 : DIAGNOSTIC
  * ===================================================================
  */
