@@ -220,24 +220,86 @@ function v3_runDiagnostics() {
  */
 
 /**
- * Wrapper pour legacy_runFullPipeline() qui retourne un objet de succès
- * La fonction originale affiche des alerts et lance le pipeline sans retourner de valeur.
+ * Génération des classes TEST SANS POPUPS
+ * Version optimisée de legacy_runFullPipeline() sans ui.alert
  *
- * @returns {Object} {success: boolean, message?: string, error?: string}
+ * @returns {Object} {success: boolean, message?: string, error?: string, stats?: Object}
  */
 function v3_runGeneration() {
   try {
-    // La fonction originale gère sa propre confirmation via UI.alert
-    // et affiche des toasts pour le feedback
-    legacy_runFullPipeline();
+    const startTime = new Date();
+    Logger.log('V3 Génération - Début...');
+
+    // Construire le contexte LEGACY
+    const ctx = typeof makeCtxFromSourceSheets_ === 'function'
+      ? makeCtxFromSourceSheets_()
+      : null;
+    if (!ctx) throw new Error('makeCtxFromSourceSheets_() non trouvée');
+
+    // Créer les onglets TEST
+    if (typeof initEmptyCacheTabs_ === 'function') {
+      initEmptyCacheTabs_(ctx);
+    } else {
+      throw new Error('initEmptyCacheTabs_() non trouvée');
+    }
+
+    // Phase 1 - Options & LV2
+    if (typeof Phase1I_dispatchOptionsLV2_ === 'function') {
+      Phase1I_dispatchOptionsLV2_(ctx);
+    } else {
+      throw new Error('Phase1I_dispatchOptionsLV2_() non trouvée');
+    }
+
+    // Phase 2 - ASSO/DISSO
+    if (typeof Phase2I_applyDissoAsso_ === 'function') {
+      Phase2I_applyDissoAsso_(ctx);
+    } else {
+      throw new Error('Phase2I_applyDissoAsso_() non trouvée');
+    }
+
+    // Phase 3 - Effectifs & Parité
+    if (typeof Phase3I_completeAndParity_ === 'function') {
+      Phase3I_completeAndParity_(ctx);
+    } else {
+      throw new Error('Phase3I_completeAndParity_() non trouvée');
+    }
+
+    // Phase 4 - Équilibrage Scores
+    if (typeof Phase4_balanceScoresSwaps_ === 'function') {
+      Phase4_balanceScoresSwaps_(ctx);
+    } else {
+      throw new Error('Phase4_balanceScoresSwaps_() non trouvée');
+    }
+
+    // Finalisation
+    if (typeof finalizeTestSheets_ === 'function') {
+      try {
+        finalizeTestSheets_(ctx);
+      } catch (e) {
+        Logger.log('⚠️ Erreur finalisation TEST : ' + e.message);
+      }
+    }
+
+    const duration = ((new Date() - startTime) / 1000).toFixed(1);
+
+    // Compter les onglets TEST créés
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const testSheets = ss.getSheets().filter(s => s.getName().endsWith('TEST'));
+
+    Logger.log(`V3 Génération - Terminé en ${duration}s - ${testSheets.length} onglets TEST`);
 
     // Si aucune exception n'est levée, on considère que c'est un succès
     return {
       success: true,
-      message: "Génération des classes lancée. Le processus peut prendre 2-5 minutes."
+      message: `✅ Génération terminée en ${duration}s - ${testSheets.length} onglet(s) TEST créé(s)`,
+      stats: {
+        duration: duration,
+        nbOngletsTest: testSheets.length
+      }
     };
   } catch (e) {
     Logger.log(`Erreur dans v3_runGeneration: ${e.message}`);
+    Logger.log(e.stack);
     return {
       success: false,
       error: e.message || "Erreur lors de la génération des classes"
