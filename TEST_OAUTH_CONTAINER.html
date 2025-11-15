@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Conteneur OAuth</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+<h1 style="padding: 20px; font-size: 24px; font-weight: bold;">Test du Conteneur OAuth</h1>
+<p style="padding: 20px; color: #666;">Cliquez sur le bouton ci-dessous pour afficher le conteneur OAuth:</p>
+
+<button onclick="testOAuth()" style="padding: 10px 20px; margin: 20px; background-color: #3b82f6; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">
+  Tester le mode OAuth
+</button>
+
+<!-- CONTENEUR OAUTH DE SECOURS -->
+<div id="oauthContainer" class="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 z-[999999] hidden">
+  <div class="text-center">
+    <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 mb-6 shadow-lg animate-pulse">
+      <i class="fas fa-lock text-3xl text-white"></i>
+    </div>
+    <h1 class="text-3xl font-bold text-gray-800 mb-2">Authentification Google</h1>
+    <p class="text-gray-600 text-lg mb-8">En attente de votre autorisation...</p>
+    <div class="flex justify-center mb-6">
+      <div class="w-12 h-12 border-4 border-gray-200 border-t-indigo-600 rounded-full animate-spin"></div>
+    </div>
+    <div class="bg-white rounded-lg p-4 shadow-md max-w-sm">
+      <p class="text-sm text-gray-600">
+        <i class="fas fa-info-circle text-blue-500 mr-2"></i>
+        Une fenêtre d'authentification doit s'ouvrir.
+      </p>
+    </div>
+    
+    <!-- Bouton de fermeture pour le test -->
+    <button onclick="closeOAuth()" style="margin-top: 30px; padding: 10px 20px; background-color: #888; color: white; border: none; border-radius: 5px; cursor: pointer;">
+      Fermer le test
+    </button>
+  </div>
+</div>
+
+<script>
+function testOAuth() {
+  var container = document.getElementById('oauthContainer');
+  container.classList.remove('hidden');
+  console.log('[INFO] Conteneur OAuth affiche');
+}
+
+function closeOAuth() {
+  var container = document.getElementById('oauthContainer');
+  container.classList.add('hidden');
+  console.log('[INFO] Conteneur OAuth cache');
+}
+</script>
+
+<div style="padding: 20px; background-color: #f0f0f0; margin: 20px; border-radius: 5px;">
+  <h2 style="font-weight: bold; margin-bottom: 10px;">Informations du test:</h2>
+  <ul style="list-style: disc; margin-left: 20px;">
+    <li>Cet écran teste l'affichage du conteneur OAuth</li>
+    <li>Dans InterfaceV2.html, ce conteneur s'affiche automatiquement en mode OAuth</li>
+    <li>La classe CSS "hidden" le masque/affiche avec Tailwind CSS</li>
+    <li>Le z-index 999999 place l'écran au-dessus de tout le contenu</li>
+  </ul>
+</div>
+
+</body>
+</html>

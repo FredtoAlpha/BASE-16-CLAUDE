@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,500,700&display=swap" rel="stylesheet">
+  <style>
+    /* ===== STYLES DE BASE ===== */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Roboto', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      margin: 0;
+      padding: 0;
+      color: #222;
+      min-width: 320px;
+      max-width: 450px;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ===== HEADER ===== */
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 5px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .header p {
+      font-size: 13px;
+      opacity: 0.95;
+      margin-top: 5px;
+    }
+
+    /* ===== CONTAINER PRINCIPAL ===== */
+    .main-container {
+      height: calc(100vh - 100px);
+      overflow-y: auto;
+      padding: 15px 10px;
+      background: #f4f6fb;
+    }
+
+    .main-container::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .main-container::-webkit-scrollbar-track {
+      background: #e0e0e0;
+    }
+
+    .main-container::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 4px;
+    }
+
+    .main-container::-webkit-scrollbar-thumb:hover {
+      background: #555;
+    }
+
+    /* ===== ACCORDÉONS (SECTIONS) ===== */
+    .accordion-section {
+      margin-bottom: 12px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      background: #fff;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .accordion-section:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      padding: 16px 20px;
+      cursor: pointer;
+      transition: all 0.3s;
+      color: white;
+      user-select: none;
+    }
+
+    .section-header:active {
+      transform: scale(0.98);
+    }
+
+    .section-icon {
+      margin-right: 12px;
+      font-size: 24px;
+    }
+
+    .section-title {
+      flex: 1;
+      font-weight: 500;
+      font-size: 15px;
+    }
+
+    .section-expand {
+      transition: transform 0.3s ease;
+      font-size: 20px;
+    }
+
+    .accordion-section.expanded .section-expand {
+      transform: rotate(180deg);
+    }
+
+    /* Couleurs par section */
+    #init-section .section-header { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+    #config-section .section-header { background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%); }
+    #data-section .section-header { background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); }
+    #pipeline-section .section-header { background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%); }
+    #tools-section .section-header { background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%); }
+    #final-section .section-header { background: linear-gradient(135deg, #f44336 0%, #D32F2F 100%); }
+
+    /* Contenu accordéon */
+    .section-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      padding: 0 20px;
+      background: #fff;
+    }
+
+    .accordion-section.expanded .section-content {
+      max-height: 1200px;
+      padding: 20px;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    /* ===== BOUTONS ===== */
+    .btn {
+      width: 100%;
+      padding: 12px 16px;
+      margin-bottom: 10px;
+      border: none;
+      border-radius: 6px;
+      font-family: 'Roboto', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      text-transform: none;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    .btn-icon {
+      margin-right: 8px;
+      font-size: 18px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+      color: white;
+    }
+
+    .btn-warning {
+      background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+      color: white;
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #f44336 0%, #D32F2F 100%);
+      color: white;
+    }
+
+    .btn-info {
+      background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+      color: white;
+    }
+
+    .btn-purple {
+      background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: #e0e0e0;
+      color: #555;
+    }
+
+    .btn-secondary:hover {
+      background: #d5d5d5;
+    }
+
+    /* ===== DIVIDER ===== */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #e0e0e0, transparent);
+      margin: 15px 0;
+    }
+
+    /* ===== INFO BOX ===== */
+    .info-box {
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 15px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .info-box.info {
+      background: #e3f2fd;
+      border-left: 4px solid #2196F3;
+      color: #1565C0;
+    }
+
+    .info-box.success {
+      background: #e8f5e9;
+      border-left: 4px solid #4CAF50;
+      color: #2E7D32;
+    }
+
+    .info-box.warning {
+      background: #fff3e0;
+      border-left: 4px solid #FF9800;
+      color: #E65100;
+    }
+
+    /* ===== SPINNER ===== */
+    .spinner-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+
+    .spinner-overlay.active {
+      display: flex;
+    }
+
+    .spinner {
+      border: 4px solid rgba(255,255,255,0.3);
+      border-top: 4px solid white;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+    }
+
+    .spinner-text {
+      color: white;
+      margin-top: 20px;
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* ===== PROGRESS BAR ===== */
+    .progress-container {
+      display: none;
+      margin: 15px 0;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background: #e0e0e0;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      width: 0%;
+      transition: width 0.3s;
+    }
+
+    .progress-text {
+      font-size: 12px;
+      color: #666;
+      margin-top: 5px;
+      text-align: center;
+    }
+
+    /* ===== FORMULAIRES ===== */
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #555;
+      margin-bottom: 6px;
+    }
+
+    .form-input,
+    .form-select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-family: 'Roboto', sans-serif;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+
+    .form-input:focus,
+    .form-select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    /* ===== CHECKBOX GROUP ===== */
+    .checkbox-group {
+      margin: 15px 0;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      padding: 8px 0;
+    }
+
+    .checkbox-item input[type="checkbox"] {
+      margin-right: 10px;
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    .checkbox-item label {
+      cursor: pointer;
+      font-size: 14px;
+      flex: 1;
+    }
+
+    /* ===== BADGE ===== */
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 500;
+      margin-left: 8px;
+    }
+
+    .badge-new {
+      background: #4CAF50;
+      color: white;
+    }
+
+    .badge-legacy {
+      background: #FF9800;
+      color: white;
+    }
+
+    .badge-count {
+      background: #2196F3;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <!-- HEADER -->
+  <div class="header">
+    <h1>🎯 Panneau de Contrôle</h1>
+    <p>Gestion complète BASE-15 + LEGACY</p>
+  </div>
+
+  <!-- SPINNER OVERLAY -->
+  <div class="spinner-overlay" id="spinner">
+    <div class="spinner"></div>
+    <div class="spinner-text" id="spinner-text">Traitement en cours...</div>
+  </div>
+
+  <!-- MAIN CONTAINER -->
+  <div class="main-container">
+
+    <!-- ===== SECTION 1: INITIALISATION ===== -->
+    <div class="accordion-section" id="init-section">
+      <div class="section-header" onclick="toggleSection('init-section')">
+        <span class="section-icon material-icons">rocket_launch</span>
+        <span class="section-title">Initialisation<span class="badge badge-new">NOUVEAU</span></span>
+        <span class="section-expand material-icons">expand_more</span>
+      </div>
+      <div class="section-content">
+        <div class="info-box info">
+          <strong>🏗️ Créer un nouveau fichier de zéro</strong><br>
+          Crée automatiquement : onglets sources (6°1, 6°2...), _CONFIG, _STRUCTURE, _JOURNAL, _BACKUP
+        </div>
+
+        <button class="btn btn-success" onclick="lancerInitialisation()">
+          <span class="btn-icon material-icons">add_circle</span>
+          Initialiser Système Complet
+        </button>
+
+        <div class="divider"></div>
+
+        <div class="form-group">
+          <label class="form-label">Niveau :</label>
+          <select class="form-select" id="init-niveau">
+            <option value="6">6ème</option>
+            <option value="5">5ème</option>
+            <option value="4">4ème</option>
+            <option value="3">3ème</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Nombre de classes sources :</label>
+          <input type="number" class="form-input" id="init-nb-sources" value="3" min="1" max="12">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Nombre de classes destination :</label>
+          <input type="number" class="form-input" id="init-nb-dest" value="3" min="1" max="12">
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SECTION 2: CONFIGURATION ===== -->
+    <div class="accordion-section" id="config-section">
+      <div class="section-header" onclick="toggleSection('config-section')">
+        <span class="section-icon material-icons">settings</span>
+        <span class="section-title">Configuration</span>
+        <span class="section-expand material-icons">expand_more</span>
+      </div>
+      <div class="section-content">
+        <div class="info-box info">
+          <strong>⚙️ Gestion _STRUCTURE et _CONFIG</strong><br>
+          Configurez les capacités, quotas options (ITA, ESP, LATIN...) pour chaque classe
+        </div>
+
+        <button class="btn btn-primary" onclick="ouvrirConfigurationStructure()">
+          <span class="btn-icon material-icons">table_chart</span>
+          Ouvrir _STRUCTURE
+        </button>
+
+        <button class="btn btn-primary" onclick="ouvrirConfigComplete()">
+          <span class="btn-icon material-icons">tune</span>
+          Configuration Complète
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== SECTION 3: PRÉPARATION DONNÉES ===== -->
+    <div class="accordion-section" id="data-section">
+      <div class="section-header" onclick="toggleSection('data-section')">
+        <span class="section-icon material-icons">data_object</span>
+        <span class="section-title">Préparation Données<span class="badge badge-new">NOUVEAU</span></span>
+        <span class="section-expand material-icons">expand_more</span>
+      </div>
+      <div class="section-content">
+        <div class="info-box warning">
+          <strong>⚠️ À exécuter dans l'ordre</strong><br>
+          1. Générer ID → 2. Listes déroulantes → 3. Consolider (optionnel) → 4. COMPTER
+        </div>
+
+        <button class="btn btn-info" onclick="genererNomPrenomID()">
+          <span class="btn-icon material-icons">badge</span>
+          1. Générer NOM_PRENOM & ID
+        </button>
+
+        <button class="btn btn-info" onclick="ajouterListesDeroulantes()">
+          <span class="btn-icon material-icons">list</span>
+          2. Ajouter Listes Déroulantes
+        </button>
+
+        <div class="divider"></div>
+
+        <button class="btn btn-secondary" onclick="consoliderDonnees()">
+          <span class="btn-icon material-icons">merge</span>
+          Consolider Sources
+        </button>
+
+        <button class="btn btn-secondary" onclick="verifierDonnees()">
+          <span class="btn-icon material-icons">verified</span>
+          Vérifier Données
+        </button>
+
+        <div class="divider"></div>
+
+        <button class="btn btn-purple" onclick="compterSources()">
+          <span class="btn-icon material-icons">calculate</span>
+          COMPTER Sources
+        </button>
+
+        <button class="btn btn-purple" onclick="compterTest()">
+          <span class="btn-icon material-icons">calculate</span>
+          COMPTER Test
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== SECTION 4: PIPELINE LEGACY ===== -->
+    <div class="accordion-section expanded" id="pipeline-section">
+      <div class="section-header" onclick="toggleSection('pipeline-section')">
+        <span class="section-icon material-icons">account_tree</span>
+        <span class="section-title">Pipeline LEGACY<span class="badge badge-legacy">PHASES 1-4</span></span>
+        <span class="section-expand material-icons">expand_more</span>
+      </div>
+      <div class="section-content">
+        <div class="info-box success">
+          <strong>✅ Pipeline Complet</strong><br>
+          Crée les onglets TEST (6°1TEST, 6°2TEST...) en lançant les 4 phases LEGACY
+        </div>
+
+        <button class="btn btn-warning" onclick="lancerPipelineLEGACY()">
+          <span class="btn-icon material-icons">play_arrow</span>
+          ▶️ Lancer Pipeline Complet
+        </button>
+
+        <div class="divider"></div>
+
+        <div class="info-box info">
+          <strong>Phases individuelles :</strong>
+        </div>
+
+        <button class="btn btn-secondary" onclick="lancerPhase1()">
+          <span class="btn-icon material-icons">filter_1</span>
+          Phase 1 - Options & LV2
+        </button>
+
+        <button class="btn btn-secondary" onclick="lancerPhase2()">
+          <span class="btn-icon material-icons">filter_2</span>
+          Phase 2 - ASSO/DISSO
+        </button>
+
+        <button class="btn btn-secondary" onclick="lancerPhase3()">
+          <span class="btn-icon material-icons">filter_3</span>
+          Phase 3 - Effectifs & Parité
+        </button>
+
+        <button class="btn btn-secondary" onclick="lancerPhase4()">
+          <span class="btn-icon material-icons">filter_4</span>
+          Phase 4 - Équilibrage Scores
+        </button>
+
+        <div class="divider"></div>
+
+        <button class="btn btn-info" onclick="voirResultatsTEST()">
+          <span class="btn-icon material-icons">visibility</span>
+          Voir Résultats TEST
+        </button>
+
+        <!-- Progress -->
+        <div class="progress-container" id="pipeline-progress">
+          <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+          <div class="progress-text" id="progress-text">Phase 1/4...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SECTION 5: OUTILS AVANCÉS ===== -->
+    <div class="accordion-section" id="tools-section">
+      <div class="section-header" onclick="toggleSection('tools-section')">
+        <span class="section-icon material-icons">build</span>
+        <span class="section-title">Outils Avancés</span>
+        <span class="section-expand material-icons">expand_more</span>
+      </div>
+      <div class="section-content">
+        <button class="btn btn-primary" onclick="showInterfaceV2()">
+          <span class="btn-icon material-icons">dashboard</span>
+          Interface Répartition V2
+        </button>
+
+        <button class="btn btn-primary" onclick="showOptimizationPanel()">
+          <span class="btn-icon material-icons">tune</span>
+          Panneau Optimisation
+        </button>
+
+        <button class="btn btn-purple" onclick="showGroupsModule()">
+          <span class="btn-icon material-icons">groups</span>
+          Groupes de Besoin
+        </button>
+
+        <button class="btn btn-info" onclick="showAnalytics()">
+          <span class="btn-icon material-icons">analytics</span>
+          Analytics & Stats
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== SECTION 6: FINALISATION ===== -->
+    <div class="accordion-section" id="final-section">
+      <div class="section-header" onclick="toggleSection('final-section')">
+        <span class="section-icon material-icons">check_circle</span>
+        <span class="section-title">Finalisation</span>
+        <span class="section-expand material-icons">expand_more</span>
+      </div>
+      <div class="section-content">
+        <div class="info-box success">
+          <strong>🎉 Dernières étapes</strong><br>
+          Export, validation finale, et archivage
+        </div>
+
+        <button class="btn btn-success" onclick="showFinalisationUI()">
+          <span class="btn-icon material-icons">done_all</span>
+          Finalisation & Export
+        </button>
+
+        <button class="btn btn-danger" onclick="showSystemLogs()">
+          <span class="btn-icon material-icons">description</span>
+          Logs Système
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== SCRIPTS ===== -->
+  <script>
+    // Toggle accordion sections
+    function toggleSection(sectionId) {
+      const section = document.getElementById(sectionId);
+      section.classList.toggle('expanded');
+    }
+
+    // Show/hide spinner
+    function showSpinner(text) {
+      document.getElementById('spinner-text').textContent = text || 'Traitement en cours...';
+      document.getElementById('spinner').classList.add('active');
+    }
+
+    function hideSpinner() {
+      document.getElementById('spinner').classList.remove('active');
+    }
+
+    // Show progress
+    function showProgress(percent, text) {
+      document.getElementById('pipeline-progress').style.display = 'block';
+      document.getElementById('progress-fill').style.width = percent + '%';
+      document.getElementById('progress-text').textContent = text;
+    }
+
+    function hideProgress() {
+      document.getElementById('pipeline-progress').style.display = 'none';
+    }
+
+    // Alert helper
+    function showAlert(message, type = 'info') {
+      alert(message);
+    }
+
+    // ===== SECTION 1: INITIALISATION =====
+    function lancerInitialisation() {
+      const niveau = document.getElementById('init-niveau').value;
+      const nbSources = document.getElementById('init-nb-sources').value;
+      const nbDest = document.getElementById('init-nb-dest').value;
+
+      if (confirm(`Initialiser le système ?\n\nNiveau : ${niveau}°\nClasses sources : ${nbSources}\nClasses destination : ${nbDest}`)) {
+        showSpinner('Initialisation du système...');
+        google.script.run
+          .withSuccessHandler(function(result) {
+            hideSpinner();
+            showAlert('✅ Système initialisé avec succès !\n\n' + result, 'success');
+          })
+          .withFailureHandler(function(error) {
+            hideSpinner();
+            showAlert('❌ Erreur : ' + error, 'error');
+          })
+          .ouvrirInitialisation();
+      }
+    }
+
+    // ===== SECTION 2: CONFIGURATION =====
+    function ouvrirConfigurationStructure() {
+      showSpinner('Ouverture _STRUCTURE...');
+      google.script.run
+        .withSuccessHandler(hideSpinner)
+        .withFailureHandler(function(error) {
+          hideSpinner();
+          showAlert('❌ Erreur : ' + error, 'error');
+        })
+        .ouvrirConfigurationStructure();
+    }
+
+    function ouvrirConfigComplete() {
+      google.script.run.ouvrirConfigurationComplete();
+    }
+
+    // ===== SECTION 3: PRÉPARATION DONNÉES =====
+    function genererNomPrenomID() {
+      if (confirm('Générer NOM_PRENOM et ID_ELEVE pour tous les élèves ?')) {
+        showSpinner('Génération ID en cours...');
+        google.script.run
+          .withSuccessHandler(function(result) {
+            hideSpinner();
+            showAlert('✅ ' + result, 'success');
+          })
+          .withFailureHandler(function(error) {
+            hideSpinner();
+            showAlert('❌ Erreur : ' + error, 'error');
+          })
+          .genererNomPrenomEtID();
+      }
+    }
+
+    function ajouterListesDeroulantes() {
+      if (confirm('Ajouter les listes déroulantes et formatage conditionnel ?')) {
+        showSpinner('Ajout listes déroulantes...');
+        google.script.run
+          .withSuccessHandler(function(result) {
+            hideSpinner();
+            showAlert('✅ ' + result, 'success');
+          })
+          .withFailureHandler(function(error) {
+            hideSpinner();
+            showAlert('❌ Erreur : ' + error, 'error');
+          })
+          .ajouterListesDeroulantes();
+      }
+    }
+
+    function consoliderDonnees() {
+      if (confirm('Consolider toutes les sources vers CONSOLIDATION ?')) {
+        showSpinner('Consolidation en cours...');
+        google.script.run
+          .withSuccessHandler(function(result) {
+            hideSpinner();
+            showAlert('✅ ' + result, 'success');
+          })
+          .withFailureHandler(function(error) {
+            hideSpinner();
+            showAlert('❌ Erreur : ' + error, 'error');
+          })
+          .consoliderDonnees();
+      }
+    }
+
+    function verifierDonnees() {
+      showSpinner('Vérification données...');
+      google.script.run
+        .withSuccessHandler(function(result) {
+          hideSpinner();
+          showAlert('✅ ' + result, 'success');
+        })
+        .withFailureHandler(function(error) {
+          hideSpinner();
+          showAlert('❌ Erreur : ' + error, 'error');
+        })
+        .verifierDonnees();
+    }
+
+    function compterSources() {
+      showSpinner('Comptage sources...');
+      google.script.run
+        .withSuccessHandler(function(result) {
+          hideSpinner();
+          showAlert('✅ ' + result, 'success');
+        })
+        .withFailureHandler(function(error) {
+          hideSpinner();
+          showAlert('❌ Erreur : ' + error, 'error');
+        })
+        .compterEffectifsOptionsEtLangues();
+    }
+
+    function compterTest() {
+      showSpinner('Comptage TEST...');
+      google.script.run
+        .withSuccessHandler(function(result) {
+          hideSpinner();
+          showAlert('✅ ' + result, 'success');
+        })
+        .withFailureHandler(function(error) {
+          hideSpinner();
+          showAlert('❌ Erreur : ' + error, 'error');
+        })
+        .compterEffectifsOptionsEtLanguesTest();
+    }
+
+    // ===== SECTION 4: PIPELINE LEGACY =====
+    function lancerPipelineLEGACY() {
+      if (confirm('Lancer le pipeline LEGACY complet (Phases 1-4) ?\n\nCela va créer les onglets TEST.')) {
+        showSpinner('Pipeline LEGACY en cours...');
+        showProgress(0, 'Démarrage...');
+
+        google.script.run
+          .withSuccessHandler(function(result) {
+            hideSpinner();
+            hideProgress();
+            showAlert('✅ Pipeline LEGACY terminé !\n\n' + result, 'success');
+          })
+          .withFailureHandler(function(error) {
+            hideSpinner();
+            hideProgress();
+            showAlert('❌ Erreur : ' + error, 'error');
+          })
+          .legacy_runFullPipeline();
+      }
+    }
+
+    function lancerPhase1() {
+      showSpinner('Phase 1 en cours...');
+      google.script.run
+        .withSuccessHandler(function(result) {
+          hideSpinner();
+          showAlert('✅ Phase 1 terminée', 'success');
+        })
+        .withFailureHandler(function(error) {
+          hideSpinner();
+          showAlert('❌ Erreur : ' + error, 'error');
+        })
+        .legacy_runPhase1();
+    }
+
+    function lancerPhase2() {
+      showSpinner('Phase 2 en cours...');
+      google.script.run
+        .withSuccessHandler(function(result) {
+          hideSpinner();
+          showAlert('✅ Phase 2 terminée', 'success');
+        })
+        .withFailureHandler(function(error) {
+          hideSpinner();
+          showAlert('❌ Erreur : ' + error, 'error');
+        })
+        .legacy_runPhase2();
+    }
+
+    function lancerPhase3() {
+      showSpinner('Phase 3 en cours...');
+      google.script.run
+        .withSuccessHandler(function(result) {
+          hideSpinner();
+          showAlert('✅ Phase 3 terminée', 'success');
+        })
+        .withFailureHandler(function(error) {
+          hideSpinner();
+          showAlert('❌ Erreur : ' + error, 'error');
+        })
+        .legacy_runPhase3();
+    }
+
+    function lancerPhase4() {
+      showSpinner('Phase 4 en cours...');
+      google.script.run
+        .withSuccessHandler(function(result) {
+          hideSpinner();
+          showAlert('✅ Phase 4 terminée', 'success');
+        })
+        .withFailureHandler(function(error) {
+          hideSpinner();
+          showAlert('❌ Erreur : ' + error, 'error');
+        })
+        .legacy_runPhase4();
+    }
+
+    function voirResultatsTEST() {
+      google.script.run.legacy_viewTestResults();
+    }
+
+    // ===== SECTION 5: OUTILS AVANCÉS =====
+    function showInterfaceV2() {
+      google.script.run.showInterfaceV2();
+    }
+
+    function showOptimizationPanel() {
+      google.script.run.showOptimizationPanel();
+    }
+
+    function showGroupsModule() {
+      google.script.run.showGroupsModule();
+    }
+
+    function showAnalytics() {
+      google.script.run.showAnalytics();
+    }
+
+    // ===== SECTION 6: FINALISATION =====
+    function showFinalisationUI() {
+      google.script.run.showFinalisationUI();
+    }
+
+    function showSystemLogs() {
+      google.script.run.showSystemLogs();
+    }
+
+    // Auto-expand pipeline section on load
+    window.onload = function() {
+      console.log('Panneau de Contrôle chargé');
+    };
+  </script>
+</body>
+</html>

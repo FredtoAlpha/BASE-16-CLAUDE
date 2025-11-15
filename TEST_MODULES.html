@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Test Modules Refactorisés</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .test-section {
+      background: white;
+      padding: 20px;
+      margin: 10px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .test-result {
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: 4px;
+    }
+    .success {
+      background: #d4edda;
+      color: #155724;
+    }
+    .error {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      background: #007bff;
+      color: white;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧪 Test des Modules Refactorisés</h1>
+  
+  <div class="test-section">
+    <h2>1. Vérification du chargement des modules</h2>
+    <div id="loading-tests"></div>
+  </div>
+  
+  <div class="test-section">
+    <h2>2. Test AppState</h2>
+    <div id="state-tests"></div>
+  </div>
+  
+  <div class="test-section">
+    <h2>3. Test AppConfig</h2>
+    <div id="config-tests"></div>
+  </div>
+  
+  <div class="test-section">
+    <h2>4. Test de compatibilité</h2>
+    <div id="compat-tests"></div>
+    <button onclick="testToast()">Tester Toast</button>
+    <button onclick="testSpinner()">Tester Spinner</button>
+  </div>
+
+  <?!= include('InterfaceV2_Modules_Loader'); ?>
+
+  <script>
+    // Tests de chargement
+    function runLoadingTests() {
+      const container = document.getElementById('loading-tests');
+      const tests = [
+        { name: 'AppConfig', obj: window.AppConfig },
+        { name: 'AppState', obj: window.AppState },
+        { name: 'STATE (alias)', obj: window.STATE },
+      ];
+      
+      tests.forEach(test => {
+        const result = document.createElement('div');
+        result.className = test.obj ? 'test-result success' : 'test-result error';
+        result.textContent = `${test.obj ? '✅' : '❌'} ${test.name} ${test.obj ? 'chargé' : 'NON chargé'}`;
+        container.appendChild(result);
+      });
+    }
+    
+    // Tests AppState
+    function runStateTests() {
+      const container = document.getElementById('state-tests');
+      const tests = [
+        {
+          name: 'AppState.getStudent()',
+          test: () => {
+            AppState.students['test1'] = { id: 'test1', nom: 'DUPONT' };
+            return AppState.getStudent('test1').nom === 'DUPONT';
+          }
+        },
+        {
+          name: 'STATE alias fonctionne',
+          test: () => STATE === AppState
+        },
+        {
+          name: 'AppState.exportState()',
+          test: () => {
+            const exported = AppState.exportState();
+            return exported.hasOwnProperty('students') && exported.hasOwnProperty('timestamp');
+          }
+        }
+      ];
+      
+      tests.forEach(test => {
+        const result = document.createElement('div');
+        try {
+          const passed = test.test();
+          result.className = passed ? 'test-result success' : 'test-result error';
+          result.textContent = `${passed ? '✅' : '❌'} ${test.name}`;
+        } catch (e) {
+          result.className = 'test-result error';
+          result.textContent = `❌ ${test.name} - Erreur: ${e.message}`;
+        }
+        container.appendChild(result);
+      });
+    }
+    
+    // Tests AppConfig
+    function runConfigTests() {
+      const container = document.getElementById('config-tests');
+      const tests = [
+        {
+          name: 'AppConfig.MODES défini',
+          test: () => AppConfig.MODES && AppConfig.MODES.TEST === 'TEST'
+        },
+        {
+          name: 'AppConfig.getScoreColor()',
+          test: () => AppConfig.getScoreColor(4) === '#10b981'
+        },
+        {
+          name: 'AppConfig.isValidMode()',
+          test: () => AppConfig.isValidMode('TEST') === true
+        }
+      ];
+      
+      tests.forEach(test => {
+        const result = document.createElement('div');
+        try {
+          const passed = test.test();
+          result.className = passed ? 'test-result success' : 'test-result error';
+          result.textContent = `${passed ? '✅' : '❌'} ${test.name}`;
+        } catch (e) {
+          result.className = 'test-result error';
+          result.textContent = `❌ ${test.name} - Erreur: ${e.message}`;
+        }
+        container.appendChild(result);
+      });
+    }
+    
+    // Tests de compatibilité
+    function runCompatTests() {
+      const container = document.getElementById('compat-tests');
+      const tests = [
+        {
+          name: 'STATE === AppState',
+          test: () => window.STATE === window.AppState
+        },
+        {
+          name: 'STATE.students accessible',
+          test: () => typeof STATE.students === 'object'
+        }
+      ];
+      
+      tests.forEach(test => {
+        const result = document.createElement('div');
+        try {
+          const passed = test.test();
+          result.className = passed ? 'test-result success' : 'test-result error';
+          result.textContent = `${passed ? '✅' : '❌'} ${test.name}`;
+        } catch (e) {
+          result.className = 'test-result error';
+          result.textContent = `❌ ${test.name} - Erreur: ${e.message}`;
+        }
+        container.appendChild(result);
+      });
+    }
+    
+    function testToast() {
+      alert('Test Toast - Vérifiez la console');
+      console.log('Test Toast effectué');
+    }
+    
+    function testSpinner() {
+      alert('Test Spinner - Vérifiez la console');
+      console.log('Test Spinner effectué');
+    }
+    
+    // Exécuter tous les tests au chargement
+    window.addEventListener('DOMContentLoaded', () => {
+      runLoadingTests();
+      runStateTests();
+      runConfigTests();
+      runCompatTests();
+    });
+  </script>
+</body>
+</html>
