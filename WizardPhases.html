@@ -707,7 +707,11 @@ function consoliderDonnees() {
       `;
 
       wizardState.data.consolidated = true;
-      showAlert('success', 'Données consolidées ! Vous pouvez passer à l\'étape suivante.');
+
+      // Afficher les statistiques post-consolidation
+      afficherStatsPostConsolidation();
+
+      showAlert('success', 'Données consolidées ! Consultez les statistiques ci-dessous.');
     })
     .withFailureHandler((error) => {
       hideLoading();
@@ -716,12 +720,146 @@ function consoliderDonnees() {
     .wizard_consoliderDonnees();
 }
 
+/**
+ * Affiche les statistiques après consolidation (PARCOURS A)
+ */
+function afficherStatsPostConsolidation() {
+  // Vérifier si la section stats existe déjà
+  let statsSection = document.getElementById('stats-post-consolidation');
+
+  if (!statsSection) {
+    // Créer la section stats après consolidation
+    const phase2Container = document.getElementById('phase-2-content');
+    statsSection = document.createElement('div');
+    statsSection.id = 'stats-post-consolidation';
+    statsSection.innerHTML = `
+      <!-- ÉTAPE 6 : STATISTIQUES PRÉ-CONFIGURATION -->
+      <div class="config-card">
+        <div class="section-header">
+          ÉTAPE 6 : Statistiques Pré-Configuration
+        </div>
+
+        <p style="margin-bottom: 16px;">
+          Aperçu des données consolidées avant la configuration complète :
+        </p>
+
+        <div id="stats-pre-config-content">
+          <p style="color: #999; font-style: italic;">Chargement des statistiques...</p>
+        </div>
+
+        <button class="btn btn-primary" onclick="genererStatsPreConfig()" style="margin-top: 16px;">
+          <span class="material-icons">analytics</span>
+          Générer les Statistiques
+        </button>
+      </div>
+    `;
+    phase2Container.appendChild(statsSection);
+  }
+
+  // Scroll vers la section stats
+  statsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/**
+ * Génère les statistiques pré-configuration
+ */
+function genererStatsPreConfig() {
+  showLoading('Génération des statistiques...');
+
+  google.script.run
+    .withSuccessHandler((stats) => {
+      hideLoading();
+
+      const container = document.getElementById('stats-pre-config-content');
+
+      if (!stats || stats.totalEleves === 0) {
+        container.innerHTML = `
+          <div class="alert alert-warning">
+            <span class="material-icons">warning</span>
+            <div>Aucune donnée trouvée dans l'onglet CONSOLIDATION</div>
+          </div>
+        `;
+        return;
+      }
+
+      // Afficher les statistiques
+      container.innerHTML = `
+        <!-- Statistiques globales -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px;">
+          <div style="background: #e3f2fd; padding: 16px; border-radius: 6px; text-align: center;">
+            <div style="font-size: 32px; font-weight: bold; color: #1976d2;">${stats.totalEleves || 0}</div>
+            <div style="color: #666; margin-top: 4px;">Élèves consolidés</div>
+          </div>
+          <div style="background: #f3e5f5; padding: 16px; border-radius: 6px; text-align: center;">
+            <div style="font-size: 32px; font-weight: bold; color: #7b1fa2;">${stats.nbSources || 0}</div>
+            <div style="color: #666; margin-top: 4px;">Classes sources</div>
+          </div>
+          <div style="background: #fff3e0; padding: 16px; border-radius: 6px; text-align: center;">
+            <div style="font-size: 32px; font-weight: bold; color: #f57c00;">${stats.parite || '50/50'}</div>
+            <div style="color: #666; margin-top: 4px;">Parité F/M</div>
+          </div>
+        </div>
+
+        <!-- Répartition LV2 -->
+        ${stats.lv2 && Object.keys(stats.lv2).length > 0 ? `
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #1976d2; margin-bottom: 12px;">
+              <i class="material-icons" style="vertical-align: middle;">language</i>
+              Répartition par LV2
+            </h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px;">
+              ${Object.keys(stats.lv2).map(lv2 => `
+                <div style="background: #e3f2fd; padding: 12px; border-radius: 6px; text-align: center;">
+                  <div style="font-size: 24px; font-weight: bold; color: #1976d2;">${stats.lv2[lv2]}</div>
+                  <div style="color: #666; margin-top: 4px; font-size: 12px;">${lv2}</div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- Répartition Options -->
+        ${stats.options && Object.keys(stats.options).length > 0 ? `
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #7b1fa2; margin-bottom: 12px;">
+              <i class="material-icons" style="vertical-align: middle;">school</i>
+              Répartition par Options
+            </h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px;">
+              ${Object.keys(stats.options).map(opt => `
+                <div style="background: #f3e5f5; padding: 12px; border-radius: 6px; text-align: center;">
+                  <div style="font-size: 24px; font-weight: bold; color: #7b1fa2;">${stats.options[opt]}</div>
+                  <div style="color: #666; margin-top: 4px; font-size: 12px;">${opt}</div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- Note d'information -->
+        <div style="margin-top: 20px; padding: 12px; background: #e8f5e9; border-left: 4px solid #4caf50; border-radius: 4px;">
+          <strong style="color: #2e7d32;">✅ Données prêtes pour la configuration !</strong><br>
+          <span style="color: #666; font-size: 14px;">
+            Passez à la Phase 3 pour configurer la structure des classes destinations.
+          </span>
+        </div>
+      `;
+
+      showAlert('success', 'Statistiques générées avec succès !');
+    })
+    .withFailureHandler((error) => {
+      hideLoading();
+      showAlert('error', `Erreur : ${error.message}`);
+    })
+    .wizard_genererStatsPreConfig();
+}
+
 function validatePhase2() {
   return wizardState.data.consolidated === true;
 }
 
 // ===================================================================
-// PHASE 3 : CONFIGURATION
+// PHASE 3 : CONFIGURATION COMPLÈTE (PARCOURS B)
 // ===================================================================
 
 // Variables globales pour Phase 3
@@ -732,8 +870,8 @@ let phase3_scenarioActif = 'default';
 function loadPhase3Content() {
   const container = document.getElementById('phase-3-content');
 
-  // Charger la configuration existante
-  showLoading('Chargement de la configuration...');
+  // Vérifier d'abord si une structure existe déjà
+  showLoading('Vérification de la configuration...');
 
   google.script.run
     .withSuccessHandler((structureData) => {
@@ -742,7 +880,7 @@ function loadPhase3Content() {
     })
     .withFailureHandler((error) => {
       hideLoading();
-      showAlert('error', `Erreur de chargement : ${error.message}`);
+      showAlert('warning', `Impossible de charger la structure : ${error.message}`);
       renderPhase3(container, null);
     })
     .chargerStructure();
@@ -764,184 +902,156 @@ function renderPhase3(container, structureData) {
     phase3_scenarioActif = scenarioActif.id;
   }
 
+  // Vérifier si une structure est déjà configurée
+  const structureExiste = phase3_classesConfig && phase3_classesConfig.length > 0;
+
   let html = `
     <div class="alert alert-info">
       <span class="material-icons">settings</span>
       <div>
-        <strong>Configuration du pipeline</strong>
-        <p>Configurez le mapping des classes, les quotas LV2/Options et les coefficients de pondération</p>
+        <strong>Configuration Complète (PARCOURS B)</strong>
+        <p>Définissez la structure des classes destinations, les quotas LV2/Options et les coefficients de pondération</p>
       </div>
     </div>
 
-    <!-- SECTION 1 : MAPPING CLASSES -->
-    <div class="config-card">
-      <div class="section-header">
-        SECTION 1 : Mapping des classes (Sources → Destinations)
+    ${structureExiste ? `
+      <!-- Structure existante détectée -->
+      <div class="config-card" style="background: #e8f5e9; border-left: 4px solid #4caf50;">
+        <div class="section-header" style="color: #2e7d32;">
+          ✅ Structure déjà configurée
+        </div>
+        <p style="margin-bottom: 16px;">
+          Une structure a été trouvée avec <strong>${phase3_classesConfig.length} classe(s) destination</strong>.
+        </p>
+        <div style="display: flex; gap: 12px;">
+          <button class="btn btn-secondary" onclick="ouvrirConfigurationCompleteAvancee()">
+            <span class="material-icons">edit</span>
+            Modifier la Structure
+          </button>
+          <button class="btn btn-primary" onclick="afficherRecapStructure()">
+            <span class="material-icons">visibility</span>
+            Voir le Récapitulatif
+          </button>
+        </div>
       </div>
-
-      <p style="margin-bottom: 16px;">
-        Définissez comment les classes sources sont mappées vers les classes destinations.
-      </p>
-
-      <div id="mapping-classes-container">
-        <!-- Classes générées dynamiquement -->
-      </div>
-
-      <button class="btn btn-secondary" onclick="ajouterMappingClasse()">
-        <span class="material-icons">add</span>
-        Ajouter un mapping
-      </button>
-    </div>
-
-    <!-- SECTION 2 : QUOTAS LV2/OPTIONS -->
-    <div class="config-card">
-      <div class="section-header">
-        SECTION 2 : Quotas LV2 et Options par classe
-      </div>
-
-      <p style="margin-bottom: 16px;">
-        Définissez les quotas maximum pour chaque LV2 et option par classe destination.
-      </p>
-
-      <div id="quotas-container">
-        <!-- Quotas générés dynamiquement -->
-      </div>
-    </div>
-
-    <!-- SECTION 3 : COEFFICIENTS DE PONDÉRATION -->
-    <div class="config-card">
-      <div class="section-header">
-        SECTION 3 : Coefficients de pondération
-      </div>
-
-      <p style="margin-bottom: 16px;">
-        Choisissez un scénario de pondération ou créez le vôtre.
-      </p>
-
-      <div class="form-row">
-        <label>Scénario :</label>
-        <select id="scenario-select-phase3" onchange="changerScenarioPhase3(this.value)">
-          <!-- Options générées dynamiquement -->
-        </select>
-        <button class="btn btn-secondary" onclick="creerNouveauScenarioPhase3()">
-          <span class="material-icons">add</span>
-          Nouveau scénario
+    ` : `
+      <!-- Aucune structure configurée -->
+      <div class="config-card" style="background: #fff3e0; border-left: 4px solid #ff9800;">
+        <div class="section-header" style="color: #f57c00;">
+          ⚠️ Configuration requise
+        </div>
+        <p style="margin-bottom: 16px;">
+          Aucune structure n'a encore été configurée. Vous devez définir :
+        </p>
+        <ul style="margin-left: 20px; line-height: 1.8; margin-bottom: 16px;">
+          <li>Le <strong>mapping</strong> des classes (origine → destination)</li>
+          <li>Les <strong>effectifs cibles</strong> par classe</li>
+          <li>Les <strong>quotas LV2 et Options</strong> par classe</li>
+          <li>Les <strong>coefficients de pondération</strong> des matières</li>
+        </ul>
+        <button class="btn btn-primary" onclick="ouvrirConfigurationCompleteAvancee()" style="font-size: 16px;">
+          <span class="material-icons">settings</span>
+          Ouvrir la Configuration Complète
         </button>
       </div>
+    `}
 
-      <div id="scenario-info-phase3" style="margin: 16px 0; padding: 12px; background: #f5f5f5; border-radius: 6px;">
-        <!-- Info scénario -->
+    <!-- Récapitulatif de la structure (affiché après validation) -->
+    <div id="recap-structure-container" style="display: none;">
+      <div class="config-card">
+        <div class="section-header">
+          📋 Récapitulatif de la Structure
+        </div>
+        <div id="recap-structure-content"></div>
       </div>
+    </div>
 
+  `;
+
+  container.innerHTML = html;
+}
+
+/**
+ * Ouvre ConfigurationComplete.html pour configuration avancée
+ */
+function ouvrirConfigurationCompleteAvancee() {
+  showLoading('Ouverture de la configuration avancée...');
+
+  google.script.run
+    .withSuccessHandler(() => {
+      hideLoading();
+      showAlert('info', 'Configurez la structure, puis revenez au wizard et rafraîchissez.');
+
+      // Fermer le wizard temporairement
+      setTimeout(() => {
+        google.script.host.close();
+      }, 1500);
+    })
+    .withFailureHandler((error) => {
+      hideLoading();
+      showAlert('error', `Erreur : ${error.message}`);
+    })
+    .ouvrirConfigurationComplete();
+}
+
+/**
+ * Affiche le récapitulatif de la structure configurée
+ */
+function afficherRecapStructure() {
+  if (!phase3_classesConfig || phase3_classesConfig.length === 0) {
+    showAlert('warning', 'Aucune structure configurée');
+    return;
+  }
+
+  const recapContainer = document.getElementById('recap-structure-container');
+  const recapContent = document.getElementById('recap-structure-content');
+
+  // Générer le récapitulatif
+  let html = `
+    <div style="margin-bottom: 20px;">
+      <h4 style="color: #1976d2; margin-bottom: 12px;">Classes Configurées (${phase3_classesConfig.length})</h4>
       <div style="overflow-x: auto;">
-        <table class="ponderation-table">
+        <table style="width: 100%; border-collapse: collapse;">
           <thead>
-            <tr>
-              <th>Matière</th>
-              <th>Code</th>
-              <th>COM</th>
-              <th>TRA</th>
-              <th>PART</th>
-              <th>ABS</th>
+            <tr style="background: #f5f5f5;">
+              <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Origine</th>
+              <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Destination</th>
+              <th style="padding: 10px; text-align: center; border: 1px solid #ddd;">Effectif</th>
+              <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Options</th>
             </tr>
           </thead>
-          <tbody id="ponderation-body-phase3">
-            <!-- Lignes générées dynamiquement -->
+          <tbody>
+            ${phase3_classesConfig.map(classe => `
+              <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;">${classe.origine || '-'}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>${classe.destination}</strong></td>
+                <td style="padding: 10px; text-align: center; border: 1px solid #ddd;">${classe.effectif}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">
+                  ${(classe.options || []).map(opt => `${opt.nom}=${opt.quota}`).join(', ') || '-'}
+                </td>
+              </tr>
+            `).join('')}
           </tbody>
         </table>
       </div>
     </div>
+
+    <div style="padding: 12px; background: #e8f5e9; border-left: 4px solid #4caf50; border-radius: 4px;">
+      <strong style="color: #2e7d32;">✅ Configuration validée !</strong><br>
+      <span style="color: #666; font-size: 14px;">
+        Vous pouvez passer à la Phase 4 pour lancer le pipeline LEGACY.
+      </span>
+    </div>
   `;
 
-  container.innerHTML = html;
+  recapContent.innerHTML = html;
+  recapContainer.style.display = 'block';
 
-  // Ajouter les styles pour le tableau de pondération
-  if (!document.getElementById('phase3-styles')) {
-    const style = document.createElement('style');
-    style.id = 'phase3-styles';
-    style.textContent = `
-      .ponderation-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 15px;
-        font-size: 14px;
-      }
-      .ponderation-table th, .ponderation-table td {
-        padding: 8px;
-        text-align: center;
-        border: 1px solid #ddd;
-      }
-      .ponderation-table th {
-        background-color: #f0c674;
-        font-weight: 500;
-      }
-      .ponderation-table tr:nth-child(even) {
-        background-color: #fff9e6;
-      }
-      .ponderation-table tr:nth-child(odd) {
-        background-color: #ffffff;
-      }
-      .ponderation-table input {
-        width: 50px;
-        text-align: center;
-        padding: 4px;
-        border: 1px solid #ddd;
-        border-radius: 3px;
-      }
-      .ponderation-table tr.special {
-        background-color: #ffebee;
-      }
-      .mapping-row {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-        margin-bottom: 12px;
-        padding: 12px;
-        background: #f9f9f9;
-        border-radius: 6px;
-      }
-      .mapping-row select, .mapping-row input {
-        flex: 1;
-        padding: 8px 12px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-      }
-      .quota-classe {
-        margin-bottom: 20px;
-        padding: 16px;
-        background: #f9f9f9;
-        border-radius: 6px;
-      }
-      .quota-classe h4 {
-        margin: 0 0 12px 0;
-        color: #1976d2;
-      }
-      .quota-row {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-        margin-bottom: 8px;
-      }
-      .quota-row label {
-        flex: 0 0 120px;
-        font-size: 14px;
-      }
-      .quota-row input {
-        width: 80px;
-        padding: 6px 10px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        text-align: center;
-      }
-    `;
-    document.head.appendChild(style);
-  }
+  // Scroll vers le récap
+  recapContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-  // Initialiser l'affichage
-  afficherMappingClasses();
-  afficherQuotas();
-  afficherScenariosPhase3();
-  afficherPonderationPhase3();
+  // Marquer la phase comme validée
+  wizardState.data.configurationComplete = true;
 }
 
 function afficherMappingClasses() {
@@ -1234,15 +1344,27 @@ function getDefaultScenarios() {
 }
 
 function validatePhase3() {
-  // Vérifier que tous les mappings sont complets
-  const mappingsValides = phase3_classesConfig.every(c => c.origine && c.destination && c.effectif > 0);
-
-  if (!mappingsValides) {
-    showAlert('error', 'Tous les mappings doivent être complétés (origine, destination, effectif)');
+  // Vérifier qu'une structure existe (soit configurée manuellement, soit via ConfigurationComplete)
+  if (!phase3_classesConfig || phase3_classesConfig.length === 0) {
+    showAlert('error', 'Aucune structure configurée. Veuillez ouvrir la Configuration Complète.');
     return false;
   }
 
-  // Sauvegarder la configuration
+  // Vérifier que les classes ont au moins une destination
+  const destinationsValides = phase3_classesConfig.some(c => c.destination);
+
+  if (!destinationsValides) {
+    showAlert('error', 'Au moins une classe destination doit être définie.');
+    return false;
+  }
+
+  // Marquer comme validé
+  wizardState.data.configurationComplete = true;
+  return true;
+}
+
+// Ancienne fonction de sauvegarde (gardée pour compatibilité)
+function phase3_sauvegarderConfiguration() {
   showLoading('Sauvegarde de la configuration...');
 
   const structureData = {
@@ -2088,13 +2210,7 @@ function ouvrirConfigurationComplete() {
   showAlert('info', 'Utilisez le menu Console > Configuration Complète');
 }
 
-function validatePhase3() {
-  // Pour l'instant, on accepte de passer
-  wizardState.data.mappingComplete = true;
-  wizardState.data.quotasComplete = true;
-  wizardState.data.coefficientsComplete = true;
-  return true;
-}
+// validatePhase3() est maintenant définie plus haut (ligne ~1346)
 
 function validatePhase4() {
   // Pour l'instant, on accepte de passer

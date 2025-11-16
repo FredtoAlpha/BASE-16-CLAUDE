@@ -1829,6 +1829,42 @@
                                     <button id="btn-show-stats" class="btn btn-secondary" style="width: 100%;"><i class="btn-icon fas fa-chart-bar"></i><span>Statistiques</span></button>
                                     <div id="stats-status" style="margin-top: var(--space-sm); font-size: 12px;"></div>
                                 </div>
+                                <!-- Ajoutez d'autres étapes pour le parcours B ici -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MODULE DE CONFIGURATION INTÉGRÉ (repliable) -->
+                <div id="module-configuration-container" class="card" style="display: none; border-color: var(--info);">
+                    <div class="config-module">
+                        <!-- Barre d'onglets -->
+                        <div class="tabs">
+                          <button class="tab-button" data-tab="general">Général</button>
+                          <button class="tab-button active" data-tab="structure">Structure des Classes</button>
+                          <button class="tab-button" data-tab="options">Options Disponibles</button>
+                          <button class="tab-button" data-tab="ponderation">Pondération Matières</button>
+                        </div>
+
+                        <!-- Onglet Général -->
+                        <div id="tab-general" class="tab-content">
+                          <div class="config-card">
+                            <div class="config-title">Paramètres Généraux</div>
+                            <div class="input-row">
+                              <label for="niveau-scolaire">Niveau scolaire:</label>
+                              <select id="niveau-scolaire"><option value="6°">6°</option><option value="5°">5°</option><option value="4°">4°</option><option value="3°">3°</option></select>
+                            </div>
+                            <div class="input-row">
+                              <label for="mot-de-passe">Mot de passe admin:</label>
+                              <input type="password" id="mot-de-passe">
+                            </div>
+                            <div class="input-row">
+                              <label for="max-swaps">Nombre max d'échanges:</label>
+                              <input type="number" id="max-swaps" value="30">
+                            </div>
+                            <div class="input-row">
+                              <label for="tolerance-parite">Tolérance parité (%):</label>
+                              <input type="number" id="tolerance-parite" value="2">
                             </div>
                         </div>
 
