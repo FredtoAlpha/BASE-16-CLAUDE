@@ -1131,7 +1131,6 @@ function buildStudentIndex_() {
   });
   return { header, rows:index };
 }
-
 /******************** Sauvegardes DRY (générique) *************************/
 /**
  * Sauvegarde générique des classes dans des onglets <classe><suffix>
