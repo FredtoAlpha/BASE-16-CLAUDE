@@ -568,30 +568,533 @@
       .chargerStructure();
   };
 
+  // Stocker les données de configuration dans le wizard state
+  window.wizardConfigClasses = [];
+
   window.renderConfigurationComplete = function(container, structureData) {
-    // TODO: Intégrer le contenu de ConfigurationComplete.html ici (inline)
-    // Pour l'instant, placeholder
+    console.log("📋 Rendu de la configuration complète avec:", structureData);
+
+    // Initialiser les classes depuis structureData ou créer une classe par défaut
+    if (structureData && structureData.classes && structureData.classes.length > 0) {
+      window.wizardConfigClasses = structureData.classes;
+    } else {
+      window.wizardConfigClasses = [{
+        origine: '',
+        destination: '',
+        effectif: 28,
+        options: []
+      }];
+    }
+
     container.innerHTML = `
+      <style>
+        .config-classe-item {
+          background: white;
+          border-radius: 8px;
+          box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+          padding: 20px;
+          margin-bottom: 20px;
+        }
+
+        .config-classe-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 15px;
+          padding-bottom: 10px;
+          border-bottom: 2px solid #e2e8f0;
+        }
+
+        .config-classe-header h3 {
+          margin: 0;
+          font-size: 16px;
+          font-weight: 600;
+          color: #1976d2;
+        }
+
+        .config-input-row {
+          display: flex;
+          align-items: center;
+          margin-bottom: 15px;
+        }
+
+        .config-input-row label {
+          flex: 0 0 180px;
+          font-size: 14px;
+          font-weight: 500;
+        }
+
+        .config-input-row input,
+        .config-input-row select {
+          flex: 1;
+          padding: 8px 12px;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          font-size: 14px;
+        }
+
+        .config-options-section {
+          margin-top: 15px;
+          padding: 15px;
+          border-radius: 8px;
+        }
+
+        .config-options-section h4 {
+          font-size: 14px;
+          font-weight: 600;
+          margin: 0 0 10px 0;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .config-option-item {
+          display: flex;
+          gap: 10px;
+          margin-bottom: 8px;
+          align-items: center;
+        }
+
+        .config-option-item select {
+          flex: 1;
+          padding: 8px 12px;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          font-size: 14px;
+        }
+
+        .config-option-item input {
+          width: 80px;
+          padding: 8px 12px;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          font-size: 14px;
+          text-align: center;
+        }
+
+        .btn-config-delete {
+          background: none;
+          border: none;
+          color: #e53935;
+          cursor: pointer;
+          padding: 5px;
+          font-size: 20px;
+        }
+
+        .btn-config-delete:hover {
+          color: #b71c1c;
+        }
+
+        .btn-config-add-option {
+          width: 100%;
+          padding: 10px;
+          border: 1px dashed #7b1fa2;
+          background: none;
+          color: #7b1fa2;
+          border-radius: 4px;
+          font-size: 13px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 5px;
+          cursor: pointer;
+          margin-top: 10px;
+        }
+
+        .btn-config-add-option:hover {
+          background: rgba(123, 31, 162, 0.05);
+        }
+
+        .btn-config-add-classe {
+          width: 100%;
+          padding: 12px;
+          border: 1px dashed #1976d2;
+          background: none;
+          color: #1976d2;
+          border-radius: 4px;
+          font-size: 14px;
+          font-weight: 500;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          cursor: pointer;
+          margin: 20px 0;
+        }
+
+        .btn-config-add-classe:hover {
+          background: rgba(25, 118, 210, 0.05);
+        }
+
+        .btn-config-save {
+          background: #10b981;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          padding: 12px 24px;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .btn-config-save:hover {
+          background: #059669;
+        }
+      </style>
+
       <h2 style="margin-bottom: 24px; color: #1e293b;">
         <i class="fas fa-sliders-h"></i> Configuration Complète
       </h2>
 
-      <div style="padding: 24px; background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; margin-bottom: 24px;">
-        <p style="color: #92400e; margin: 0;">
-          ⚠️ Cette section sera complétée dans la prochaine version.
-          En attendant, utilisez le menu <strong>Console > Configuration Complète</strong>.
+      <div style="padding: 16px; background: #e0f2fe; border-left: 4px solid #0284c7; border-radius: 4px; margin-bottom: 24px;">
+        <p style="margin: 0; color: #075985; font-size: 14px;">
+          <strong>📋 Instructions :</strong><br>
+          Pour chaque classe destination, configurez :
+          <ul style="margin: 8px 0 0 0;">
+            <li>Classe d'origine et destination</li>
+            <li>Effectif cible</li>
+            <li>LV2 spécifique (optionnelle) avec quota</li>
+            <li>Options complémentaires (LATIN, GREC, etc.) avec quotas</li>
+          </ul>
         </p>
       </div>
 
-      <div style="margin-top: 32px; display: flex; justify-content: space-between;">
+      <div id="config-classes-container"></div>
+
+      <button class="btn-config-add-classe" onclick="wizardAddClasse()">
+        <i class="fas fa-plus"></i> Ajouter une classe
+      </button>
+
+      <div style="margin-top: 32px; padding-top: 24px; border-top: 2px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
         <button class="btn" onclick="goToPhase(${wizardState.parcours === 'A' ? '4' : '3'})" style="background: #e2e8f0; color: #475569;">
           <i class="fas fa-arrow-left"></i> Retour
         </button>
-        <button class="btn btn-primary" onclick="goToPhase(6)">
-          <i class="fas fa-arrow-right"></i> Suivant : Lancement LEGACY
-        </button>
+
+        <div style="display: flex; gap: 12px;">
+          <button class="btn-config-save" onclick="wizardSaveConfiguration()">
+            <i class="fas fa-save"></i> Enregistrer la Configuration
+          </button>
+          <button class="btn btn-primary" onclick="goToPhase(6)">
+            <i class="fas fa-arrow-right"></i> Suivant : Lancement LEGACY
+          </button>
+        </div>
       </div>
     `;
+
+    // Afficher les classes
+    wizardRenderClasses();
+  };
+
+  // ===================================================================
+  // HELPER FUNCTIONS POUR LA CONFIGURATION
+  // ===================================================================
+
+  window.wizardRenderClasses = function() {
+    const container = document.getElementById('config-classes-container');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    window.wizardConfigClasses.forEach((classe, index) => {
+      // Séparer LV2 et options complémentaires
+      let lv2Specifique = null;
+      let quotaLV2 = 0;
+      let optionsComplementaires = [];
+
+      if (classe.options && classe.options.length > 0) {
+        // La première option est considérée comme LV2 potentielle
+        if (classe.options[0] && classe.options[0].nom) {
+          lv2Specifique = classe.options[0].nom;
+          quotaLV2 = classe.options[0].quota || 0;
+        }
+        // Les autres sont des options complémentaires
+        if (classe.options.length > 1) {
+          optionsComplementaires = classe.options.slice(1);
+        }
+      }
+
+      const classeDiv = document.createElement('div');
+      classeDiv.className = 'config-classe-item';
+
+      classeDiv.innerHTML = `
+        <div class="config-classe-header">
+          <h3>Classe #${index + 1} : ${classe.origine || '(à définir)'} → ${classe.destination || '(à définir)'}</h3>
+          <button class="btn-config-delete" onclick="wizardDeleteClasse(${index})" title="Supprimer cette classe">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+
+        <div class="config-input-row">
+          <label>Classe d'origine :</label>
+          <input type="text" value="${classe.origine || ''}"
+                 placeholder="Ex: 6°1"
+                 oninput="wizardUpdateClasse(${index}, 'origine', this.value)">
+        </div>
+
+        <div class="config-input-row">
+          <label>Classe destination :</label>
+          <input type="text" value="${classe.destination || ''}"
+                 placeholder="Ex: 5°A"
+                 oninput="wizardUpdateClasse(${index}, 'destination', this.value)">
+        </div>
+
+        <div class="config-input-row">
+          <label>Effectif cible :</label>
+          <input type="number" value="${classe.effectif || 28}" min="1" max="40"
+                 oninput="wizardUpdateClasse(${index}, 'effectif', parseInt(this.value))">
+        </div>
+
+        <!-- Section LV2 -->
+        <div class="config-options-section" style="background: #e3f2fd;">
+          <h4 style="color: #1976d2;">
+            <i class="fas fa-language"></i> LV2 Spécifique (optionnelle)
+          </h4>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <select onchange="wizardUpdateClasseLV2(${index}, this.value)" style="flex: 1;">
+              <option value="">Aucune LV2 spécifique</option>
+              ${wizardGenerateLV2Options(lv2Specifique)}
+            </select>
+            <label style="flex: 0 0 60px; font-weight: 500;">Quota :</label>
+            <input type="number" value="${quotaLV2}" min="0" max="${classe.effectif || 28}"
+                   style="width: 80px; text-align: center;"
+                   id="lv2-quota-${index}"
+                   oninput="wizardUpdateQuotaLV2(${index}, parseInt(this.value))"
+                   ${!lv2Specifique ? 'disabled' : ''}>
+          </div>
+          <small style="color: #0277bd; font-size: 12px; display: block; margin-top: 8px;">
+            <i class="fas fa-info-circle"></i> Cette langue apparaîtra dans la colonne LV2 pour les élèves concernés
+          </small>
+        </div>
+
+        <!-- Section Options Complémentaires -->
+        <div class="config-options-section" style="background: #f3e5f5;">
+          <h4 style="color: #7b1fa2;">
+            <i class="fas fa-star"></i> Options Complémentaires
+          </h4>
+          <div id="config-options-complementaires-${index}">
+            ${wizardGenerateOptionsComplementairesHTML(optionsComplementaires, index)}
+          </div>
+          <button class="btn-config-add-option" onclick="wizardAddOptionComplementaire(${index})">
+            <i class="fas fa-plus"></i> Ajouter une option complémentaire
+          </button>
+          <small style="color: #6a1b9a; font-size: 12px; display: block; margin-top: 8px;">
+            <i class="fas fa-info-circle"></i> Ces options apparaîtront dans la colonne OPT pour les élèves concernés
+          </small>
+        </div>
+      `;
+
+      container.appendChild(classeDiv);
+    });
+  };
+
+  window.wizardGenerateLV2Options = function(lv2Selectionnee) {
+    const lv2List = wizardState.data.lv2List || [];
+    let html = '';
+
+    lv2List.forEach(lv2 => {
+      html += `<option value="${lv2}" ${lv2 === lv2Selectionnee ? 'selected' : ''}>${lv2}</option>`;
+    });
+
+    return html;
+  };
+
+  window.wizardGenerateOptionsComplementairesHTML = function(optionsComplementaires, classeIndex) {
+    if (!optionsComplementaires || optionsComplementaires.length === 0) {
+      return '<p style="color: #666; font-style: italic; margin: 8px 0;">Aucune option complémentaire</p>';
+    }
+
+    let html = '';
+    optionsComplementaires.forEach((option, optIndex) => {
+      html += `
+        <div class="config-option-item">
+          <select onchange="wizardUpdateOptionComplementaire(${classeIndex}, ${optIndex}, 'nom', this.value)" style="flex: 1;">
+            <option value="">-- Choisir --</option>
+            ${wizardGenerateOptionsComplementairesSelectHTML(option.nom)}
+          </select>
+          <label style="flex: 0 0 60px; text-align: center; font-size: 12px; color: #666;">Quota</label>
+          <input type="number" value="${option.quota || 0}" min="0" max="35"
+                 style="width: 80px; text-align: center;"
+                 oninput="wizardUpdateOptionComplementaire(${classeIndex}, ${optIndex}, 'quota', parseInt(this.value))">
+          <button class="btn-config-delete" onclick="wizardDeleteOptionComplementaire(${classeIndex}, ${optIndex})" title="Supprimer">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      `;
+    });
+
+    return html;
+  };
+
+  window.wizardGenerateOptionsComplementairesSelectHTML = function(optionSelectionnee) {
+    const optionsList = wizardState.data.optionsList || [];
+    let html = '';
+
+    optionsList.forEach(option => {
+      html += `<option value="${option}" ${option === optionSelectionnee ? 'selected' : ''}>${option}</option>`;
+    });
+
+    return html;
+  };
+
+  // ===================================================================
+  // FONCTIONS DE GESTION DES CLASSES ET OPTIONS
+  // ===================================================================
+
+  window.wizardUpdateClasse = function(index, propriete, valeur) {
+    if (window.wizardConfigClasses[index]) {
+      window.wizardConfigClasses[index][propriete] = valeur;
+      // Rafraîchir l'affichage pour mettre à jour le titre
+      wizardRenderClasses();
+    }
+  };
+
+  window.wizardUpdateClasseLV2 = function(classeIndex, lv2Value) {
+    const quotaInput = document.getElementById(`lv2-quota-${classeIndex}`);
+    if (quotaInput) {
+      quotaInput.disabled = !lv2Value;
+      if (!lv2Value) quotaInput.value = 0;
+    }
+    console.log(`Classe ${classeIndex}: LV2 = ${lv2Value}`);
+  };
+
+  window.wizardUpdateQuotaLV2 = function(classeIndex, quota) {
+    console.log(`Classe ${classeIndex}: Quota LV2 = ${quota}`);
+  };
+
+  window.wizardAddClasse = function() {
+    window.wizardConfigClasses.push({
+      origine: '',
+      destination: '',
+      effectif: 28,
+      options: []
+    });
+    wizardRenderClasses();
+  };
+
+  window.wizardDeleteClasse = function(index) {
+    if (confirm('Voulez-vous vraiment supprimer cette classe ?')) {
+      window.wizardConfigClasses.splice(index, 1);
+      wizardRenderClasses();
+    }
+  };
+
+  window.wizardAddOptionComplementaire = function(classeIndex) {
+    if (!wizardState.data.optionsList || wizardState.data.optionsList.length === 0) {
+      alert('Aucune option disponible !\n\nVous devez d\'abord configurer les options dans la Phase 2.');
+      return;
+    }
+
+    const classe = window.wizardConfigClasses[classeIndex];
+    if (!classe) return;
+
+    // Initialiser options si nécessaire
+    if (!classe.options) classe.options = [];
+
+    // Ajouter une nouvelle option (en position 2+, car position 1 = LV2)
+    classe.options.push({
+      nom: '',
+      quota: 0
+    });
+
+    wizardRenderClasses();
+  };
+
+  window.wizardUpdateOptionComplementaire = function(classeIndex, optIndex, propriete, valeur) {
+    const classe = window.wizardConfigClasses[classeIndex];
+    if (!classe || !classe.options) return;
+
+    // optIndex correspond aux options complémentaires (index 1+)
+    const realIndex = optIndex + 1; // +1 car index 0 = LV2
+
+    if (classe.options[realIndex]) {
+      classe.options[realIndex][propriete] = valeur;
+    }
+
+    console.log(`Classe ${classeIndex}, Option complémentaire ${optIndex}: ${propriete} = ${valeur}`);
+  };
+
+  window.wizardDeleteOptionComplementaire = function(classeIndex, optIndex) {
+    const classe = window.wizardConfigClasses[classeIndex];
+    if (!classe || !classe.options) return;
+
+    const realIndex = optIndex + 1; // +1 car index 0 = LV2
+
+    if (classe.options[realIndex]) {
+      classe.options.splice(realIndex, 1);
+      wizardRenderClasses();
+    }
+  };
+
+  // ===================================================================
+  // FONCTION DE SAUVEGARDE
+  // ===================================================================
+
+  window.wizardSaveConfiguration = function() {
+    console.log("💾 Sauvegarde de la configuration...");
+
+    // Collecter les données depuis l'interface
+    const classesAvecOptions = [];
+
+    window.wizardConfigClasses.forEach((classe, index) => {
+      const classeData = {
+        origine: classe.origine,
+        destination: classe.destination,
+        effectif: classe.effectif,
+        options: []
+      };
+
+      // 1. Récupérer la LV2 depuis l'interface
+      const lv2Select = document.querySelector(`[onchange*="wizardUpdateClasseLV2(${index}"]`);
+      const quotaLV2Input = document.getElementById(`lv2-quota-${index}`);
+
+      if (lv2Select && lv2Select.value && quotaLV2Input && parseInt(quotaLV2Input.value) > 0) {
+        classeData.options.push({
+          nom: lv2Select.value,
+          quota: parseInt(quotaLV2Input.value)
+        });
+      }
+
+      // 2. Récupérer les options complémentaires depuis l'interface
+      const optionsContainer = document.getElementById(`config-options-complementaires-${index}`);
+      if (optionsContainer) {
+        const selects = optionsContainer.querySelectorAll('select');
+        const inputs = optionsContainer.querySelectorAll('input[type="number"]');
+
+        for (let i = 0; i < selects.length; i++) {
+          if (selects[i] && selects[i].value && inputs[i] && parseInt(inputs[i].value) > 0) {
+            classeData.options.push({
+              nom: selects[i].value,
+              quota: parseInt(inputs[i].value)
+            });
+          }
+        }
+      }
+
+      classesAvecOptions.push(classeData);
+    });
+
+    // Préparer les données pour la sauvegarde
+    const structureData = {
+      classes: classesAvecOptions,
+      options: wizardState.data.optionsList || []
+    };
+
+    console.log("📤 Données à sauvegarder:", structureData);
+
+    // Sauvegarder via le backend
+    google.script.run
+      .withSuccessHandler((result) => {
+        console.log("✅ Sauvegarde réussie:", result);
+        alert(result.message || 'Configuration sauvegardée avec succès dans l\'onglet _STRUCTURE !');
+      })
+      .withFailureHandler((error) => {
+        console.error("❌ Erreur sauvegarde:", error);
+        alert('Erreur lors de la sauvegarde : ' + error);
+      })
+      .sauvegarderStructure(structureData);
   };
 
   // ===================================================================
