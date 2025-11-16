@@ -1781,17 +1781,6 @@
                     </div>
                 </div>
 
-                <!-- MODULE DE CONFIGURATION INTÉGRÉ (repliable) -->
-                <div id="module-configuration-container" class="card" style="display: none; border-color: var(--info);">
-                    <div class="config-module">
-                        <!-- Barre d'onglets -->
-                        <div class="tabs">
-                          <button class="tab-button" data-tab="general">Général</button>
-                          <button class="tab-button active" data-tab="structure">Structure des Classes</button>
-                          <button class="tab-button" data-tab="options">Options Disponibles</button>
-                          <button class="tab-button" data-tab="ponderation">Pondération Matières</button>
-                        </div>
-
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-xl);">
 
                         <!-- PARCOURS A -->
@@ -3156,7 +3145,7 @@
             // ===================================================================
             // SYSTÈME DE MINIMISATION - GESTION
             // ===================================================================
-            const consoleToggleBtn = document.getElementById('consoleToggleBtn');
+            const consoleToggleBtn = document.getElementById('console-toggle-btn');
             const minimizedCurrentPhase = document.getElementById('minimized-current-phase');
             const minimizedCurrentStatus = document.getElementById('minimized-current-status');
             const minimizedProgressCircle = document.getElementById('minimizedProgressCircle');
