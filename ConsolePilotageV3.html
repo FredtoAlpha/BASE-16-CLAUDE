@@ -2393,7 +2393,10 @@
             restoreMinimizedState();
 
             // Theme toggle
-            document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+            const themeToggle = document.getElementById('theme-toggle');
+            if (themeToggle) {
+                themeToggle.addEventListener('click', toggleTheme);
+            }
 
             // Navigation
             document.querySelectorAll('.nav-link').forEach(link => {
@@ -2410,12 +2413,23 @@
             const confirmCheckbox = document.getElementById('confirm-checklist');
             const confirmBtn = document.getElementById('btn-confirm-finalize');
 
-            confirmCheckbox.addEventListener('change', () => {
-                confirmBtn.disabled = !confirmCheckbox.checked;
-            });
+            if(confirmCheckbox) {
+                confirmCheckbox.addEventListener('change', () => {
+                    if(confirmBtn) {
+                        confirmBtn.disabled = !confirmCheckbox.checked;
+                    }
+                });
+            }
 
-            document.getElementById('btn-close-modal').addEventListener('click', hideModal);
-            document.getElementById('btn-cancel-finalize').addEventListener('click', hideModal);
+            const closeModalBtn = document.getElementById('btn-close-modal');
+            if(closeModalBtn) {
+                closeModalBtn.addEventListener('click', hideModal);
+            }
+
+            const cancelFinalizeBtn = document.getElementById('btn-cancel-finalize');
+            if(cancelFinalizeBtn) {
+                cancelFinalizeBtn.addEventListener('click', hideModal);
+            }
 
             // ===================================================================
             // PHASE 1 : FORMULAIRE DE CONFIGURATION INTÉGRÉ
@@ -2509,9 +2523,11 @@
             }
 
             // Sauvegarder la configuration
-            document.getElementById('btn-save-config').addEventListener('click', () => {
-                const config = {
-                    niveau: configNiveau.value,
+            const saveConfigBtn = document.getElementById('btn-save-config');
+            if (saveConfigBtn) {
+                saveConfigBtn.addEventListener('click', () => {
+                    const config = {
+                        niveau: configNiveau.value,
                     nbSources: parseInt(configNbSources.value),
                     nbDest: parseInt(configNbDest.value),
                     lv2: configLv2.value,
@@ -2612,48 +2628,54 @@
             });
 
             // NOUVEAUX BOUTONS - Étape 1 : Générer NOM_PRENOM & ID_ELEVE
-            document.getElementById('btn-generate-ids').addEventListener('click', () => {
-                showLoading('Génération NOM_PRENOM & ID_ELEVE...');
-                const statusDiv = document.getElementById('ids-status');
+            const generateIdsBtn = document.getElementById('btn-generate-ids');
+            if(generateIdsBtn) {
+                generateIdsBtn.addEventListener('click', () => {
+                    showLoading('Génération NOM_PRENOM & ID_ELEVE...');
+                    const statusDiv = document.getElementById('ids-status');
 
-                google.script.run
-                    .withSuccessHandler(response => {
-                        hideLoading();
-                        if (response.success) {
-                            statusDiv.innerHTML = '<span style="color: var(--success);"><i class="fas fa-check-circle"></i> ' + response.message + '</span>';
-                            showToast('success', '✅ NOM_PRENOM & ID_ELEVE générés !');
-                        } else {
-                            statusDiv.innerHTML = '<span style="color: var(--danger);"><i class="fas fa-exclamation-circle"></i> Erreur: ' + response.error + '</span>';
-                            showToast('error', 'Erreur lors de la génération');
-                        }
-                    })
-                    .withFailureHandler(error => {
-                        hideLoading();
-                        statusDiv.innerHTML = '<span style="color: var(--danger);"><i class="fas fa-exclamation-circle"></i> Erreur: ' + error.message + '</span>';
-                        showToast('error', 'Erreur lors de la génération');
-                    })
-                    .v3_genererNomPrenomEtID();
-            });
-
-            // NOUVEAUX BOUTONS - Étape 2 : Configurer Structure
-            document.getElementById('btn-configure-structure').addEventListener('click', () => {
-                const statusDiv = document.getElementById('structure-status');
-                statusDiv.innerHTML = '<span style="color: var(--info);"><i class="fas fa-spinner fa-spin"></i> Ouverture de l\'interface...</span>';
-
-                try {
                     google.script.run
-                        .withSuccessHandler(() => {
-                            statusDiv.innerHTML = '<span style="color: var(--success);"><i class="fas fa-check-circle"></i> Interface ouverte - Complétez la configuration</span>';
+                        .withSuccessHandler(response => {
+                            hideLoading();
+                            if (response.success) {
+                                statusDiv.innerHTML = '<span style="color: var(--success);"><i class="fas fa-check-circle"></i> ' + response.message + '</span>';
+                                showToast('success', '✅ NOM_PRENOM & ID_ELEVE générés !');
+                            } else {
+                                statusDiv.innerHTML = '<span style="color: var(--danger);"><i class="fas fa-exclamation-circle"></i> Erreur: ' + response.error + '</span>';
+                                showToast('error', 'Erreur lors de la génération');
+                            }
                         })
                         .withFailureHandler(error => {
+                            hideLoading();
                             statusDiv.innerHTML = '<span style="color: var(--danger);"><i class="fas fa-exclamation-circle"></i> Erreur: ' + error.message + '</span>';
-                            showToast('error', 'Impossible d\'ouvrir l\'interface');
+                            showToast('error', 'Erreur lors de la génération');
                         })
-                        .ouvrirConfigurationComplete();
-                } catch (e) {
-                    statusDiv.innerHTML = '<span style="color: var(--danger);"><i class="fas fa-exclamation-circle"></i> Erreur: ' + e.message + '</span>';
-                }
-            });
+                        .v3_genererNomPrenomEtID();
+                });
+            }
+
+            // NOUVEAUX BOUTONS - Étape 2 : Configurer Structure
+            const configureStructureBtn = document.getElementById('btn-configure-structure');
+            if(configureStructureBtn) {
+                configureStructureBtn.addEventListener('click', () => {
+                    const statusDiv = document.getElementById('structure-status');
+                    statusDiv.innerHTML = '<span style="color: var(--info);"><i class="fas fa-spinner fa-spin"></i> Ouverture de l\'interface...</span>';
+
+                    try {
+                        google.script.run
+                            .withSuccessHandler(() => {
+                                statusDiv.innerHTML = '<span style="color: var(--success);"><i class="fas fa-check-circle"></i> Interface ouverte - Complétez la configuration</span>';
+                            })
+                            .withFailureHandler(error => {
+                                statusDiv.innerHTML = '<span style="color: var(--danger);"><i class="fas fa-exclamation-circle"></i> Erreur: ' + error.message + '</span>';
+                                showToast('error', 'Impossible d\'ouvrir l\'interface');
+                            })
+                            .ouvrirConfigurationComplete();
+                    } catch (e) {
+                        statusDiv.innerHTML = '<span style="color: var(--danger);"><i class="fas fa-exclamation-circle"></i> Erreur: ' + e.message + '</span>';
+                    }
+                });
+            }
 
             // Sauvegarde automatique lors de la modification d'un champ
             const configFields = [
@@ -2686,156 +2708,171 @@
             sourceLabel.textContent = getNiveauSource(configNiveau.value);
 
             // Phase 2: Diagnostic
-            document.getElementById('btn-run-diagnostics').addEventListener('click', () => {
-                updatePhaseStatus(2, 'active');
-                showLoading('Diagnostic en cours...');
+            const runDiagnosticsBtn = document.getElementById('btn-run-diagnostics');
+            if(runDiagnosticsBtn) {
+                runDiagnosticsBtn.addEventListener('click', () => {
+                    updatePhaseStatus(2, 'active');
+                    showLoading('Diagnostic en cours...');
 
-                google.script.run
-                    .withSuccessHandler(results => {
-                        hideLoading();
-                        displayDiagnostics(results);
-                        const hasErrors = results.some(r => r.status === 'error');
-                        updatePhaseStatus(2, hasErrors ? 'error' : 'completed');
+                    google.script.run
+                        .withSuccessHandler(results => {
+                            hideLoading();
+                            displayDiagnostics(results);
+                            const hasErrors = results.some(r => r.status === 'error');
+                            updatePhaseStatus(2, hasErrors ? 'error' : 'completed');
 
-                        if (hasErrors) {
-                            showToast('error', 'Des erreurs ont été détectées');
-                            showAlert('error', 'Veuillez corriger les erreurs avant de continuer.');
-                        } else {
-                            showToast('success', 'Diagnostic terminé avec succès');
-                            showAlert('success', 'Aucune erreur détectée. Vous pouvez passer à la génération.');
-                        }
-                    })
-                    .withFailureHandler(error => {
-                        hideLoading();
-                        updatePhaseStatus(2, 'error');
-                        showToast('error', 'Erreur lors du diagnostic');
-                        showAlert('error', error.message);
-                    })
-                    .v3_runDiagnostics();
-            });
+                            if (hasErrors) {
+                                showToast('error', 'Des erreurs ont été détectées');
+                                showAlert('error', 'Veuillez corriger les erreurs avant de continuer.');
+                            } else {
+                                showToast('success', 'Diagnostic terminé avec succès');
+                                showAlert('success', 'Aucune erreur détectée. Vous pouvez passer à la génération.');
+                            }
+                        })
+                        .withFailureHandler(error => {
+                            hideLoading();
+                            updatePhaseStatus(2, 'error');
+                            showToast('error', 'Erreur lors du diagnostic');
+                            showAlert('error', error.message);
+                        })
+                        .v3_runDiagnostics();
+                });
+            }
 
             // Phase 3: Génération
-            document.getElementById('btn-run-generation').addEventListener('click', () => {
-                updatePhaseStatus(3, 'active');
-                showLoading('Génération des classes en cours...');
+            const runGenerationBtn = document.getElementById('btn-run-generation');
+            if(runGenerationBtn) {
+                runGenerationBtn.addEventListener('click', () => {
+                    updatePhaseStatus(3, 'active');
+                    showLoading('Génération des classes en cours...');
 
-                google.script.run
-                    .withSuccessHandler(response => {
-                        hideLoading();
-                        if (response.success) {
-                            updatePhaseStatus(3, 'completed');
-                            showToast('success', 'Classes générées avec succès !');
-                            showAlert('success', response.message || 'Les classes ont été générées dans les onglets ...TEST.');
-                        } else {
+                    google.script.run
+                        .withSuccessHandler(response => {
+                            hideLoading();
+                            if (response.success) {
+                                updatePhaseStatus(3, 'completed');
+                                showToast('success', 'Classes générées avec succès !');
+                                showAlert('success', response.message || 'Les classes ont été générées dans les onglets ...TEST.');
+                            } else {
+                                updatePhaseStatus(3, 'error');
+                                showToast('error', 'Erreur lors de la génération');
+                                showAlert('error', response.error || 'Une erreur est survenue');
+                            }
+                        })
+                        .withFailureHandler(error => {
+                            hideLoading();
                             updatePhaseStatus(3, 'error');
                             showToast('error', 'Erreur lors de la génération');
-                            showAlert('error', response.error || 'Une erreur est survenue');
-                        }
-                    })
-                    .withFailureHandler(error => {
-                        hideLoading();
-                        updatePhaseStatus(3, 'error');
-                        showToast('error', 'Erreur lors de la génération');
-                        showAlert('error', error.message);
-                    })
-                    .v3_runGeneration();
-            });
+                            showAlert('error', error.message);
+                        })
+                        .v3_runGeneration();
+                });
+            }
 
             // Phase 4: Optimisation
-            document.getElementById('btn-run-optimization').addEventListener('click', () => {
-                updatePhaseStatus(4, 'active');
+            const runOptimizationBtn = document.getElementById('btn-run-optimization');
+            if(runOptimizationBtn) {
+                runOptimizationBtn.addEventListener('click', () => {
+                    updatePhaseStatus(4, 'active');
 
-                google.script.run
-                    .withSuccessHandler(response => {
-                        if (response.success) {
-                            updatePhaseStatus(4, 'completed');
-                            showToast('success', 'Panneau d\'optimisation ouvert');
-                            showAlert('success', response.message || 'Utilisez le panneau pour optimiser la répartition.');
-                        } else {
+                    google.script.run
+                        .withSuccessHandler(response => {
+                            if (response.success) {
+                                updatePhaseStatus(4, 'completed');
+                                showToast('success', 'Panneau d\'optimisation ouvert');
+                                showAlert('success', response.message || 'Utilisez le panneau pour optimiser la répartition.');
+                            } else {
+                                updatePhaseStatus(4, 'error');
+                                showToast('error', 'Erreur lors de l\'optimisation');
+                                showAlert('error', response.error || 'Une erreur est survenue');
+                            }
+                        })
+                        .withFailureHandler(error => {
                             updatePhaseStatus(4, 'error');
                             showToast('error', 'Erreur lors de l\'optimisation');
-                            showAlert('error', response.error || 'Une erreur est survenue');
-                        }
-                    })
-                    .withFailureHandler(error => {
-                        updatePhaseStatus(4, 'error');
-                        showToast('error', 'Erreur lors de l\'optimisation');
-                        showAlert('error', error.message);
-                    })
-                    .v3_runOptimization();
-            });
+                            showAlert('error', error.message);
+                        })
+                        .v3_runOptimization();
+                });
+            }
 
             // Phase 5: Swaps Manuels
-            document.getElementById('btn-open-swap-interface').addEventListener('click', () => {
-                updatePhaseStatus(5, 'active');
+            const openSwapInterfaceBtn = document.getElementById('btn-open-swap-interface');
+            if(openSwapInterfaceBtn) {
+                openSwapInterfaceBtn.addEventListener('click', () => {
+                    updatePhaseStatus(5, 'active');
 
-                google.script.run
-                    .withSuccessHandler(response => {
-                        if (response.success) {
-                            window.open(google.script.host.origin + google.script.host.path, '_blank');
-                            updatePhaseStatus(5, 'completed');
-                            showToast('success', 'Interface de swap ouverte');
-                        } else {
+                    google.script.run
+                        .withSuccessHandler(response => {
+                            if (response.success) {
+                                window.open(google.script.host.origin + google.script.host.path, '_blank');
+                                updatePhaseStatus(5, 'completed');
+                                showToast('success', 'Interface de swap ouverte');
+                            } else {
+                                updatePhaseStatus(5, 'error');
+                                showToast('error', 'Erreur lors de l\'ouverture');
+                                showAlert('error', response.error || 'Impossible d\'ouvrir l\'interface');
+                            }
+                        })
+                        .withFailureHandler(error => {
                             updatePhaseStatus(5, 'error');
                             showToast('error', 'Erreur lors de l\'ouverture');
-                            showAlert('error', response.error || 'Impossible d\'ouvrir l\'interface');
-                        }
-                    })
-                    .withFailureHandler(error => {
-                        updatePhaseStatus(5, 'error');
-                        showToast('error', 'Erreur lors de l\'ouverture');
-                        showAlert('error', error.message);
-                    })
-                    .v3_setBridgeContext('TEST', '');
-            });
+                            showAlert('error', error.message);
+                        })
+                        .v3_setBridgeContext('TEST', '');
+                });
+            }
 
             // Phase 6: Finalisation
-            document.getElementById('btn-finalize-process').addEventListener('click', () => {
-                updatePhaseStatus(6, 'active');
-                showLoading('Vérification avant finalisation...');
+            const finalizeProcessBtn = document.getElementById('btn-finalize-process');
+            if(finalizeProcessBtn) {
+                finalizeProcessBtn.addEventListener('click', () => {
+                    updatePhaseStatus(6, 'active');
+                    showLoading('Vérification avant finalisation...');
 
-                google.script.run
-                    .withSuccessHandler(results => {
-                        hideLoading();
+                    google.script.run
+                        .withSuccessHandler(results => {
+                            hideLoading();
 
-                        // Populate modal checklist
-                        const checklistContainer = document.getElementById('checklist-container');
-                        checklistContainer.innerHTML = '';
+                            // Populate modal checklist
+                            const checklistContainer = document.getElementById('checklist-container');
+                            checklistContainer.innerHTML = '';
 
-                        results.forEach(item => {
-                            const li = document.createElement('li');
-                            li.className = 'checklist-item';
+                            results.forEach(item => {
+                                const li = document.createElement('li');
+                                li.className = 'checklist-item';
 
-                            let icon = '';
-                            if (item.status === 'ok') {
-                                icon = '✅';
-                                li.style.background = 'rgba(16, 185, 129, 0.1)';
-                            } else if (item.status === 'warning') {
-                                icon = '⚠️';
-                                li.style.background = 'rgba(245, 158, 11, 0.1)';
-                            } else {
-                                icon = '❌';
-                                li.style.background = 'rgba(239, 68, 68, 0.1)';
-                            }
+                                let icon = '';
+                                if (item.status === 'ok') {
+                                    icon = '✅';
+                                    li.style.background = 'rgba(16, 185, 129, 0.1)';
+                                } else if (item.status === 'warning') {
+                                    icon = '⚠️';
+                                    li.style.background = 'rgba(245, 158, 11, 0.1)';
+                                } else {
+                                    icon = '❌';
+                                    li.style.background = 'rgba(239, 68, 68, 0.1)';
+                                }
 
-                            li.innerHTML = `<span style="margin-right: 12px;">${icon}</span><span>${item.message}</span>`;
-                            checklistContainer.appendChild(li);
-                        });
+                                li.innerHTML = `<span style="margin-right: 12px;">${icon}</span><span>${item.message}</span>`;
+                                checklistContainer.appendChild(li);
+                            });
 
-                        // Reset checkbox
-                        confirmCheckbox.checked = false;
-                        confirmBtn.disabled = true;
+                            // Reset checkbox
+                            confirmCheckbox.checked = false;
+                            confirmBtn.disabled = true;
 
-                        showModal();
-                    })
-                    .withFailureHandler(error => {
-                        hideLoading();
-                        updatePhaseStatus(6, 'error');
-                        showToast('error', 'Erreur lors de la vérification');
-                        showAlert('error', error.message);
-                    })
-                    .v3_runDiagnostics();
-            });
+                            showModal();
+                        })
+                        .withFailureHandler(error => {
+                            hideLoading();
+                            updatePhaseStatus(6, 'error');
+                            showToast('error', 'Erreur lors de la vérification');
+                            showAlert('error', error.message);
+                        })
+                        .v3_runDiagnostics();
+                });
+            }
 
             // Confirm finalize
             confirmBtn.addEventListener('click', () => {
