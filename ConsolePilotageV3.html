@@ -5,775 +5,605 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Console de Pilotage V3 - Expert Edition</title>
-
-    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
-        /* =====================================================================
-         * DESIGN SYSTEM - Variables CSS Niveau Expert
-         * ===================================================================*/
         :root {
-            /* Palette de Couleurs Professionnelle */
-            --primary-50: #f0f4ff;
-            --primary-100: #e0e9ff;
-            --primary-200: #c7d7fe;
-            --primary-300: #a4bbfc;
-            --primary-400: #8098f9;
             --primary-500: #667eea;
-            --primary-600: #5468d8;
-            --primary-700: #4451b5;
-            --primary-800: #3a3f92;
-            --primary-900: #333770;
-
-            --secondary-50: #f0fdfa;
-            --secondary-100: #ccfbf1;
-            --secondary-200: #99f6e4;
-            --secondary-300: #5eead4;
-            --secondary-400: #2dd4bf;
-            --secondary-500: #14b8a6;
-            --secondary-600: #0d9488;
-            --secondary-700: #0f766e;
-            --secondary-800: #115e59;
-            --secondary-900: #134e4a;
-
-            --success: #10b981;
-            --warning: #f59e0b;
             --danger: #ef4444;
-            --info: #3b82f6;
-
-            /* Neutrals - Dark Mode Ready */
-            --gray-50: #f9fafb;
-            --gray-100: #f3f4f6;
-            --gray-200: #e5e7eb;
-            --gray-300: #d1d5db;
-            --gray-400: #9ca3af;
-            --gray-500: #6b7280;
-            --gray-600: #4b5563;
-            --gray-700: #374151;
-            --gray-800: #1f2937;
-            --gray-900: #111827;
-
-            /* Semantic Colors */
-            --bg-primary: #ffffff;
-            --bg-secondary: #f9fafb;
-            --bg-tertiary: #f3f4f6;
-            --bg-sidebar: #1a1f36;
-            --bg-panel: #f8fafc;
-
+            --success: #10b981;
             --text-primary: #111827;
             --text-secondary: #6b7280;
-            --text-tertiary: #9ca3af;
-            --text-inverse: #ffffff;
-
             --border-light: #e5e7eb;
-            --border-medium: #d1d5db;
-            --border-dark: #9ca3af;
-
-            /* Spacing System */
-            --space-xs: 0.25rem;
-            --space-sm: 0.5rem;
-            --space-md: 1rem;
-            --space-lg: 1.5rem;
-            --space-xl: 2rem;
-            --space-2xl: 3rem;
-
-            /* Border Radius */
-            --radius-sm: 0.375rem;
-            --radius-md: 0.5rem;
-            --radius-lg: 0.75rem;
-            --radius-xl: 1rem;
-            --radius-2xl: 1.5rem;
-            --radius-full: 9999px;
-
-            /* Shadows - Multi-Layer Professional */
-            --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            --shadow-glow: 0 0 20px rgba(102, 126, 234, 0.4);
-
-            /* Transitions */
-            --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-            --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
-            --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
-
-            /* Layout Dimensions */
-            --sidebar-width: 320px;
-            --panel-width: 380px;
-            --header-height: 70px;
-
-            /* Z-Index Scale */
-            --z-base: 1;
-            --z-dropdown: 1000;
-            --z-sticky: 1020;
-            --z-fixed: 1030;
-            --z-modal-backdrop: 1040;
-            --z-modal: 1050;
-            --z-popover: 1060;
-            --z-tooltip: 1070;
         }
-
-        /* Dark Mode Variables */
-        [data-theme="dark"] {
-            --bg-primary: #111827;
-            --bg-secondary: #1f2937;
-            --bg-tertiary: #374151;
-            --bg-sidebar: #0a0e1a;
-            --bg-panel: #1a1f36;
-
-            --text-primary: #f9fafb;
-            --text-secondary: #d1d5db;
-            --text-tertiary: #9ca3af;
-
-            --border-light: #374151;
-            --border-medium: #4b5563;
-            --border-dark: #6b7280;
-        }
-
-        /* =====================================================================
-         * RESET & BASE STYLES
-         * ===================================================================*/
-        *,
-        *::before,
-        *::after {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html {
-            font-size: 16px;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: var(--text-primary);
-            overflow-x: hidden;
-            line-height: 1.6;
+            font-family: 'Inter', sans-serif;
+            background: #f4f6fb;
         }
-
-        /* =====================================================================
-         * LAYOUT - 3 Column Grid Architecture
-         * ===================================================================*/
         .app-container {
             display: grid;
-            grid-template-columns: var(--sidebar-width) 1fr var(--panel-width);
+            grid-template-columns: 320px 1fr 380px;
             min-height: 100vh;
-            position: relative;
         }
-
-        /* =====================================================================
-         * SIDEBAR - Left Navigation
-         * ===================================================================*/
-        .sidebar {
-            background: rgba(26, 31, 54, 0.98);
-            backdrop-filter: blur(24px);
-            border-right: 1px solid rgba(255, 255, 255, 0.08);
-            display: flex;
-            flex-direction: column;
-            position: sticky;
-            top: 0;
-            height: 100vh;
-            overflow-y: auto;
-            z-index: var(--z-sticky);
-            box-shadow: var(--shadow-2xl);
-        }
-
-        .sidebar-header {
-            padding: var(--space-xl);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
-        }
-
-        .sidebar-brand {
-            display: flex;
-            align-items: center;
-            gap: var(--space-md);
-            margin-bottom: var(--space-sm);
-        }
-
-        .brand-icon {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, var(--primary-500), #764ba2);
-            border-radius: var(--radius-xl);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            color: white;
-            box-shadow: var(--shadow-glow);
-            animation: float 3s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-5px); }
-        }
-
-        .brand-text h1 {
-            color: white;
-            font-size: 20px;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-        }
-
-        .brand-text .version {
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 11px;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        /* Theme Toggle */
-        .theme-toggle {
-            margin-top: var(--space-lg);
-            display: flex;
-            align-items: center;
-            gap: var(--space-md);
-            padding: var(--space-sm) var(--space-md);
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: var(--radius-lg);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .toggle-switch {
-            position: relative;
-            width: 52px;
-            height: 28px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: var(--radius-full);
-            cursor: pointer;
-            transition: background var(--transition-base);
-        }
-
-        .toggle-switch.active {
-            background: var(--primary-500);
-        }
-
-        .toggle-slider {
-            position: absolute;
-            top: 3px;
-            left: 3px;
-            width: 22px;
-            height: 22px;
-            background: white;
-            border-radius: 50%;
-            transition: transform var(--transition-base);
-            box-shadow: var(--shadow-md);
-        }
-
-        .toggle-switch.active .toggle-slider {
-            transform: translateX(24px);
-        }
-
-        .toggle-label {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 13px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: var(--space-sm);
-        }
-
-        /* Navigation */
-        .sidebar-nav {
-            flex: 1;
-            padding: var(--space-lg) var(--space-md);
-        }
-
-        .nav-section-title {
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: var(--space-md);
-            margin-left: var(--space-md);
-        }
-
-        .nav-item {
-            margin-bottom: var(--space-sm);
-            position: relative;
-        }
-
-        .nav-link {
-            display: flex;
-            align-items: center;
-            padding: var(--space-md) var(--space-md);
-            color: rgba(255, 255, 255, 0.7);
-            text-decoration: none;
-            border-radius: var(--radius-lg);
-            transition: all var(--transition-base);
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-            border: 1px solid transparent;
-        }
-
-        .nav-link::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 4px;
-            background: linear-gradient(135deg, var(--primary-500), #764ba2);
-            transform: scaleY(0);
-            transition: transform var(--transition-base);
-            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-        }
-
-        .nav-link:hover {
-            background: rgba(255, 255, 255, 0.08);
-            color: white;
-            transform: translateX(2px);
-            border-color: rgba(255, 255, 255, 0.1);
-        }
-
-        .nav-link.active {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
-            color: white;
-            border-color: rgba(102, 126, 234, 0.3);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-        }
-
-        .nav-link.active::before {
-            transform: scaleY(1);
-        }
-
-        .nav-link.completed {
-            background: rgba(16, 185, 129, 0.1);
-            border-color: rgba(16, 185, 129, 0.2);
-        }
-
-        .nav-link.disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-            pointer-events: none;
-        }
-
-        .nav-icon-wrapper {
-            width: 40px;
-            height: 40px;
-            border-radius: var(--radius-lg);
-            background: rgba(255, 255, 255, 0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: var(--space-md);
-            transition: all var(--transition-base);
-            position: relative;
-        }
-
-        .nav-link:hover .nav-icon-wrapper {
-            background: rgba(255, 255, 255, 0.15);
-            transform: scale(1.05);
-        }
-
-        .nav-link.active .nav-icon-wrapper {
-            background: linear-gradient(135deg, var(--primary-500), #764ba2);
-            box-shadow: var(--shadow-glow);
-        }
-
-        .nav-icon {
-            font-size: 18px;
-        }
-
-        .nav-text {
-            flex: 1;
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .nav-number {
-            position: absolute;
-            top: -4px;
-            left: -4px;
-            width: 20px;
-            height: 20px;
-            background: var(--primary-500);
-            color: white;
-            border-radius: 50%;
-            font-size: 10px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 2px solid var(--bg-sidebar);
-        }
-
-        /* Badges */
-        .nav-badge {
-            padding: 4px 10px;
-            border-radius: var(--radius-full);
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            white-space: nowrap;
-            animation: fadeIn var(--transition-base);
-        }
-
-        .badge-pending {
-            background: rgba(245, 158, 11, 0.2);
-            color: #fbbf24;
-            border: 1px solid rgba(245, 158, 11, 0.3);
-        }
-
-        .badge-active {
-            background: rgba(102, 126, 234, 0.2);
-            color: #a5b4fc;
-            border: 1px solid rgba(102, 126, 234, 0.3);
-            animation: pulse 2s infinite;
-        }
-
-        .badge-completed {
-            background: rgba(16, 185, 129, 0.2);
-            color: #6ee7b7;
-            border: 1px solid rgba(16, 185, 129, 0.3);
-        }
-
-        .badge-error {
-            background: rgba(239, 68, 68, 0.2);
-            color: #fca5a5;
-            border: 1px solid rgba(239, 68, 68, 0.3);
-        }
-
-        @keyframes pulse {
-            0%, 100% {
-                opacity: 1;
-                transform: scale(1);
-            }
-            50% {
-                opacity: 0.8;
-                transform: scale(0.98);
-            }
-        }
-
-        /* Sidebar Footer */
-        .sidebar-footer {
-            padding: var(--space-lg);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            background: rgba(0, 0, 0, 0.2);
-        }
-
-        .progress-summary {
-            background: rgba(255, 255, 255, 0.05);
-            padding: var(--space-md);
-            border-radius: var(--radius-lg);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .progress-title {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 12px;
-            font-weight: 600;
-            margin-bottom: var(--space-sm);
-        }
-
-        .progress-bar-container {
-            height: 8px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: var(--radius-full);
-            overflow: hidden;
-            position: relative;
-        }
-
-        .progress-bar {
-            height: 100%;
-            background: linear-gradient(90deg, var(--primary-500), #764ba2);
-            border-radius: var(--radius-full);
-            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .progress-bar::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            right: 0;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-            animation: shimmer 2s infinite;
-        }
-
-        @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-        }
-
-        .progress-text {
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 11px;
-            margin-top: var(--space-xs);
-            display: flex;
-            justify-content: space-between;
-        }
-
-        /* =====================================================================
-         * MAIN CONTENT
-         * ===================================================================*/
         .main-content {
-            background: var(--bg-primary);
-            padding: var(--space-2xl);
-            overflow-y: auto;
-            max-height: 100vh;
-            transition: background var(--transition-base);
-        }
-
-        .content-header {
-            margin-bottom: var(--space-2xl);
-            padding-bottom: var(--space-xl);
-            border-bottom: 2px solid var(--border-light);
-        }
-
-        .page-title {
-            font-size: 32px;
-            font-weight: 900;
-            background: linear-gradient(135deg, var(--primary-500), #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: var(--space-sm);
-            letter-spacing: -1px;
-        }
-
-        .page-subtitle {
-            color: var(--text-secondary);
-            font-size: 16px;
-            line-height: 1.6;
-        }
-
-        /* Phase Container */
-        .phase {
-            display: none;
-            animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .phase.active {
-            display: block;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Cards - Premium Design */
-        .card {
-            background: var(--bg-primary);
-            border-radius: var(--radius-2xl);
-            padding: var(--space-2xl);
-            box-shadow: var(--shadow-lg);
-            border: 1px solid var(--border-light);
-            margin-bottom: var(--space-xl);
-            transition: all var(--transition-base);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary-500), #764ba2);
-            opacity: 0;
-            transition: opacity var(--transition-base);
-        }
-
-        .card:hover {
-            box-shadow: var(--shadow-xl);
-            transform: translateY(-2px);
-            border-color: var(--primary-200);
-        }
-
-        .card:hover::before {
-            opacity: 1;
-        }
-
-        .card-header {
-            display: flex;
-            align-items: center;
-            gap: var(--space-md);
-            margin-bottom: var(--space-xl);
-            padding-bottom: var(--space-lg);
-            border-bottom: 2px solid var(--border-light);
-        }
-
-        .card-icon {
-            width: 56px;
-            height: 56px;
-            background: linear-gradient(135deg, var(--primary-500), #764ba2);
-            border-radius: var(--radius-xl);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            color: white;
-            box-shadow: var(--shadow-glow);
-            flex-shrink: 0;
-        }
-
-        .card-title {
-            font-size: 22px;
-            font-weight: 800;
-            color: var(--text-primary);
-            letter-spacing: -0.5px;
-        }
-
-        .card-description {
-            color: var(--text-secondary);
-            font-size: 15px;
-            line-height: 1.7;
-            margin-bottom: var(--space-xl);
-        }
-
-        /* Buttons - Multi-Variant System */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: var(--space-sm);
-            padding: 14px 28px;
-            border-radius: var(--radius-lg);
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all var(--transition-base);
-            border: none;
-            text-decoration: none;
-            font-family: 'Inter', sans-serif;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.3);
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
-        }
-
-        .btn:hover::before {
-            width: 300px;
-            height: 300px;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary-500), #764ba2);
-            color: white;
-            box-shadow: 0 4px 14px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
-        }
-
-        .btn-secondary {
             background: white;
-            color: var(--primary-500);
-            border: 2px solid var(--primary-500);
+            padding: 3rem;
+        }
+        .card {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 2rem;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+        .btn {
+            padding: 14px 28px;
+            border-radius: 0.75rem;
+            font-size: 15px;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-primary { background: #1976d2; color: white; }
+        .btn-secondary { background: #f0f0f0; }
+        .phase { display: none; }
+        .phase.active { display: block; }
+
+        /* Styles for integrated config module */
+        .config-module { font-family: 'Roboto', Arial, sans-serif; color: #222; }
+        .config-module .tabs { display: flex; border-bottom: 1px solid #ddd; margin-bottom: 20px; }
+        .config-module .tab-button { padding: 12px 20px; background: none; border: none; border-bottom: 3px solid transparent; font-size: 14px; font-weight: 500; color: #555; cursor: pointer; transition: all 0.2s; }
+        .config-module .tab-button:hover { color: #1976d2; }
+        .config-module .tab-button.active { color: #1976d2; border-bottom-color: #1976d2; }
+        .config-module .tab-content { display: none; padding: 20px 0; }
+        .config-module .tab-content.active { display: block; }
+        .config-module .config-card { background: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); padding: 20px; margin-bottom: 20px; }
+        .config-module .config-title { font-size: 16px; font-weight: 500; color: #1976d2; margin-bottom: 15px; }
+        .config-module .input-row { display: flex; align-items: center; margin-bottom: 15px; }
+        .config-module .input-row label { flex: 0 0 180px; font-size: 14px; }
+        .config-module .input-row input, .config-module .input-row select { flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-family: 'Roboto', sans-serif; font-size: 14px; }
+        .config-module .classe-item { background: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); padding: 20px; margin-bottom: 20px; }
+        .config-module .classe-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .config-module .classe-header h3 { margin: 0; font-size: 16px; font-weight: 500; color: #1976d2; }
+        .config-module .options-section { margin-top: 20px; }
+        .config-module .options-section h4 { font-size: 14px; font-weight: 500; margin-bottom: 10px; color: #555; }
+        .config-module .option-item { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+        .config-module .option-item select { flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-family: 'Roboto', sans-serif; font-size: 14px; }
+        .config-module .option-item input { width: 80px; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-family: 'Roboto', sans-serif; font-size: 14px; }
+        .config-module .btn-action { background: #f0f0f0; border: none; border-radius: 4px; padding: 10px 16px; font-family: 'Roboto', sans-serif; font-size: 14px; display: flex; align-items: center; cursor: pointer; margin-right: 10px; transition: background 0.2s; }
+        .config-module .btn-action:hover { background: #e0e0e0; }
+        .config-module .btn-action .material-icons { margin-right: 5px; font-size: 18px; }
+        .config-module .btn-supprimer { background: none; border: none; color: #e53935; cursor: pointer; padding: 5px; }
+        .config-module .btn-supprimer-option { background: none; border: none; color: #e53935; cursor: pointer; padding: 2px; }
+        .config-module .button-row { display: flex; justify-content: flex-end; margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; }
+        .config-module .btn-ajouter { width: 100%; padding: 12px; border: 1px dashed #1976d2; background: none; color: #1976d2; border-radius: 4px; font-family: 'Roboto', sans-serif; font-size: 14px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s; margin-bottom: 20px; }
+        .config-module .btn-ajouter:hover { background: rgba(25, 118, 210, 0.05); }
+        .config-module .btn-ajouter .material-icons { margin-right: 5px; }
+        .config-module .scenario-selector { margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .config-module .scenario-selector select { flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-family: 'Roboto', sans-serif; font-size: 14px; }
+        .config-module .scenario-card { background: #f9f9f9; border-radius: 4px; padding: 10px 15px; margin-bottom: 15px; border: 1px solid #eee; }
+        .config-module .ponderation-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
+        .config-module .ponderation-table th, .config-module .ponderation-table td { padding: 8px; text-align: center; border: 1px solid #ddd; }
+        .config-module .ponderation-table th { background-color: #f0c674; font-weight: 500; }
+        .config-module .ponderation-table input { width: 40px; text-align: center; padding: 4px; border: 1px solid #ddd; border-radius: 3px; }
+        .loading-overlay.active { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 1001; }
+        .toast { padding: 15px; background: #333; color: white; border-radius: 5px; margin-bottom: 10px; }
+        .toast-success { background: var(--success); }
+    </style>
+</head>
+<body>
+    <div id="toast-container"></div>
+    <div class="app-container">
+        <aside class="sidebar" style="background: #1a1f36; color: white; padding: 1rem;">
+            <h1>Console V3</h1>
+            <nav>
+                <a href="#" data-step="1">1. Initialisation</a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <div id="phase-1" class="phase active">
+                <div class="card">
+                    <h2>⚙️ Paramètres Généraux</h2>
+                    <input type="password" id="config-admin-password" placeholder="Mot de passe Admin">
+                    <button id="btn-run-initialisation" class="btn btn-primary">Lancer l'Initialisation</button>
+                </div>
+                <div class="card">
+                    <h2>CHOIX STRATÉGIQUE</h2>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <h3>Parcours A: Préparer les données</h3>
+                            <button id="btn-generate-ids">Générer ID & Noms</button>
+                            <div id="ids-status"></div>
+                            <button id="btn-consolidate">Consolider</button>
+                            <div id="consolidate-status"></div>
+                            <button id="btn-show-stats">Statistiques</button>
+                            <div id="stats-status"></div>
+                        </div>
+                        <div>
+                            <h3>Parcours B: Configurer les classes</h3>
+                            <button id="btn-configure-structure">Configurer la Structure</button>
+                             <div id="structure-status"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="module-configuration-container" class="card" style="display: none;">
+                    <div class="config-module">
+                        <div class="tabs">
+                            <button class="tab-button" data-tab="general">Général</button>
+                            <button class="tab-button active" data-tab="structure">Structure des Classes</button>
+                            <button class="tab-button" data-tab="options">Options Disponibles</button>
+                            <button class="tab-button" data-tab="ponderation">Pondération Matières</button>
+                        </div>
+                        <div id="tab-general" class="tab-content">
+                            <div class="config-card">
+                                <div class="config-title">Paramètres Généraux</div>
+                                <div class="input-row"><label for="module-max-swaps">Nombre max d'échanges:</label><input type="number" id="module-max-swaps" value="30"></div>
+                                <div class="input-row"><label for="module-tolerance-parite">Tolérance parité (%):</label><input type="number" id="module-tolerance-parite" value="2"></div>
+                            </div>
+                        </div>
+                        <div id="tab-structure" class="tab-content active">
+                            <div class="config-card">
+                                <div class="config-title">Paramètres des Classes</div>
+                                <div class="input-row"><label for="effectif-total">Effectif total:</label><input type="number" id="effectif-total" readonly></div>
+                                <div class="input-row"><label for="effectif-moyen">Effectif moyen par classe:</label><input type="number" id="effectif-moyen" value="28"></div>
+                            </div>
+                            <div id="classes-container"></div>
+                            <button id="btn-ajouter-classe" class="btn-ajouter"><i class="material-icons">add</i> Ajouter une classe</button>
+                        </div>
+                        <div id="tab-options" class="tab-content">
+                            <div class="config-card">
+                                <div class="config-title">Liste des Options</div>
+                                <div id="options-disponibles-container"></div>
+                                <button id="btn-ajouter-option-disponible" class="btn-ajouter"><i class="material-icons">add</i> Ajouter une option</button>
+                            </div>
+                        </div>
+                        <div id="tab-ponderation" class="tab-content">
+                             <div class="config-card">
+                                <div class="config-title">Scénarios de Pondération</div>
+                                <div class="scenario-selector"><select id="scenario-select"></select><button id="btn-nouveau-scenario" class="btn-action"><i class="material-icons">add</i> Nouveau</button></div>
+                                <div id="scenario-actif" class="scenario-card"></div>
+                                <table class="ponderation-table">
+                                    <thead><tr><th>Matière</th><th>Code</th><th>COM</th><th>TRA</th><th>PART</th><th>ABS</th></tr></thead>
+                                    <tbody id="ponderation-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="button-row">
+                            <button id="btn-annuler-config" class="btn-secondary">Annuler</button>
+                            <button id="btn-enregistrer-config" class="btn-primary">Enregistrer</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        <aside class="diagnostic-panel" style="background: #f8fafc; padding: 1rem;">
+            <h2>Diagnostic Live</h2>
+        </aside>
+    </div>
+
+    <div id="loading-overlay" style="display: none;">
+        <div id="loading-text">Chargement...</div>
+    </div>
+
+    <script>
+        const appState = {
+            workflow: {
+                a1_ids_generated: false,
+                a2_consolidated: false,
+                a3_stats_shown: false,
+                b1_structure_configured: false
+            }
+        };
+
+        function showLoading(text) { document.getElementById('loading-overlay').style.display = 'flex'; document.getElementById('loading-text').textContent = text; }
+        function hideLoading() { document.getElementById('loading-overlay').style.display = 'none'; }
+        function toggleConsoleMinimize() {
+            const isMinimized = document.body.classList.toggle('console-minimized');
+            localStorage.setItem('console_v3_minimized', isMinimized);
+            showToast('info', isMinimized ? 'Console minimisée' : 'Console restaurée');
         }
 
-        .btn-secondary:hover {
-            background: var(--primary-500);
-            color: white;
+        function restoreMinimizedState() {
+            if (localStorage.getItem('console_v3_minimized') === 'true') {
+                document.body.classList.add('console-minimized');
+            }
         }
 
-        .btn-success {
-            background: var(--success);
-            color: white;
-            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+        function showToast(type, message) {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+
+            let displayMessage = message;
+            if (typeof message === 'object' && message !== null) {
+                // Handle Google Apps Script error objects
+                if (message.message) {
+                    displayMessage = message.message;
+                } else if (message.error) {
+                    displayMessage = message.error;
+                } else {
+                    // Fallback for other objects
+                    try {
+                        displayMessage = JSON.stringify(message);
+                    } catch (e) {
+                        displayMessage = '[object Object]';
+                    }
+                }
+            }
+
+            toast.textContent = displayMessage;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 500);
+            }, 4000);
         }
 
-        .btn-danger {
-            background: var(--danger);
-            color: white;
-            box-shadow: 0 4px 14px rgba(239, 68, 68, 0.4);
+        function updateWorkflowButtons() {
+            const wf = appState.workflow;
+            document.getElementById('btn-generate-ids').disabled = wf.a1_ids_generated;
+            document.getElementById('btn-consolidate').disabled = !wf.a1_ids_generated || wf.a2_consolidated;
+            document.getElementById('btn-show-stats').disabled = !wf.a2_consolidated || wf.a3_stats_shown;
+            document.getElementById('btn-configure-structure').disabled = wf.b1_structure_configured;
+
+            if (wf.a1_ids_generated) document.getElementById('ids-status').innerHTML = `<span style="color: var(--success);">✅ Terminé</span>`;
+            if (wf.a2_consolidated) document.getElementById('consolidate-status').innerHTML = `<span style="color: var(--success);">✅ Terminé</span>`;
+            if (wf.a3_stats_shown) document.getElementById('stats-status').innerHTML = `<span style="color: var(--success);">✅ Terminé</span>`;
+            if (wf.b1_structure_configured) document.getElementById('structure-status').innerHTML = `<span style="color: var(--success);">✅ Terminé</span>`;
         }
 
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none !important;
+        document.addEventListener('DOMContentLoaded', () => {
+            restoreMinimizedState();
+            const toggleBtn = document.getElementById('console-toggle-btn');
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', toggleConsoleMinimize);
+            }
+
+            const initBtn = document.getElementById('btn-run-initialisation');
+            if (initBtn) {
+                initBtn.addEventListener('click', () => {
+                const adminPassword = document.getElementById('config-admin-password').value;
+                if (!adminPassword) {
+                    showToast('error', 'Mot de passe requis');
+                    return;
+                }
+                showLoading('Initialisation...');
+                google.script.run
+                    .withSuccessHandler(response => {
+                        hideLoading();
+                        if (response.success) showToast('success', 'Initialisation réussie !');
+                        else showToast('error', `Erreur: ${response.error}`);
+                    })
+                    .withFailureHandler(err => { hideLoading(); showToast('error', err.message); })
+                    .v3_runInitializationWithForm({ adminPassword, niveau: '5°', nbSources: 6, nbDest: 6, lv2: '', opt: '' });
+                });
+            }
+
+            const generateIdsBtn = document.getElementById('btn-generate-ids');
+            if (generateIdsBtn) {
+                generateIdsBtn.addEventListener('click', () => {
+                    showLoading('Génération ID & Noms...');
+                    google.script.run
+                        .withSuccessHandler(response => {
+                            hideLoading();
+                            if (response.success) {
+                                appState.workflow.a1_ids_generated = true;
+                                updateWorkflowButtons();
+                                showToast('success', 'Génération réussie !');
+                            } else showToast('error', `Erreur: ${response.error}`);
+                        })
+                        .withFailureHandler(err => { hideLoading(); showToast('error', err.message); })
+                        .v3_genererNomPrenomEtID();
+                });
+            }
+
+            const consolidateBtn = document.getElementById('btn-consolidate');
+            if (consolidateBtn) {
+                consolidateBtn.addEventListener('click', () => {
+                    showLoading('Consolidation...');
+                    google.script.run
+                        .withSuccessHandler(response => {
+                            hideLoading();
+                            if (response.success) {
+                                appState.workflow.a2_consolidated = true;
+                                updateWorkflowButtons();
+                                showToast('success', 'Consolidation réussie !');
+                            } else showToast('error', `Erreur: ${response.error}`);
+                        })
+                        .withFailureHandler(err => { hideLoading(); showToast('error', err.message); })
+                        .consoliderDonnees();
+                });
+            }
+
+            const showStatsBtn = document.getElementById('btn-show-stats');
+            if (showStatsBtn) {
+                showStatsBtn.addEventListener('click', () => {
+                    showLoading('Calcul des stats...');
+                    google.script.run
+                        .withSuccessHandler(() => {
+                            hideLoading();
+                            appState.workflow.a3_stats_shown = true;
+                            updateWorkflowButtons();
+                            showToast('success', 'Statistiques générées !');
+                        })
+                        .withFailureHandler(err => { hideLoading(); showToast('error', err.message); })
+                        .compterEffectifsOptionsEtLangues();
+                });
+            }
+
+            const configureBtn = document.getElementById('btn-configure-structure');
+            if (configureBtn) {
+                configureBtn.addEventListener('click', () => {
+                    const moduleContainer = document.getElementById('module-configuration-container');
+                    if (moduleContainer) {
+                        moduleContainer.style.display = moduleContainer.style.display === 'none' ? 'block' : 'none';
+                    }
+                });
+            }
+
+            google.script.run
+                .withSuccessHandler(response => {
+                    if (response.success) {
+                        appState.workflow.a1_ids_generated = response.idsGenerated;
+                        appState.workflow.a2_consolidated = response.consolidationDone;
+                        appState.workflow.b1_structure_configured = response.structureConfigured;
+                        updateWorkflowButtons();
+                    }
+                })
+                .v3_getInitialState();
+
+            initializeConfigModule();
+        });
+
+        // --- Integrated ConfigurationComplete Code ---
+        let configData = { general: {}, classes: [], options: [], scenarios: [] };
+
+        function initializeConfigModule() {
+            chargerConfiguration();
+
+            document.querySelectorAll('.config-module .tab-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    document.querySelectorAll('.config-module .tab-button').forEach(btn => btn.classList.remove('active'));
+                    document.querySelectorAll('.config-module .tab-content').forEach(tab => tab.classList.remove('active'));
+                    this.classList.add('active');
+                    const tabContent = document.querySelector(`.config-module #tab-${tabId}`);
+                    if (tabContent) {
+                        tabContent.classList.add('active');
+                    }
+                });
+            });
+
+            const addClassBtn = document.getElementById('btn-ajouter-classe');
+            if (addClassBtn) addClassBtn.addEventListener('click', ajouterClasse);
+
+            const addOptionBtn = document.getElementById('btn-ajouter-option-disponible');
+            if (addOptionBtn) addOptionBtn.addEventListener('click', ajouterOptionDisponibleEtRafraichir);
+
+            const newScenarioBtn = document.getElementById('btn-nouveau-scenario');
+            if (newScenarioBtn) newScenarioBtn.addEventListener('click', creerNouveauScenario);
+
+            const cancelBtn = document.getElementById('btn-annuler-config');
+            if (cancelBtn) cancelBtn.addEventListener('click', fermerConfiguration);
+
+            const saveBtn = document.getElementById('btn-enregistrer-config');
+            if (saveBtn) saveBtn.addEventListener('click', enregistrerConfiguration);
+
+            const scenarioSelect = document.getElementById('scenario-select');
+            if (scenarioSelect) scenarioSelect.addEventListener('change', function() { changerScenarioActif(this.value); });
+
+            const avgEffectifInput = document.getElementById('effectif-moyen');
+            if (avgEffectifInput) {
+                avgEffectifInput.addEventListener('input', function() {
+                    const effectifMoyen = parseInt(this.value) || 28;
+                    configData.classes.forEach(c => c.effectif = effectifMoyen);
+                    afficherClasses();
+                });
+            }
         }
 
-        .btn-icon {
-            font-size: 18px;
+        function chargerConfiguration() {
+            google.script.run
+                .withSuccessHandler(data => {
+                    if (data.general) configData.general = data.general;
+                    if (data.classes) configData.classes = data.classes;
+                    configData.options = (data.optionsPersonnalisees || data.options || []);
+                    if (data.scenarios) configData.scenarios = data.scenarios;
+                    if (!configData.classes || configData.classes.length === 0) {
+                         configData.classes = [{ origine: '', destination: '', effectif: 28, options: [] }];
+                    }
+                    afficherClasses();
+                    afficherOptionsDisponibles();
+                    afficherScenarios();
+                })
+                .withFailureHandler(err => showToast('error', 'Erreur chargement config: ' + err.message))
+                .chargerStructure();
         }
 
-        /* =====================================================================
-         * DIAGNOSTIC PANEL - Right Sidebar
-         * ===================================================================*/
-        .diagnostic-panel {
-            background: rgba(248, 250, 252, 0.98);
-            backdrop-filter: blur(24px);
-            border-left: 1px solid var(--border-light);
-            padding: var(--space-xl);
-            overflow-y: auto;
-            position: sticky;
-            top: 0;
-            height: 100vh;
-            box-shadow: var(--shadow-2xl);
+        function afficherClasses() {
+            const container = document.getElementById('classes-container');
+            container.innerHTML = '';
+            configData.classes.forEach((classe, index) => {
+                const div = document.createElement('div');
+                div.className = 'classe-item';
+                let lv2Specifique = null, quotaLV2 = 0;
+                let optionsComplementaires = [];
+                if (classe.options && classe.options.length > 0) {
+                    classe.options.forEach(opt => {
+                        if (!lv2Specifique && opt.nom) { lv2Specifique = opt.nom; quotaLV2 = opt.quota; }
+                        else if (opt.nom) { optionsComplementaires.push(opt); }
+                    });
+                }
+                div.innerHTML = `
+                    <div class="classe-header"><h3>Classe #${index + 1}</h3><button class="btn-supprimer" onclick="supprimerClasse(${index})">&times;</button></div>
+                    <div class="input-row"><label>Origine:</label><input type="text" value="${classe.origine}" oninput="updateClasse(${index}, 'origine', this.value)"></div>
+                    <div class="input-row"><label>Destination:</label><input type="text" value="${classe.destination}" oninput="updateClasse(${index}, 'destination', this.value)"></div>
+                    <div class="input-row"><label>Effectif:</label><input type="number" value="${classe.effectif}" oninput="updateClasse(${index}, 'effectif', parseInt(this.value))"></div>
+                    <div class="options-section">
+                        <h4>LV2 Spécifique</h4>
+                        <select onchange="updateClasseLV2(${index}, this.value)">
+                            <option value="">Aucune</option>
+                            ${genererOptionsLV2HTML(lv2Specifique)}
+                        </select>
+                        <input type="number" value="${quotaLV2}" oninput="updateQuotaLV2(${index}, parseInt(this.value))" ${!lv2Specifique ? 'disabled' : ''}>
+                    </div>
+                    <div class="options-section">
+                        <h4>Options Complémentaires</h4>
+                        <div id="classe-options-complementaires-${index}">${genererOptionsComplementairesHTML(optionsComplementaires, index)}</div>
+                        <button class="btn-ajouter" onclick="ajouterOptionComplementaire(${index})">+ Ajouter option</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+            calculerTotalEffectifs();
         }
-
-        .panel-header {
-            margin-bottom: var(--space-xl);
-            padding-bottom: var(--space-lg);
-            border-bottom: 2px solid var(--border-light);
+        function genererOptionsLV2HTML(selection) { return configData.options.map(o => `<option value="${o}" ${o === selection ? 'selected' : ''}>${o}</option>`).join(''); }
+        function genererOptionsComplementairesHTML(options, classeIndex) {
+            return options.map((opt, i) => `
+                <div class="option-item">
+                    <select onchange="updateOptionComplementaire(${classeIndex}, ${i}, 'nom', this.value)">
+                        <option value="">--</option>${genererOptionsComplementairesSelectHTML(opt.nom)}
+                    </select>
+                    <input type="number" value="${opt.quota}" oninput="updateOptionComplementaire(${classeIndex}, ${i}, 'quota', parseInt(this.value))">
+                    <button class="btn-supprimer-option" onclick="supprimerOptionComplementaire(${classeIndex}, ${i})">&times;</button>
+                </div>`).join('');
         }
-
-        .panel-title {
-            font-size: 18px;
-            font-weight: 800;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: var(--space-sm);
-            margin-bottom: var(--space-xs);
+        function genererOptionsComplementairesSelectHTML(selection) { return configData.options.map(o => `<option value="${o}" ${o === selection ? 'selected' : ''}>${o}</option>`).join(''); }
+        function updateClasse(index, prop, value) { configData.classes[index][prop] = value; if (prop === 'effectif') calculerTotalEffectifs(); }
+        function supprimerClasse(index) { configData.classes.splice(index, 1); afficherClasses(); }
+        function ajouterClasse() { configData.classes.push({ origine: '', destination: '', effectif: 28, options: [] }); afficherClasses(); }
+        function calculerTotalEffectifs() { document.getElementById('effectif-total').value = configData.classes.reduce((sum, c) => sum + (c.effectif || 0), 0); }
+        function afficherOptionsDisponibles() {
+            const container = document.getElementById('options-disponibles-container');
+            container.innerHTML = configData.options.map((opt, i) => `
+                <div class="input-row">
+                    <input type="text" value="${opt}" oninput="updateOptionDisponibleEtRafraichir(${i}, this.value)">
+                    <button class="btn-supprimer" onclick="supprimerOptionDisponibleEtRafraichir(${i})">&times;</button>
+                </div>`).join('');
         }
-
-        .panel-subtitle {
-            font-size: 11px;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: 600;
+        function ajouterOptionDisponibleEtRafraichir() {
+            const opt = prompt("Nouvelle option:");
+            if (opt) { configData.options.push(opt.trim().toUpperCase()); afficherOptionsDisponibles(); rafraichirOptionsInterface(); }
         }
+        function updateOptionDisponibleEtRafraichir(index, value) { configData.options[index] = value.trim().toUpperCase(); setTimeout(rafraichirOptionsInterface, 300); }
+        function supprimerOptionDisponibleEtRafraichir(index) { configData.options.splice(index, 1); afficherOptionsDisponibles(); rafraichirOptionsInterface(); }
+        function rafraichirOptionsInterface() { afficherClasses(); }
+        function afficherScenarios() {
+            const select = document.getElementById('scenario-select');
+            select.innerHTML = configData.scenarios.map(s => `<option value="${s.id}" ${s.actif ? 'selected' : ''}>${s.nom}</option>`).join('');
+            afficherScenarioActif();
+        }
+        function afficherScenarioActif() {
+            const scenario = configData.scenarios.find(s => s.actif);
+            if (!scenario) return;
+            document.getElementById('scenario-actif').innerHTML = `<h4>${scenario.nom}</h4><p>${scenario.description}</p>`;
+            const tbody = document.getElementById('ponderation-body');
+            tbody.innerHTML = scenario.ponderation.map((m, i) => `
+                <tr>
+                    <td>${m.matiere}</td><td>${m.code}</td>
+                    <td><input type="number" value="${m.COM}" oninput="updatePonderation(${i}, 'COM', this.value)"></td>
+                    <td><input type="number" value="${m.TRA}" oninput="updatePonderation(${i}, 'TRA', this.value)"></td>
+                    <td><input type="number" value="${m.PART}" oninput="updatePonderation(${i}, 'PART', this.value)"></td>
+                    <td><input type="number" value="${m.ABS}" oninput="updatePonderation(${i}, 'ABS', this.value)"></td>
+                </tr>`).join('');
+        }
+        function updatePonderation(index, critere, value) { const s = configData.scenarios.find(sc => sc.actif); if(s) s.ponderation[index][critere] = parseInt(value) || 0; }
+        function changerScenarioActif(id) { configData.scenarios.forEach(s => s.actif = s.id === id); afficherScenarioActif(); }
+        function creerNouveauScenario() {
+            const nom = prompt("Nom du scénario:");
+            if (nom) {
+                const id = "custom_" + Date.now();
+                const base = configData.scenarios.find(s => s.actif);
+                const newScenario = { id, nom, description: "Personnalisé", actif: false, ponderation: JSON.parse(JSON.stringify(base.ponderation)) };
+                configData.scenarios.push(newScenario);
+                afficherScenarios();
+                document.getElementById('scenario-select').value = id;
+                changerScenarioActif(id);
+            }
+        }
+        function enregistrerConfiguration() {
+            showLoading('Enregistrement...');
+            const structureData = {
+                classes: configData.classes, options: configData.options, general: configData.general,
+                scenarios: configData.scenarios, ponderation: configData.scenarios.find(s => s.actif).ponderation
+            };
+             // Re-gather data from DOM before saving
+            structureData.classes = [];
+            document.querySelectorAll('#classes-container .classe-item').forEach((item, index) => {
+                 const classeData = {
+                    origine: item.querySelector('input[oninput*="origine"]').value,
+                    destination: item.querySelector('input[oninput*="destination"]').value,
+                    effectif: parseInt(item.querySelector('input[oninput*="effectif"]').value),
+                    options: []
+                };
+                 const lv2Select = item.querySelector('select[onchange*="updateClasseLV2"]');
+                 const quotaLV2Input = item.querySelector('input[oninput*="updateQuotaLV2"]');
+                 if (lv2Select && lv2Select.value && quotaLV2Input && quotaLV2Input.value > 0) {
+                     classeData.options.push({ nom: lv2Select.value, quota: parseInt(quotaLV2Input.value) });
+                 }
+                item.querySelectorAll('.option-item').forEach(optItem => {
+                    const optSelect = optItem.querySelector('select');
+                    const optInput = optItem.querySelector('input');
+                    if(optSelect && optSelect.value && optInput && optInput.value > 0) {
+                        classeData.options.push({ nom: optSelect.value, quota: parseInt(optInput.value) });
+                    }
+                });
 
-        /* Metrics Grid */
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: var(--space-md);
-            margin-bottom: var(--space-xl);
+                structureData.classes.push(classeData);
+            });
+            google.script.run
+                .withSuccessHandler(result => {
+                    hideLoading();
+                    showToast('success', result.message || 'Sauvegardé !');
+                    appState.workflow.b1_structure_configured = true;
+                    updateWorkflowButtons();
+                    document.getElementById('module-configuration-container').style.display = 'none';
+                })
+                .withFailureHandler(err => { hideLoading(); showToast('error', 'Erreur: ' + err.message); })
+                .sauvegarderStructure(structureData);
+        }
+        function fermerConfiguration() { document.getElementById('module-configuration-container').style.display = 'none'; }
+
+        // Expose functions to global scope for inline event handlers
+        window.supprimerClasse = supprimerClasse;
+        window.updateClasse = updateClasse;
+        window.updateClasseLV2 = function(i,v){};
+        window.updateQuotaLV2 = function(i,v){};
+        window.ajouterOptionComplementaire = function(i){
+             const container = document.getElementById(`classe-options-complementaires-${i}`);
+             const newIndex = container.querySelectorAll('.option-item').length;
+             const newItem = document.createElement('div');
+             newItem.className = 'option-item';
+             newItem.innerHTML = `<select onchange="updateOptionComplementaire(${i}, ${newIndex}, 'nom', this.value)"><option value="">--</option>${genererOptionsComplementairesSelectHTML('')}</select><input type="number" value="0" oninput="updateOptionComplementaire(${i}, ${newIndex}, 'quota', parseInt(this.value))"><button onclick="supprimerOptionComplementaire(${i}, ${newIndex})">&times;</button>`;
+             container.appendChild(newItem);
+        };
+        window.updateOptionComplementaire = function(ci,oi,p,v){};
+        window.supprimerOptionComplementaire = function(ci,oi){
+            const container = document.getElementById(`classe-options-complementaires-${ci}`);
+            const item = container.querySelectorAll('.option-item')[oi];
+            if(item) item.remove();
+        };
+        window.updateOptionDisponibleEtRafraichir = updateOptionDisponibleEtRafraichir;
+        window.supprimerOptionDisponibleEtRafraichir = supprimerOptionDisponibleEtRafraichir;
+        window.updatePonderation = updatePonderation;
+
+        function debuggerOptions() {
+          console.log("🔍 === DEBUG OPTIONS ===");
+          google.script.run
+            .withSuccessHandler(function(result) {
+              console.log("✅ Options reçues du serveur:", result);
+              if (result && result.optionsPersonnalisees) {
+                configData.options = result.optionsPersonnalisees;
+                afficherOptionsDisponibles();
+                afficherClasses();
+              }
+            })
+            .testerOptionsPersonnaliseesInterface();
         }
 
         .metric-card {
@@ -3003,39 +2833,6 @@
             updateMinimizedBar();
         });
     </script>
-
-    <!-- =====================================================================
-     * BOUTON TOGGLE FLOTTANT
-     * ===================================================================-->
-    <button class="console-toggle-btn" id="consoleToggleBtn" title="Minimiser/Maximiser la console (Ctrl+M)">
-        <i class="fas fa-chevron-down"></i>
-    </button>
-
-    <!-- =====================================================================
-     * BARRE MINIMALE
-     * ===================================================================-->
-    <div class="console-minimized-bar">
-        <div class="minimized-bar-content">
-            <div class="minimized-bar-logo">
-                <i class="fas fa-rocket"></i>
-                <span class="minimized-bar-title">Console V3 Expert</span>
-            </div>
-            <div class="minimized-bar-status">
-                <div class="minimized-status-item">
-                    <i class="fas fa-layer-group"></i>
-                    <span id="minimized-current-phase">Phase 1</span>
-                </div>
-                <div class="minimized-status-item">
-                    <i class="fas fa-info-circle"></i>
-                    <span id="minimized-current-status">En attente</span>
-                </div>
-            </div>
-            <div class="minimized-bar-progress">
-                <div class="minimized-progress-circle" id="minimizedProgressCircle">
-                    <span class="minimized-progress-text" id="minimizedProgressText">0%</span>
-                </div>
-            </div>
-        </div>
-    </div>
+    <button id="console-toggle-btn" class="btn" style="position: fixed; bottom: 20px; right: 20px; z-index: 1002;">Minimiser</button>
 </body>
 </html>
