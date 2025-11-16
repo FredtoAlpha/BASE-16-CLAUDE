@@ -1829,6 +1829,31 @@
                                     <button id="btn-show-stats" class="btn btn-secondary" style="width: 100%;"><i class="btn-icon fas fa-chart-bar"></i><span>Statistiques</span></button>
                                     <div id="stats-status" style="margin-top: var(--space-sm); font-size: 12px;"></div>
                                 </div>
+                                <!-- Étape A.2 : Consolidation -->
+                                <div style="padding: var(--space-lg); background: white; border-radius: var(--radius-lg); border: 1px solid var(--border-light);">
+                                    <div style="display: flex; align-items: center; gap: var(--space-md); margin-bottom: var(--space-md);">
+                                        <div style="width: 32px; height: 32px; background: linear-gradient(135deg, var(--secondary-500), var(--secondary-700)); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px;">A.2</div>
+                                        <div>
+                                            <h4 style="font-size: 15px; font-weight: 700;">Consolider les Données</h4>
+                                            <p style="font-size: 12px; color: var(--text-secondary);">Rassemble tous les élèves dans l'onglet CONSOLIDATION</p>
+                                        </div>
+                                    </div>
+                                    <button id="btn-consolidate" class="btn btn-secondary" style="width: 100%;"><i class="btn-icon fas fa-stream"></i><span>Consolider</span></button>
+                                    <div id="consolidate-status" style="margin-top: var(--space-sm); font-size: 12px;"></div>
+                                </div>
+
+                                <!-- Étape A.3 : Statistiques -->
+                                <div style="padding: var(--space-lg); background: white; border-radius: var(--radius-lg); border: 1px solid var(--border-light);">
+                                    <div style="display: flex; align-items: center; gap: var(--space-md); margin-bottom: var(--space-md);">
+                                        <div style="width: 32px; height: 32px; background: linear-gradient(135deg, var(--secondary-500), var(--secondary-700)); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px;">A.3</div>
+                                        <div>
+                                            <h4 style="font-size: 15px; font-weight: 700;">Afficher les Statistiques</h4>
+                                            <p style="font-size: 12px; color: var(--text-secondary);">Génère un rapport d'analyse des données sources</p>
+                                        </div>
+                                    </div>
+                                    <button id="btn-show-stats" class="btn btn-secondary" style="width: 100%;"><i class="btn-icon fas fa-chart-bar"></i><span>Statistiques</span></button>
+                                    <div id="stats-status" style="margin-top: var(--space-sm); font-size: 12px;"></div>
+                                </div>
                                 <!-- Ajoutez d'autres étapes pour le parcours B ici -->
                             </div>
                         </div>
@@ -1906,14 +1931,6 @@
                         <div id="tab-general" class="tab-content">
                           <div class="config-card">
                             <div class="config-title">Paramètres Généraux</div>
-                            <div class="input-row">
-                              <label for="niveau-scolaire">Niveau scolaire:</label>
-                              <select id="niveau-scolaire"><option value="6°">6°</option><option value="5°">5°</option><option value="4°">4°</option><option value="3°">3°</option></select>
-                            </div>
-                            <div class="input-row">
-                              <label for="mot-de-passe">Mot de passe admin:</label>
-                              <input type="password" id="mot-de-passe">
-                            </div>
                             <div class="input-row">
                               <label for="max-swaps">Nombre max d'échanges:</label>
                               <input type="number" id="max-swaps" value="30">
@@ -3267,6 +3284,22 @@
             // Initialiser l'état des boutons de workflow
             updateWorkflowButtons();
 
+            // Charger l'état initial depuis le backend
+            google.script.run
+                .withSuccessHandler(function(initialState) {
+                    if (initialState) {
+                        appState.workflow.a1_ids_generated = initialState.idsGenerated;
+                        appState.workflow.a2_consolidated = initialState.consolidationDone;
+                        appState.workflow.b1_structure_configured = initialState.structureConfigured;
+                        updateWorkflowButtons();
+                        showToast('info', 'État du workflow chargé.');
+                    }
+                })
+                .withFailureHandler(function(err) {
+                     showToast('error', "Erreur au chargement de l'état.");
+                })
+                .v3_getInitialState();
+
             // --- DEBUT DU CODE INTÉGRÉ DE ConfigurationComplete.html ---
             (function() {
                 'use strict';
@@ -3319,17 +3352,9 @@
                         afficherClasses();
                     });
 
-                    document.getElementById('niveau-scolaire').value = configData.general.niveau;
-                    document.getElementById('mot-de-passe').value = configData.general.motDePasse;
                     document.getElementById('max-swaps').value = configData.general.maxSwaps;
                     document.getElementById('tolerance-parite').value = configData.general.toleranceParite;
 
-                    document.getElementById('niveau-scolaire').addEventListener('change', function() {
-                        configData.general.niveau = this.value;
-                    });
-                    document.getElementById('mot-de-passe').addEventListener('input', function() {
-                        configData.general.motDePasse = this.value;
-                    });
                     document.getElementById('max-swaps').addEventListener('input', function() {
                         configData.general.maxSwaps = parseInt(this.value) || 30;
                     });
@@ -3347,8 +3372,6 @@
                             console.log("📦 Données reçues du serveur:", data);
                             if (data.general) {
                                 configData.general = data.general;
-                                document.getElementById('niveau-scolaire').value = data.general.niveau || "6°";
-                                document.getElementById('mot-de-passe').value = data.general.motDePasse || "";
                                 document.getElementById('max-swaps').value = data.general.maxSwaps || 30;
                                 document.getElementById('tolerance-parite').value = data.general.toleranceParite || 2;
                             }
