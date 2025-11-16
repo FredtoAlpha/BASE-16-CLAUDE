@@ -1829,6 +1829,42 @@
                                     <button id="btn-show-stats" class="btn btn-secondary" style="width: 100%;"><i class="btn-icon fas fa-chart-bar"></i><span>Statistiques</span></button>
                                     <div id="stats-status" style="margin-top: var(--space-sm); font-size: 12px;"></div>
                                 </div>
+                                <!-- Ajoutez d'autres étapes pour le parcours B ici -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MODULE DE CONFIGURATION INTÉGRÉ (repliable) -->
+                <div id="module-configuration-container" class="card" style="display: none; border-color: var(--info);">
+                    <div class="config-module">
+                        <!-- Barre d'onglets -->
+                        <div class="tabs">
+                          <button class="tab-button" data-tab="general">Général</button>
+                          <button class="tab-button active" data-tab="structure">Structure des Classes</button>
+                          <button class="tab-button" data-tab="options">Options Disponibles</button>
+                          <button class="tab-button" data-tab="ponderation">Pondération Matières</button>
+                        </div>
+
+                        <!-- Onglet Général -->
+                        <div id="tab-general" class="tab-content">
+                          <div class="config-card">
+                            <div class="config-title">Paramètres Généraux</div>
+                            <div class="input-row">
+                              <label for="niveau-scolaire">Niveau scolaire:</label>
+                              <select id="niveau-scolaire"><option value="6°">6°</option><option value="5°">5°</option><option value="4°">4°</option><option value="3°">3°</option></select>
+                            </div>
+                            <div class="input-row">
+                              <label for="mot-de-passe">Mot de passe admin:</label>
+                              <input type="password" id="mot-de-passe">
+                            </div>
+                            <div class="input-row">
+                              <label for="max-swaps">Nombre max d'échanges:</label>
+                              <input type="number" id="max-swaps" value="30">
+                            </div>
+                            <div class="input-row">
+                              <label for="tolerance-parite">Tolérance parité (%):</label>
+                              <input type="number" id="tolerance-parite" value="2">
                             </div>
                         </div>
 
@@ -3498,7 +3534,79 @@
                     document.getElementById('effectif-total').value = total;
                 }
 
-                // All scenario functions (afficherScenarios, etc.) are included here...
+                function afficherScenarios() {
+                    const select = document.getElementById('scenario-select');
+                    select.innerHTML = '';
+                    if (!configData.scenarios) return;
+                    configData.scenarios.forEach(scenario => {
+                        const option = document.createElement('option');
+                        option.value = scenario.id;
+                        option.textContent = scenario.nom;
+                        if (scenario.actif) option.selected = true;
+                        select.appendChild(option);
+                    });
+                    afficherScenarioActif();
+                }
+
+                function afficherScenarioActif() {
+                    const scenarioActif = configData.scenarios.find(s => s.actif);
+                    if (!scenarioActif) return;
+
+                    const container = document.getElementById('scenario-actif');
+                    container.innerHTML = `
+                        <h4>${scenarioActif.nom}</h4>
+                        <p>${scenarioActif.description}</p>
+                    `;
+
+                    const tableBody = document.getElementById('ponderation-body');
+                    tableBody.innerHTML = '';
+                    scenarioActif.ponderation.forEach((matiere, index) => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${matiere.matiere}</td>
+                            <td>${matiere.code}</td>
+                            <td><input type="number" value="${matiere.COM}" oninput="updatePonderation(${index}, 'COM', this.value)"></td>
+                            <td><input type="number" value="${matiere.TRA}" oninput="updatePonderation(${index}, 'TRA', this.value)"></td>
+                            <td><input type="number" value="${matiere.PART}" oninput="updatePonderation(${index}, 'PART', this.value)"></td>
+                            <td><input type="number" value="${matiere.ABS}" oninput="updatePonderation(${index}, 'ABS', this.value)"></td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                }
+
+                function updatePonderation(index, critere, valeur) {
+                    const scenarioActif = configData.scenarios.find(s => s.actif);
+                    if(scenarioActif) {
+                        scenarioActif.ponderation[index][critere] = parseInt(valeur) || 0;
+                    }
+                }
+
+                function changerScenarioActif(scenarioId) {
+                    configData.scenarios.forEach(s => s.actif = s.id === scenarioId);
+                    afficherScenarioActif();
+                }
+
+                function creerNouveauScenario() {
+                    const nom = prompt("Nom du nouveau scénario :");
+                    if (!nom || !nom.trim()) return;
+                    const id = "custom_" + Date.now();
+                    const scenarioActif = configData.scenarios.find(s => s.actif);
+                    const nouvellePonderation = JSON.parse(JSON.stringify(scenarioActif.ponderation)); // Deep copy
+
+                    const nouveauScenario = {
+                        id: id,
+                        nom: nom,
+                        description: "Scénario personnalisé",
+                        actif: false,
+                        ponderation: nouvellePonderation
+                    };
+                    configData.scenarios.push(nouveauScenario);
+                    afficherScenarios();
+
+                    const select = document.getElementById('scenario-select');
+                    select.value = id;
+                    changerScenarioActif(id);
+                }
 
                 function enregistrerConfiguration() {
                     console.log("💾 Enregistrement de la configuration...");
@@ -3548,6 +3656,7 @@
                 window.supprimerOptionComplementaire = supprimerOptionComplementaire;
                 window.updateOptionDisponibleEtRafraichir = updateOptionDisponibleEtRafraichir;
                 window.supprimerOptionDisponibleEtRafraichir = supprimerOptionDisponibleEtRafraichir;
+                window.updatePonderation = updatePonderation;
             })();
             // --- FIN DU CODE INTÉGRÉ ---
         });
