@@ -214,11 +214,34 @@
 
         function showToast(type, message) {
             const container = document.getElementById('toast-container');
+            if (!container) return;
+
             const toast = document.createElement('div');
             toast.className = `toast toast-${type}`;
-            toast.textContent = message;
+
+            let displayMessage = message;
+            if (typeof message === 'object' && message !== null) {
+                // Handle Google Apps Script error objects
+                if (message.message) {
+                    displayMessage = message.message;
+                } else if (message.error) {
+                    displayMessage = message.error;
+                } else {
+                    // Fallback for other objects
+                    try {
+                        displayMessage = JSON.stringify(message);
+                    } catch (e) {
+                        displayMessage = '[object Object]';
+                    }
+                }
+            }
+
+            toast.textContent = displayMessage;
             container.appendChild(toast);
-            setTimeout(() => toast.remove(), 4000);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 500);
+            }, 4000);
         }
 
         function updateWorkflowButtons() {
@@ -236,9 +259,14 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             restoreMinimizedState();
-            document.getElementById('console-toggle-btn').addEventListener('click', toggleConsoleMinimize);
+            const toggleBtn = document.getElementById('console-toggle-btn');
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', toggleConsoleMinimize);
+            }
 
-            document.getElementById('btn-run-initialisation').addEventListener('click', () => {
+            const initBtn = document.getElementById('btn-run-initialisation');
+            if (initBtn) {
+                initBtn.addEventListener('click', () => {
                 const adminPassword = document.getElementById('config-admin-password').value;
                 if (!adminPassword) {
                     showToast('error', 'Mot de passe requis');
@@ -253,55 +281,70 @@
                     })
                     .withFailureHandler(err => { hideLoading(); showToast('error', err.message); })
                     .v3_runInitializationWithForm({ adminPassword, niveau: '5°', nbSources: 6, nbDest: 6, lv2: '', opt: '' });
-            });
+                });
+            }
 
-            document.getElementById('btn-generate-ids').addEventListener('click', () => {
-                showLoading('Génération ID & Noms...');
-                google.script.run
-                    .withSuccessHandler(response => {
-                        hideLoading();
-                        if (response.success) {
-                            appState.workflow.a1_ids_generated = true;
+            const generateIdsBtn = document.getElementById('btn-generate-ids');
+            if (generateIdsBtn) {
+                generateIdsBtn.addEventListener('click', () => {
+                    showLoading('Génération ID & Noms...');
+                    google.script.run
+                        .withSuccessHandler(response => {
+                            hideLoading();
+                            if (response.success) {
+                                appState.workflow.a1_ids_generated = true;
+                                updateWorkflowButtons();
+                                showToast('success', 'Génération réussie !');
+                            } else showToast('error', `Erreur: ${response.error}`);
+                        })
+                        .withFailureHandler(err => { hideLoading(); showToast('error', err.message); })
+                        .v3_genererNomPrenomEtID();
+                });
+            }
+
+            const consolidateBtn = document.getElementById('btn-consolidate');
+            if (consolidateBtn) {
+                consolidateBtn.addEventListener('click', () => {
+                    showLoading('Consolidation...');
+                    google.script.run
+                        .withSuccessHandler(response => {
+                            hideLoading();
+                            if (response.success) {
+                                appState.workflow.a2_consolidated = true;
+                                updateWorkflowButtons();
+                                showToast('success', 'Consolidation réussie !');
+                            } else showToast('error', `Erreur: ${response.error}`);
+                        })
+                        .withFailureHandler(err => { hideLoading(); showToast('error', err.message); })
+                        .consoliderDonnees();
+                });
+            }
+
+            const showStatsBtn = document.getElementById('btn-show-stats');
+            if (showStatsBtn) {
+                showStatsBtn.addEventListener('click', () => {
+                    showLoading('Calcul des stats...');
+                    google.script.run
+                        .withSuccessHandler(() => {
+                            hideLoading();
+                            appState.workflow.a3_stats_shown = true;
                             updateWorkflowButtons();
-                            showToast('success', 'Génération réussie !');
-                        } else showToast('error', `Erreur: ${response.error}`);
-                    })
-                    .withFailureHandler(err => { hideLoading(); showToast('error', err.message); })
-                    .v3_genererNomPrenomEtID();
-            });
+                            showToast('success', 'Statistiques générées !');
+                        })
+                        .withFailureHandler(err => { hideLoading(); showToast('error', err.message); })
+                        .compterEffectifsOptionsEtLangues();
+                });
+            }
 
-            document.getElementById('btn-consolidate').addEventListener('click', () => {
-                showLoading('Consolidation...');
-                google.script.run
-                    .withSuccessHandler(response => {
-                        hideLoading();
-                        if (response.success) {
-                            appState.workflow.a2_consolidated = true;
-                            updateWorkflowButtons();
-                            showToast('success', 'Consolidation réussie !');
-                        } else showToast('error', `Erreur: ${response.error}`);
-                    })
-                    .withFailureHandler(err => { hideLoading(); showToast('error', err.message); })
-                    .consoliderDonnees();
-            });
-
-            document.getElementById('btn-show-stats').addEventListener('click', () => {
-                showLoading('Calcul des stats...');
-                google.script.run
-                    .withSuccessHandler(() => {
-                        hideLoading();
-                        appState.workflow.a3_stats_shown = true;
-                        updateWorkflowButtons();
-                        showToast('success', 'Statistiques générées !');
-                    })
-                    .withFailureHandler(err => { hideLoading(); showToast('error', err.message); })
-                    .compterEffectifsOptionsEtLangues();
-            });
-
-            document.getElementById('btn-configure-structure').addEventListener('click', () => {
-                const moduleContainer = document.getElementById('module-configuration-container');
-                moduleContainer.style.display = moduleContainer.style.display === 'none' ? 'block' : 'none';
-            });
+            const configureBtn = document.getElementById('btn-configure-structure');
+            if (configureBtn) {
+                configureBtn.addEventListener('click', () => {
+                    const moduleContainer = document.getElementById('module-configuration-container');
+                    if (moduleContainer) {
+                        moduleContainer.style.display = moduleContainer.style.display === 'none' ? 'block' : 'none';
+                    }
+                });
+            }
 
             google.script.run
                 .withSuccessHandler(response => {
@@ -322,26 +365,46 @@
 
         function initializeConfigModule() {
             chargerConfiguration();
+
             document.querySelectorAll('.config-module .tab-button').forEach(button => {
                 button.addEventListener('click', function() {
                     const tabId = this.getAttribute('data-tab');
                     document.querySelectorAll('.config-module .tab-button').forEach(btn => btn.classList.remove('active'));
                     document.querySelectorAll('.config-module .tab-content').forEach(tab => tab.classList.remove('active'));
                     this.classList.add('active');
-                    document.querySelector(`.config-module #tab-${tabId}`).classList.add('active');
+                    const tabContent = document.querySelector(`.config-module #tab-${tabId}`);
+                    if (tabContent) {
+                        tabContent.classList.add('active');
+                    }
                 });
             });
-            document.getElementById('btn-ajouter-classe').addEventListener('click', ajouterClasse);
-            document.getElementById('btn-ajouter-option-disponible').addEventListener('click', ajouterOptionDisponibleEtRafraichir);
-            document.getElementById('btn-nouveau-scenario').addEventListener('click', creerNouveauScenario);
-            document.getElementById('btn-annuler-config').addEventListener('click', fermerConfiguration);
-            document.getElementById('btn-enregistrer-config').addEventListener('click', enregistrerConfiguration);
-            document.getElementById('scenario-select').addEventListener('change', function() { changerScenarioActif(this.value); });
-            document.getElementById('effectif-moyen').addEventListener('input', function() {
-                const effectifMoyen = parseInt(this.value) || 28;
-                configData.classes.forEach(c => c.effectif = effectifMoyen);
-                afficherClasses();
-            });
+
+            const addClassBtn = document.getElementById('btn-ajouter-classe');
+            if (addClassBtn) addClassBtn.addEventListener('click', ajouterClasse);
+
+            const addOptionBtn = document.getElementById('btn-ajouter-option-disponible');
+            if (addOptionBtn) addOptionBtn.addEventListener('click', ajouterOptionDisponibleEtRafraichir);
+
+            const newScenarioBtn = document.getElementById('btn-nouveau-scenario');
+            if (newScenarioBtn) newScenarioBtn.addEventListener('click', creerNouveauScenario);
+
+            const cancelBtn = document.getElementById('btn-annuler-config');
+            if (cancelBtn) cancelBtn.addEventListener('click', fermerConfiguration);
+
+            const saveBtn = document.getElementById('btn-enregistrer-config');
+            if (saveBtn) saveBtn.addEventListener('click', enregistrerConfiguration);
+
+            const scenarioSelect = document.getElementById('scenario-select');
+            if (scenarioSelect) scenarioSelect.addEventListener('change', function() { changerScenarioActif(this.value); });
+
+            const avgEffectifInput = document.getElementById('effectif-moyen');
+            if (avgEffectifInput) {
+                avgEffectifInput.addEventListener('input', function() {
+                    const effectifMoyen = parseInt(this.value) || 28;
+                    configData.classes.forEach(c => c.effectif = effectifMoyen);
+                    afficherClasses();
+                });
+            }
         }
 
         function chargerConfiguration() {
