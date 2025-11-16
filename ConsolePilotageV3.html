@@ -2267,6 +2267,23 @@
         // ===================================================================
         function showToast(type, message, duration = 4000) {
             const container = document.getElementById('toast-container');
+            if (!container) {
+                console.error('Toast container not found');
+                return;
+            }
+
+            // Convertir les objets en chaînes lisibles
+            let displayMessage = message;
+            if (typeof message === 'object') {
+                if (message.error) {
+                    displayMessage = message.error;
+                } else if (message.message) {
+                    displayMessage = message.message;
+                } else {
+                    displayMessage = JSON.stringify(message);
+                }
+            }
+
             const toast = document.createElement('div');
             toast.className = `toast toast-${type}`;
 
@@ -2279,7 +2296,7 @@
 
             toast.innerHTML = `
                 <i class="fas ${iconMap[type]}"></i>
-                <span>${message}</span>
+                <span>${displayMessage}</span>
             `;
 
             container.appendChild(toast);
@@ -2383,6 +2400,20 @@
         }
 
         // ===================================================================
+        // HELPER: SAFE EVENT LISTENER ATTACHMENT
+        // ===================================================================
+        function safeAddEventListener(elementId, event, handler) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.addEventListener(event, handler);
+                return true;
+            } else {
+                console.warn(`⚠️ Element "${elementId}" not found, skipping event listener`);
+                return false;
+            }
+        }
+
+        // ===================================================================
         // EVENT LISTENERS
         // ===================================================================
         document.addEventListener('DOMContentLoaded', () => {
@@ -2393,7 +2424,7 @@
             restoreMinimizedState();
 
             // Theme toggle
-            document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+            safeAddEventListener('theme-toggle', 'click', toggleTheme);
 
             // Navigation
             document.querySelectorAll('.nav-link').forEach(link => {
@@ -2410,12 +2441,14 @@
             const confirmCheckbox = document.getElementById('confirm-checklist');
             const confirmBtn = document.getElementById('btn-confirm-finalize');
 
-            confirmCheckbox.addEventListener('change', () => {
-                confirmBtn.disabled = !confirmCheckbox.checked;
-            });
+            if (confirmCheckbox && confirmBtn) {
+                confirmCheckbox.addEventListener('change', () => {
+                    confirmBtn.disabled = !confirmCheckbox.checked;
+                });
+            }
 
-            document.getElementById('btn-close-modal').addEventListener('click', hideModal);
-            document.getElementById('btn-cancel-finalize').addEventListener('click', hideModal);
+            safeAddEventListener('btn-close-modal', 'click', hideModal);
+            safeAddEventListener('btn-cancel-finalize', 'click', hideModal);
 
             // ===================================================================
             // PHASE 1 : FORMULAIRE DE CONFIGURATION INTÉGRÉ
@@ -2443,10 +2476,12 @@
             }
 
             // Mise à jour dynamique du label "Classes Sources"
-            configNiveau.addEventListener('change', () => {
-                sourceLabel.textContent = getNiveauSource(configNiveau.value);
-                autoSaveConfig(); // Sauvegarde auto
-            });
+            if (configNiveau && sourceLabel) {
+                configNiveau.addEventListener('change', () => {
+                    sourceLabel.textContent = getNiveauSource(configNiveau.value);
+                    autoSaveConfig(); // Sauvegarde auto
+                });
+            }
 
             // ===================================================================
             // SAUVEGARDE AUTOMATIQUE EN TEMPS RÉEL
@@ -2478,8 +2513,10 @@
             // Ajouter les event listeners pour la sauvegarde auto sur tous les champs
             [configNiveau, configNbSources, configNbDest, configLv2, configOpt,
              configMaxSwaps, configParityTolerance, configTestSuffix, configDefSuffix].forEach(field => {
-                field.addEventListener('input', autoSaveConfig);
-                field.addEventListener('change', autoSaveConfig);
+                if (field) {
+                    field.addEventListener('input', autoSaveConfig);
+                    field.addEventListener('change', autoSaveConfig);
+                }
             });
 
             // Charger la configuration sauvegardée
@@ -2509,7 +2546,7 @@
             }
 
             // Sauvegarder la configuration
-            document.getElementById('btn-save-config').addEventListener('click', () => {
+            safeAddEventListener('btn-save-config', 'click', () => {
                 const config = {
                     niveau: configNiveau.value,
                     nbSources: parseInt(configNbSources.value),
@@ -2541,7 +2578,7 @@
             });
 
             // Phase 1: Initialisation (avec données du formulaire)
-            document.getElementById('btn-run-initialisation').addEventListener('click', () => {
+            safeAddEventListener('btn-run-initialisation', 'click', () => {
                 // Récupérer le mot de passe admin
                 const adminPassword = document.getElementById('config-admin-password').value;
 
@@ -2612,7 +2649,7 @@
             });
 
             // NOUVEAUX BOUTONS - Étape 1 : Générer NOM_PRENOM & ID_ELEVE
-            document.getElementById('btn-generate-ids').addEventListener('click', () => {
+            safeAddEventListener('btn-generate-ids', 'click', () => {
                 showLoading('Génération NOM_PRENOM & ID_ELEVE...');
                 const statusDiv = document.getElementById('ids-status');
 
@@ -2636,7 +2673,7 @@
             });
 
             // NOUVEAUX BOUTONS - Étape 2 : Configurer Structure
-            document.getElementById('btn-configure-structure').addEventListener('click', () => {
+            safeAddEventListener('btn-configure-structure', 'click', () => {
                 const statusDiv = document.getElementById('structure-status');
                 statusDiv.innerHTML = '<span style="color: var(--info);"><i class="fas fa-spinner fa-spin"></i> Ouverture de l\'interface...</span>';
 
@@ -2662,7 +2699,8 @@
             ];
 
             configFields.forEach(field => {
-                field.addEventListener('input', () => {
+                if (field) {
+                    field.addEventListener('input', () => {
                     const config = {
                         niveau: configNiveau.value,
                         nbSources: parseInt(configNbSources.value),
@@ -2676,7 +2714,8 @@
                     };
                     localStorage.setItem('console_v3_config', JSON.stringify(config));
                     showToast('info', '💾 brouillon sauvegardé...');
-                });
+                    });
+                }
             });
 
             // Charger la configuration au démarrage
@@ -2686,7 +2725,7 @@
             sourceLabel.textContent = getNiveauSource(configNiveau.value);
 
             // Phase 2: Diagnostic
-            document.getElementById('btn-run-diagnostics').addEventListener('click', () => {
+            safeAddEventListener('btn-run-diagnostics', 'click', () => {
                 updatePhaseStatus(2, 'active');
                 showLoading('Diagnostic en cours...');
 
@@ -2715,7 +2754,7 @@
             });
 
             // Phase 3: Génération
-            document.getElementById('btn-run-generation').addEventListener('click', () => {
+            safeAddEventListener('btn-run-generation', 'click', () => {
                 updatePhaseStatus(3, 'active');
                 showLoading('Génération des classes en cours...');
 
@@ -2742,7 +2781,7 @@
             });
 
             // Phase 4: Optimisation
-            document.getElementById('btn-run-optimization').addEventListener('click', () => {
+            safeAddEventListener('btn-run-optimization', 'click', () => {
                 updatePhaseStatus(4, 'active');
 
                 google.script.run
@@ -2766,7 +2805,7 @@
             });
 
             // Phase 5: Swaps Manuels
-            document.getElementById('btn-open-swap-interface').addEventListener('click', () => {
+            safeAddEventListener('btn-open-swap-interface', 'click', () => {
                 updatePhaseStatus(5, 'active');
 
                 google.script.run
@@ -2790,7 +2829,7 @@
             });
 
             // Phase 6: Finalisation
-            document.getElementById('btn-finalize-process').addEventListener('click', () => {
+            safeAddEventListener('btn-finalize-process', 'click', () => {
                 updatePhaseStatus(6, 'active');
                 showLoading('Vérification avant finalisation...');
 
