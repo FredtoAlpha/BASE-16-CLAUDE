@@ -531,95 +531,198 @@ function wizard_getConfig() {
 }
 
 /**
- * Génère les statistiques pré-configuration à partir de l'onglet CONSOLIDATION
- * @returns {Object} Statistiques (totalEleves, nbSources, parite, lv2, options)
+ * Sauvegarde la configuration initiale (LV2 et Options)
+ * @param {Object} data - Données d'initialisation
  */
-function wizard_genererStatsPreConfig() {
+function wizard_saveInitialConfig(data) {
   try {
-    Logger.log('📊 [WIZARD] Génération statistiques pré-configuration');
+    Logger.log('💾 [WIZARD] Sauvegarde configuration initiale');
+
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let configSheet = ss.getSheetByName('_CONFIG');
+
+    if (!configSheet) {
+      configSheet = ss.insertSheet('_CONFIG');
+      Logger.log('✅ Onglet _CONFIG créé');
+    }
+
+    // Structure de base
+    const configData = [
+      ['PARAMETRE', 'VALEUR'],
+      ['NIVEAU', data.niveau || '6°'],
+      ['NB_SOURCES', data.nbSourcesClasses || 6],
+      ['NB_DESTINATIONS', data.nbDestinations || 5],
+      ['LV2', (data.lv2List || []).join(',')],
+      ['OPT', (data.optionsList || []).join(',')],
+      ['ADMIN_PASSWORD', data.motDePasse || ''],
+      ['DATE_INIT', new Date().toISOString()]
+    ];
+
+    // Écrire la config
+    configSheet.clear();
+    configSheet.getRange(1, 1, configData.length, 2).setValues(configData);
+
+    // Formatage
+    configSheet.getRange('A1:B1').setFontWeight('bold').setBackground('#4285f4').setFontColor('white');
+    configSheet.setColumnWidth(1, 200);
+    configSheet.setColumnWidth(2, 300);
+
+    // Créer les onglets sources
+    const niveau = data.niveau || '6°';
+    const nbSources = data.nbSourcesClasses || 6;
+
+    for (let i = 1; i <= nbSources; i++) {
+      const nomOnglet = `${niveau}${i}`;
+
+      if (!ss.getSheetByName(nomOnglet)) {
+        const newSheet = ss.insertSheet(nomOnglet);
+        const headers = ['ID_ELEVE', 'NOM', 'PRENOM', 'NOM_PRENOM', 'SEXE', 'LV2', 'OPT', 'COM', 'TRA', 'PART', 'ABS'];
+        newSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+        newSheet.getRange(1, 1, 1, headers.length).setFontWeight('bold').setBackground('#f0c674');
+        newSheet.setFrozenRows(1);
+        Logger.log(`✅ Onglet ${nomOnglet} créé`);
+      }
+    }
+
+    Logger.log('✅ Configuration initiale sauvegardée');
+    return { success: true, message: 'Configuration sauvegardée avec succès' };
+
+  } catch (e) {
+    Logger.log(`❌ Erreur sauvegarde config: ${e}`);
+    throw new Error(`Impossible de sauvegarder: ${e.message}`);
+  }
+}
+
+/**
+ * Génère un onglet STATS avec statistiques globales
+ */
+function wizard_genererStatistiques() {
+  try {
+    Logger.log('📊 [WIZARD] Génération onglet STATS');
 
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const consolidationSheet = ss.getSheetByName('CONSOLIDATION');
 
     if (!consolidationSheet) {
-      throw new Error('Onglet CONSOLIDATION introuvable. Consolidez d\'abord les données.');
+      throw new Error('Onglet CONSOLIDATION introuvable');
+    }
+
+    let statsSheet = ss.getSheetByName('STATS');
+    if (!statsSheet) {
+      statsSheet = ss.insertSheet('STATS');
+    } else {
+      statsSheet.clear();
     }
 
     const data = consolidationSheet.getDataRange().getValues();
 
     if (data.length <= 1) {
-      return {
-        totalEleves: 0,
-        nbSources: 0,
-        parite: '0/0',
-        lv2: {},
-        options: {}
-      };
+      throw new Error('Aucune donnée dans CONSOLIDATION');
     }
 
     const headers = data[0];
+    const rows = data.slice(1).filter(row => row[1] && row[2]);
 
-    // Trouver les indices des colonnes
     const sourceIndex = headers.indexOf('SOURCE');
     const sexeIndex = headers.indexOf('SEXE');
     const lv2Index = headers.indexOf('LV2');
     const optIndex = headers.indexOf('OPT');
 
-    const rows = data.slice(1).filter(row => row[1] && row[2]); // Ignorer lignes vides
-
-    // Statistiques globales
-    const totalEleves = rows.length;
-    const sourcesSet = new Set();
-    let totalFilles = 0;
-    let totalGarcons = 0;
-    const lv2Stats = {};
-    const optionsStats = {};
+    const stats = {
+      totalEleves: rows.length,
+      sources: {},
+      sexe: { F: 0, M: 0 },
+      lv2: {},
+      options: {}
+    };
 
     rows.forEach(row => {
-      // Compter les sources
       if (sourceIndex !== -1 && row[sourceIndex]) {
-        sourcesSet.add(row[sourceIndex]);
+        const src = row[sourceIndex];
+        stats.sources[src] = (stats.sources[src] || 0) + 1;
       }
 
-      // Compter la parité
-      if (sexeIndex !== -1) {
-        if (row[sexeIndex] === 'F') totalFilles++;
-        if (row[sexeIndex] === 'M') totalGarcons++;
+      if (sexeIndex !== -1 && row[sexeIndex]) {
+        const sexe = row[sexeIndex];
+        if (sexe === 'F' || sexe === 'M') stats.sexe[sexe]++;
       }
 
-      // Compter les LV2
       if (lv2Index !== -1 && row[lv2Index]) {
         const lv2 = row[lv2Index];
-        lv2Stats[lv2] = (lv2Stats[lv2] || 0) + 1;
+        stats.lv2[lv2] = (stats.lv2[lv2] || 0) + 1;
       }
 
-      // Compter les options
       if (optIndex !== -1 && row[optIndex]) {
         const opt = row[optIndex];
-        optionsStats[opt] = (optionsStats[opt] || 0) + 1;
+        stats.options[opt] = (stats.options[opt] || 0) + 1;
       }
     });
 
-    // Calculer la parité en pourcentage
-    const paritePourcentage = totalEleves > 0
-      ? Math.round((totalFilles / totalEleves) * 100)
-      : 50;
-    const parite = `${paritePourcentage}/${100 - paritePourcentage}`;
+    // Écrire les statistiques
+    let currentRow = 1;
 
-    const stats = {
-      totalEleves: totalEleves,
-      nbSources: sourcesSet.size,
-      parite: parite,
-      lv2: lv2Stats,
-      options: optionsStats
-    };
+    statsSheet.getRange(currentRow, 1, 1, 2).merge().setValue('📊 STATISTIQUES GLOBALES');
+    statsSheet.getRange(currentRow, 1).setFontSize(16).setFontWeight('bold').setBackground('#667eea').setFontColor('white');
+    currentRow += 2;
 
-    Logger.log(`✅ Statistiques générées: ${totalEleves} élèves, ${sourcesSet.size} sources`);
+    statsSheet.getRange(currentRow, 1).setValue('Total élèves :');
+    statsSheet.getRange(currentRow, 2).setValue(stats.totalEleves).setFontWeight('bold');
+    currentRow += 2;
 
-    return stats;
+    statsSheet.getRange(currentRow, 1, 1, 2).merge().setValue('Répartition par Source');
+    statsSheet.getRange(currentRow, 1).setFontWeight('bold').setBackground('#e3f2fd');
+    currentRow++;
+
+    Object.keys(stats.sources).sort().forEach(src => {
+      statsSheet.getRange(currentRow, 1).setValue(src);
+      statsSheet.getRange(currentRow, 2).setValue(stats.sources[src]);
+      currentRow++;
+    });
+    currentRow++;
+
+    statsSheet.getRange(currentRow, 1, 1, 2).merge().setValue('Parité F/M');
+    statsSheet.getRange(currentRow, 1).setFontWeight('bold').setBackground('#f3e5f5');
+    currentRow++;
+    statsSheet.getRange(currentRow, 1).setValue('Filles');
+    statsSheet.getRange(currentRow, 2).setValue(stats.sexe.F);
+    currentRow++;
+    statsSheet.getRange(currentRow, 1).setValue('Garçons');
+    statsSheet.getRange(currentRow, 2).setValue(stats.sexe.M);
+    currentRow += 2;
+
+    if (Object.keys(stats.lv2).length > 0) {
+      statsSheet.getRange(currentRow, 1, 1, 2).merge().setValue('Répartition par LV2');
+      statsSheet.getRange(currentRow, 1).setFontWeight('bold').setBackground('#fff3e0');
+      currentRow++;
+
+      Object.keys(stats.lv2).sort().forEach(lv2 => {
+        statsSheet.getRange(currentRow, 1).setValue(lv2);
+        statsSheet.getRange(currentRow, 2).setValue(stats.lv2[lv2]);
+        currentRow++;
+      });
+      currentRow++;
+    }
+
+    if (Object.keys(stats.options).length > 0) {
+      statsSheet.getRange(currentRow, 1, 1, 2).merge().setValue('Répartition par Options');
+      statsSheet.getRange(currentRow, 1).setFontWeight('bold').setBackground('#e8f5e9');
+      currentRow++;
+
+      Object.keys(stats.options).sort().forEach(opt => {
+        statsSheet.getRange(currentRow, 1).setValue(opt);
+        statsSheet.getRange(currentRow, 2).setValue(stats.options[opt]);
+        currentRow++;
+      });
+    }
+
+    statsSheet.setColumnWidth(1, 250);
+    statsSheet.setColumnWidth(2, 100);
+
+    Logger.log('✅ Onglet STATS généré');
+    return { success: true, message: 'Statistiques générées dans STATS' };
 
   } catch (e) {
-    Logger.log(`❌ [WIZARD] Erreur génération stats: ${e}`);
+    Logger.log(`❌ Erreur génération stats: ${e}`);
     throw new Error(`Impossible de générer les statistiques: ${e.message}`);
   }
 }

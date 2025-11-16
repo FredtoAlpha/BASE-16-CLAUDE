@@ -1,0 +1,2124 @@
+<script>
+/**
+ * ===================================================================
+ * WIZARD PHASES - Contenu de toutes les phases du wizard
+ * ===================================================================
+ */
+
+// ===================================================================
+// PHASE 1 : INITIALISATION
+// ===================================================================
+function loadPhase1Content() {
+  const container = document.getElementById('phase-1-content');
+
+  // Vérifier s'il existe une session sauvegardée ou des modèles
+  google.script.run
+    .withSuccessHandler((modeles) => {
+      renderPhase1(container, modeles);
+    })
+    .withFailureHandler(() => {
+      renderPhase1(container, []);
+    })
+    .listerModelesConfig();
+}
+
+function renderPhase1(container, modeles) {
+  let html = '';
+
+  // Section : Charger un modèle
+  if (modeles && modeles.length > 0) {
+    html += `
+      <div class="alert alert-info">
+        <span class="material-icons">lightbulb</span>
+        <div>
+          <strong>Modèles disponibles</strong>
+          <p>Vous pouvez charger une configuration existante pour gagner du temps.</p>
+        </div>
+      </div>
+
+      <div class="config-card">
+        <div class="config-card-title">
+          <span class="material-icons">folder_open</span>
+          Charger un modèle de configuration
+        </div>
+
+        <div class="form-row">
+          <label>Modèle :</label>
+          <select id="modele-select">
+            <option value="">-- Nouvelle configuration --</option>
+            ${modeles.map(m => `<option value="${m.nom}">${m.nom} (${new Date(m.dateCreation).toLocaleDateString()})</option>`).join('')}
+          </select>
+        </div>
+
+        <button class="btn btn-secondary" onclick="chargerModele()">
+          <span class="material-icons">download</span>
+          Charger ce modèle
+        </button>
+      </div>
+    `;
+  }
+
+  // Section : Configuration de base
+  html += `
+    <div class="config-card">
+      <div class="config-card-title">
+        <span class="material-icons">school</span>
+        Paramètres de base
+      </div>
+
+      <div class="form-row">
+        <label>Niveau scolaire : <span style="color:red;">*</span></label>
+        <select id="niveau-select">
+          <option value="">-- Sélectionner --</option>
+          <option value="6°">6°</option>
+          <option value="5°">5°</option>
+          <option value="4°">4°</option>
+          <option value="3°">3°</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="config-card">
+      <div class="config-card-title">
+        <span class="material-icons">domain</span>
+        Structure des classes
+      </div>
+
+      <div class="form-row">
+        <label>Nombre de classes SOURCES : <span style="color:red;">*</span></label>
+        <input type="number" id="nb-sources" min="1" max="20" value="9" />
+      </div>
+
+      <div class="form-row">
+        <label id="label-sources">écoles primaires</label>
+      </div>
+
+      <div class="form-row">
+        <label>Nombre de classes DESTINATIONS : <span style="color:red;">*</span></label>
+        <input type="number" id="nb-destinations" min="1" max="15" value="5" />
+      </div>
+
+      <div class="form-row">
+        <label id="label-destinations">classes de 6° à créer</label>
+      </div>
+    </div>
+
+    <div class="config-card">
+      <div class="config-card-title">
+        <span class="material-icons">translate</span>
+        LV2 disponibles
+      </div>
+
+      <div id="lv2-tags" class="tag-list"></div>
+
+      <div class="form-row" style="margin-top: 16px;">
+        <input type="text" id="lv2-input" placeholder="Ajouter une LV2 (ex: ESP, ITA, ALL...)" />
+        <button class="btn btn-secondary" onclick="ajouterLV2()">
+          <span class="material-icons">add</span>
+          Ajouter
+        </button>
+      </div>
+
+      <div style="margin-top: 12px; font-size: 13px; color: #666;">
+        💡 Exemples : ESP (Espagnol), ITA (Italien), ALL (Allemand), CHI (Chinois)
+      </div>
+    </div>
+
+    <div class="config-card">
+      <div class="config-card-title">
+        <span class="material-icons">library_books</span>
+        Options disponibles
+      </div>
+
+      <div id="opt-tags" class="tag-list"></div>
+
+      <div class="form-row" style="margin-top: 16px;">
+        <input type="text" id="opt-input" placeholder="Ajouter une option (ex: LATIN, GREC...)" />
+        <button class="btn btn-secondary" onclick="ajouterOPT()">
+          <span class="material-icons">add</span>
+          Ajouter
+        </button>
+      </div>
+
+      <div style="margin-top: 12px; font-size: 13px; color: #666;">
+        💡 Exemples : LATIN, GREC, CHAV (Chavagnes), LLCA, SPORT
+      </div>
+    </div>
+
+    <div class="config-card" style="background: #f0f9ff; border: 1px solid #1976d2;">
+      <div class="config-card-title">
+        <span class="material-icons">info</span>
+        Cette étape va créer
+      </div>
+
+      <ul style="margin-left: 20px; line-height: 1.8;">
+        <li><span id="summary-sources">9</span> onglets sources (ECOLE1, ECOLE2... ECOLE9)</li>
+        <li>Onglet CONSOLIDATION</li>
+        <li>Onglet _STRUCTURE</li>
+        <li>Onglet _CONFIG</li>
+      </ul>
+    </div>
+
+    <div class="form-row" style="margin-top: 20px;">
+      <label></label>
+      <button class="btn btn-secondary" onclick="sauvegarderCommeModele()">
+        <span class="material-icons">save</span>
+        Sauvegarder comme modèle
+      </button>
+    </div>
+  `;
+
+  container.innerHTML = html;
+
+  // Initialiser les LV2 et OPT par défaut
+  phase1_lv2Options = ['ESP', 'ITA', 'ALL', 'CHI'];
+  phase1_optOptions = ['CHAV', 'LATIN', 'GREC'];
+  updateLV2Tags();
+  updateOPTTags();
+
+  // Event listeners
+  document.getElementById('niveau-select').addEventListener('change', updateLabelsFromNiveau);
+  document.getElementById('nb-sources').addEventListener('input', updateSummary);
+  document.getElementById('nb-destinations').addEventListener('input', updateSummary);
+}
+
+// Variables globales pour Phase 1
+let phase1_lv2Options = [];
+let phase1_optOptions = [];
+
+function updateLabelsFromNiveau() {
+  const niveau = document.getElementById('niveau-select').value;
+  const labelSources = document.getElementById('label-sources');
+  const labelDest = document.getElementById('label-destinations');
+
+  if (niveau === '6°') {
+    labelSources.textContent = 'écoles primaires';
+    labelDest.textContent = 'classes de 6° à créer';
+  } else {
+    const niveauPrecedent = {'5°': '6°', '4°': '5°', '3°': '4°'}[niveau] || 'niveau précédent';
+    labelSources.textContent = `classes de ${niveauPrecedent}`;
+    labelDest.textContent = `classes de ${niveau} à créer`;
+  }
+}
+
+function updateSummary() {
+  const nbSources = document.getElementById('nb-sources').value || 0;
+  document.getElementById('summary-sources').textContent = nbSources;
+}
+
+function ajouterLV2() {
+  const input = document.getElementById('lv2-input');
+  const value = input.value.trim().toUpperCase();
+
+  if (!value) return;
+
+  if (!phase1_lv2Options.includes(value)) {
+    phase1_lv2Options.push(value);
+    updateLV2Tags();
+  }
+
+  input.value = '';
+}
+
+function supprimerLV2(lv2) {
+  phase1_lv2Options = phase1_lv2Options.filter(item => item !== lv2);
+  updateLV2Tags();
+}
+
+function updateLV2Tags() {
+  const container = document.getElementById('lv2-tags');
+  if (!container) return;
+
+  if (phase1_lv2Options.length === 0) {
+    container.innerHTML = '<p style="color: #999; font-style: italic;">Aucune LV2 ajoutée</p>';
+    return;
+  }
+
+  container.innerHTML = phase1_lv2Options.map(lv2 => `
+    <div class="tag">
+      ${lv2}
+      <span class="material-icons remove-tag" onclick="supprimerLV2('${lv2}')" style="font-size: 16px;">close</span>
+    </div>
+  `).join('');
+}
+
+function ajouterOPT() {
+  const input = document.getElementById('opt-input');
+  const value = input.value.trim().toUpperCase();
+
+  if (!value) return;
+
+  if (!phase1_optOptions.includes(value)) {
+    phase1_optOptions.push(value);
+    updateOPTTags();
+  }
+
+  input.value = '';
+}
+
+function supprimerOPT(opt) {
+  phase1_optOptions = phase1_optOptions.filter(item => item !== opt);
+  updateOPTTags();
+}
+
+function updateOPTTags() {
+  const container = document.getElementById('opt-tags');
+  if (!container) return;
+
+  if (phase1_optOptions.length === 0) {
+    container.innerHTML = '<p style="color: #999; font-style: italic;">Aucune option ajoutée</p>';
+    return;
+  }
+
+  container.innerHTML = phase1_optOptions.map(opt => `
+    <div class="tag" style="background: #f3e5f5; color: #7b1fa2;">
+      ${opt}
+      <span class="material-icons remove-tag" onclick="supprimerOPT('${opt}')" style="font-size: 16px;">close</span>
+    </div>
+  `).join('');
+}
+
+function getLV2Options() {
+  return phase1_lv2Options;
+}
+
+function getOptOptions() {
+  return phase1_optOptions;
+}
+
+function chargerModele() {
+  const select = document.getElementById('modele-select');
+  const nomModele = select.value;
+
+  if (!nomModele) {
+    showAlert('warning', 'Veuillez sélectionner un modèle');
+    return;
+  }
+
+  showLoading('Chargement du modèle...');
+
+  google.script.run
+    .withSuccessHandler((config) => {
+      hideLoading();
+
+      // Remplir les champs
+      if (config.niveau) document.getElementById('niveau-select').value = config.niveau;
+      if (config.nbSources) document.getElementById('nb-sources').value = config.nbSources;
+      if (config.nbDestinations) document.getElementById('nb-destinations').value = config.nbDestinations;
+
+      if (config.lv2Options) {
+        phase1_lv2Options = config.lv2Options;
+        updateLV2Tags();
+      }
+
+      if (config.optOptions) {
+        phase1_optOptions = config.optOptions;
+        updateOPTTags();
+      }
+
+      updateLabelsFromNiveau();
+      updateSummary();
+
+      showAlert('success', `Modèle "${nomModele}" chargé avec succès`);
+    })
+    .withFailureHandler((error) => {
+      hideLoading();
+      showAlert('error', `Erreur : ${error.message}`);
+    })
+    .chargerModeleConfig(nomModele);
+}
+
+function sauvegarderCommeModele() {
+  const nom = prompt('Nom du modèle :');
+
+  if (!nom) return;
+
+  const config = {
+    niveau: document.getElementById('niveau-select').value,
+    nbSources: parseInt(document.getElementById('nb-sources').value),
+    nbDestinations: parseInt(document.getElementById('nb-destinations').value),
+    lv2Options: phase1_lv2Options,
+    optOptions: phase1_optOptions
+  };
+
+  showLoading('Sauvegarde du modèle...');
+
+  google.script.run
+    .withSuccessHandler(() => {
+      hideLoading();
+      showAlert('success', `Modèle "${nom}" sauvegardé avec succès`);
+    })
+    .withFailureHandler((error) => {
+      hideLoading();
+      showAlert('error', `Erreur : ${error.message}`);
+    })
+    .sauvegarderModeleConfig(nom, config);
+}
+
+function validatePhase1() {
+  const niveau = document.getElementById('niveau-select')?.value;
+  const nbSources = parseInt(document.getElementById('nb-sources')?.value);
+  const nbDest = parseInt(document.getElementById('nb-destinations')?.value);
+
+  if (!niveau) {
+    showAlert('error', 'Veuillez sélectionner un niveau scolaire');
+    return false;
+  }
+
+  if (!nbSources || nbSources < 1) {
+    showAlert('error', 'Le nombre de classes sources doit être au moins 1');
+    return false;
+  }
+
+  if (!nbDest || nbDest < 1) {
+    showAlert('error', 'Le nombre de classes destinations doit être au moins 1');
+    return false;
+  }
+
+  if (phase1_lv2Options.length === 0) {
+    showAlert('warning', 'Aucune LV2 configurée. Êtes-vous sûr ?');
+    // On ne bloque pas, c'est juste un warning
+  }
+
+  // Tout est OK, lancer l'initialisation
+  showLoading('Initialisation du système...');
+
+  google.script.run
+    .withSuccessHandler((result) => {
+      hideLoading();
+
+      // Sauvegarder dans l'état
+      wizardState.data.niveau = niveau;
+      wizardState.data.nbSources = nbSources;
+      wizardState.data.nbDestinations = nbDest;
+      wizardState.data.lv2Options = phase1_lv2Options;
+      wizardState.data.optOptions = phase1_optOptions;
+
+      showAlert('success', 'Système initialisé avec succès !');
+
+      // Passer à la phase suivante après 1 seconde
+      setTimeout(() => goToPhase(2), 1000);
+    })
+    .withFailureHandler((error) => {
+      hideLoading();
+      showAlert('error', `Erreur lors de l'initialisation : ${error.message}`);
+    })
+    .wizard_initialiserSysteme(niveau, nbSources, nbDest, phase1_lv2Options, phase1_optOptions);
+
+  // Bloquer la validation le temps de l'initialisation
+  return false;
+}
+
+// ===================================================================
+// PHASE 2 : IMPORT & PRÉPARATION
+// ===================================================================
+function loadPhase2Content() {
+  const container = document.getElementById('phase-2-content');
+
+  let html = `
+    <div class="alert alert-info">
+      <span class="material-icons">info</span>
+      <div>
+        <strong>5 étapes à suivre</strong>
+        <p>Import des données, génération automatique, validation et consolidation</p>
+      </div>
+    </div>
+
+    <!-- ÉTAPE 1 : IMPORT -->
+    <div class="config-card">
+      <div class="section-header">
+        ÉTAPE 1 : Import des données
+      </div>
+
+      <p style="margin-bottom: 16px;">Comment voulez-vous ajouter les élèves ?</p>
+
+      <div class="form-row">
+        <label>
+          <input type="radio" name="import-method" value="manuel" checked /> Saisie manuelle
+        </label>
+      </div>
+
+      <div class="form-row">
+        <label>
+          <input type="radio" name="import-method" value="csv" /> Import CSV
+        </label>
+      </div>
+
+      <div id="csv-import-zone" style="display: none; margin-top: 16px; padding: 16px; background: #f5f5f5; border-radius: 6px;">
+        <div class="form-row">
+          <label>Classe cible :</label>
+          <select id="csv-target-sheet">
+            <option value="">-- Sélectionner --</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label>Fichier CSV :</label>
+          <input type="file" id="csv-file" accept=".csv" />
+        </div>
+
+        <button class="btn btn-primary" onclick="importerCSV()">
+          <span class="material-icons">upload_file</span>
+          Importer
+        </button>
+      </div>
+
+      <div style="margin-top: 16px;">
+        <button class="btn btn-secondary" onclick="ouvrirOngletsSourcesPourSaisie()">
+          <span class="material-icons">open_in_new</span>
+          Ouvrir les onglets sources
+        </button>
+      </div>
+    </div>
+
+    <!-- ÉTAPE 2 : GÉNÉRATION -->
+    <div class="config-card">
+      <div class="section-header">
+        ÉTAPE 2 : Génération automatique
+      </div>
+
+      <p style="margin-bottom: 16px;">
+        ✅ Colonnes générées automatiquement :
+      </p>
+
+      <ul style="margin-left: 20px; line-height: 1.8;">
+        <li><strong>NOM & PRENOM</strong> → Concaténation automatique</li>
+        <li><strong>ID_ELEVE</strong> → Génération unique (ECOLE1001, ECOLE1002...)</li>
+      </ul>
+
+      <p style="margin-top: 12px; color: #666; font-size: 13px;">
+        💡 Les colonnes NOM, PRENOM et ID_ELEVE seront masquées après génération
+      </p>
+
+      <button class="btn btn-success" onclick="genererNomPrenomID()" style="margin-top: 16px;">
+        <span class="material-icons">auto_fix_high</span>
+        Générer maintenant
+      </button>
+    </div>
+
+    <!-- ÉTAPE 3 : LISTES DÉROULANTES -->
+    <div class="config-card">
+      <div class="section-header">
+        ÉTAPE 3 : Listes déroulantes
+      </div>
+
+      <p style="margin-bottom: 16px;">
+        Les listes déroulantes suivantes seront créées :
+      </p>
+
+      <ul style="margin-left: 20px; line-height: 1.8;">
+        <li><strong>SEXE</strong> → M / F</li>
+        <li><strong>LV2</strong> → ${wizardState.data.lv2Options.join(' / ')}</li>
+        <li><strong>OPT</strong> → ${wizardState.data.optOptions.join(' / ')}</li>
+        <li><strong>COM / TRA / PART / ABS</strong> → 1 / 2 / 3 / 4</li>
+        <li><strong>DISPO</strong> → ULIS / GEVASCO / PAP / PPRE...</li>
+      </ul>
+
+      <button class="btn btn-success" onclick="appliquerListesDeroulantes()" style="margin-top: 16px;">
+        <span class="material-icons">check_box</span>
+        Appliquer les listes
+      </button>
+    </div>
+
+    <!-- ÉTAPE 4 : VALIDATION -->
+    <div class="config-card">
+      <div class="section-header">
+        ÉTAPE 4 : Validation
+      </div>
+
+      <div id="validation-results" style="margin-bottom: 16px;">
+        <p style="color: #999; font-style: italic;">Cliquez sur "Valider" pour vérifier les données</p>
+      </div>
+
+      <button class="btn btn-primary" onclick="validerDonnees()">
+        <span class="material-icons">check_circle</span>
+        Valider les données
+      </button>
+    </div>
+
+    <!-- ÉTAPE 5 : CONSOLIDATION -->
+    <div class="config-card">
+      <div class="section-header">
+        ÉTAPE 5 : Consolidation
+      </div>
+
+      <p style="margin-bottom: 16px;">
+        Fusion de toutes les données dans l'onglet CONSOLIDATION
+      </p>
+
+      <div id="consolidation-results" style="margin-bottom: 16px;">
+        <p style="color: #999; font-style: italic;">La consolidation sera effectuée après validation</p>
+      </div>
+
+      <button class="btn btn-success" onclick="consoliderDonnees()" id="btn-consolider" disabled>
+        <span class="material-icons">merge</span>
+        Consolider maintenant
+      </button>
+    </div>
+  `;
+
+  container.innerHTML = html;
+
+  // Charger les onglets sources
+  chargerOngletsSourcesPourCSV();
+
+  // Event listener pour le choix d'import
+  document.querySelectorAll('input[name="import-method"]').forEach(radio => {
+    radio.addEventListener('change', (e) => {
+      const csvZone = document.getElementById('csv-import-zone');
+      csvZone.style.display = e.target.value === 'csv' ? 'block' : 'none';
+    });
+  });
+}
+
+function chargerOngletsSourcesPourCSV() {
+  google.script.run
+    .withSuccessHandler((info) => {
+      if (info && info.sources) {
+        const select = document.getElementById('csv-target-sheet');
+        select.innerHTML = '<option value="">-- Sélectionner --</option>' +
+          info.sources.map(s => `<option value="${s}">${s}</option>`).join('');
+      }
+    })
+    .wizard_getStructureInfo();
+}
+
+function ouvrirOngletsSourcesPourSaisie() {
+  showAlert('info', 'Vous pouvez maintenant saisir les données dans les onglets sources. Revenez ici une fois terminé.');
+  google.script.host.close();
+}
+
+function importerCSV() {
+  const fileInput = document.getElementById('csv-file');
+  const targetSheet = document.getElementById('csv-target-sheet').value;
+
+  if (!targetSheet) {
+    showAlert('error', 'Veuillez sélectionner une classe cible');
+    return;
+  }
+
+  if (!fileInput.files || fileInput.files.length === 0) {
+    showAlert('error', 'Veuillez sélectionner un fichier CSV');
+    return;
+  }
+
+  const file = fileInput.files[0];
+  const reader = new FileReader();
+
+  reader.onload = function(e) {
+    const csvContent = e.target.result;
+
+    showLoading('Import du fichier CSV...');
+
+    google.script.run
+      .withSuccessHandler((result) => {
+        hideLoading();
+        showAlert('success', `${result.lignesImportees} lignes importées dans ${targetSheet}`);
+        fileInput.value = '';
+      })
+      .withFailureHandler((error) => {
+        hideLoading();
+        showAlert('error', `Erreur : ${error.message}`);
+      })
+      .importCSVVersOnglet(csvContent, targetSheet);
+  };
+
+  reader.readAsText(file);
+}
+
+function genererNomPrenomID() {
+  showLoading('Génération NOM_PRENOM et ID_ELEVE...');
+
+  google.script.run
+    .withSuccessHandler(() => {
+      hideLoading();
+      showAlert('success', 'NOM_PRENOM et ID_ELEVE générés avec succès !');
+    })
+    .withFailureHandler((error) => {
+      hideLoading();
+      showAlert('error', `Erreur : ${error.message}`);
+    })
+    .wizard_genererNomPrenomEtID();
+}
+
+function appliquerListesDeroulantes() {
+  showLoading('Application des listes déroulantes...');
+
+  google.script.run
+    .withSuccessHandler(() => {
+      hideLoading();
+      showAlert('success', 'Listes déroulantes appliquées avec succès !');
+    })
+    .withFailureHandler((error) => {
+      hideLoading();
+      showAlert('error', `Erreur : ${error.message}`);
+    })
+    .wizard_ajouterListesDeroulantes();
+}
+
+function validerDonnees() {
+  showLoading('Validation des données...');
+
+  google.script.run
+    .withSuccessHandler((result) => {
+      hideLoading();
+
+      const container = document.getElementById('validation-results');
+
+      if (result.hasErrors) {
+        container.innerHTML = `
+          <div class="alert alert-error">
+            <span class="material-icons">error</span>
+            <div>${result.message}</div>
+          </div>
+        `;
+        document.getElementById('btn-consolider').disabled = true;
+      } else {
+        container.innerHTML = `
+          <div class="alert alert-success">
+            <span class="material-icons">check_circle</span>
+            <div>${result.message}</div>
+          </div>
+        `;
+        document.getElementById('btn-consolider').disabled = false;
+        wizardState.data.dataValidated = true;
+      }
+    })
+    .withFailureHandler((error) => {
+      hideLoading();
+      showAlert('error', `Erreur : ${error.message}`);
+    })
+    .wizard_verifierDonnees();
+}
+
+function consoliderDonnees() {
+  showLoading('Consolidation des données...');
+
+  google.script.run
+    .withSuccessHandler((result) => {
+      hideLoading();
+
+      const container = document.getElementById('consolidation-results');
+      container.innerHTML = `
+        <div class="alert alert-success">
+          <span class="material-icons">check_circle</span>
+          <div>${result.message}</div>
+        </div>
+      `;
+
+      wizardState.data.consolidated = true;
+      showAlert('success', 'Données consolidées ! Vous pouvez passer à l\'étape suivante.');
+    })
+    .withFailureHandler((error) => {
+      hideLoading();
+      showAlert('error', `Erreur : ${error.message}`);
+    })
+    .wizard_consoliderDonnees();
+}
+
+function validatePhase2() {
+  return wizardState.data.consolidated === true;
+}
+
+// ===================================================================
+// PHASE 3 : CONFIGURATION
+// ===================================================================
+
+// Variables globales pour Phase 3
+let phase3_classesConfig = [];
+let phase3_scenarios = [];
+let phase3_scenarioActif = 'default';
+
+function loadPhase3Content() {
+  const container = document.getElementById('phase-3-content');
+
+  // Charger la configuration existante
+  showLoading('Chargement de la configuration...');
+
+  google.script.run
+    .withSuccessHandler((structureData) => {
+      hideLoading();
+      renderPhase3(container, structureData);
+    })
+    .withFailureHandler((error) => {
+      hideLoading();
+      showAlert('error', `Erreur de chargement : ${error.message}`);
+      renderPhase3(container, null);
+    })
+    .chargerStructure();
+}
+
+function renderPhase3(container, structureData) {
+  // Initialiser les données
+  if (structureData) {
+    phase3_classesConfig = structureData.classes || [];
+    phase3_scenarios = structureData.scenarios || getDefaultScenarios();
+  } else {
+    phase3_classesConfig = [];
+    phase3_scenarios = getDefaultScenarios();
+  }
+
+  // Trouver le scénario actif
+  const scenarioActif = phase3_scenarios.find(s => s.actif) || phase3_scenarios[0];
+  if (scenarioActif) {
+    phase3_scenarioActif = scenarioActif.id;
+  }
+
+  let html = `
+    <div class="alert alert-info">
+      <span class="material-icons">settings</span>
+      <div>
+        <strong>Configuration du pipeline</strong>
+        <p>Configurez le mapping des classes, les quotas LV2/Options et les coefficients de pondération</p>
+      </div>
+    </div>
+
+    <!-- SECTION 1 : MAPPING CLASSES -->
+    <div class="config-card">
+      <div class="section-header">
+        SECTION 1 : Mapping des classes (Sources → Destinations)
+      </div>
+
+      <p style="margin-bottom: 16px;">
+        Définissez comment les classes sources sont mappées vers les classes destinations.
+      </p>
+
+      <div id="mapping-classes-container">
+        <!-- Classes générées dynamiquement -->
+      </div>
+
+      <button class="btn btn-secondary" onclick="ajouterMappingClasse()">
+        <span class="material-icons">add</span>
+        Ajouter un mapping
+      </button>
+    </div>
+
+    <!-- SECTION 2 : QUOTAS LV2/OPTIONS -->
+    <div class="config-card">
+      <div class="section-header">
+        SECTION 2 : Quotas LV2 et Options par classe
+      </div>
+
+      <p style="margin-bottom: 16px;">
+        Définissez les quotas maximum pour chaque LV2 et option par classe destination.
+      </p>
+
+      <div id="quotas-container">
+        <!-- Quotas générés dynamiquement -->
+      </div>
+    </div>
+
+    <!-- SECTION 3 : COEFFICIENTS DE PONDÉRATION -->
+    <div class="config-card">
+      <div class="section-header">
+        SECTION 3 : Coefficients de pondération
+      </div>
+
+      <p style="margin-bottom: 16px;">
+        Choisissez un scénario de pondération ou créez le vôtre.
+      </p>
+
+      <div class="form-row">
+        <label>Scénario :</label>
+        <select id="scenario-select-phase3" onchange="changerScenarioPhase3(this.value)">
+          <!-- Options générées dynamiquement -->
+        </select>
+        <button class="btn btn-secondary" onclick="creerNouveauScenarioPhase3()">
+          <span class="material-icons">add</span>
+          Nouveau scénario
+        </button>
+      </div>
+
+      <div id="scenario-info-phase3" style="margin: 16px 0; padding: 12px; background: #f5f5f5; border-radius: 6px;">
+        <!-- Info scénario -->
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table class="ponderation-table">
+          <thead>
+            <tr>
+              <th>Matière</th>
+              <th>Code</th>
+              <th>COM</th>
+              <th>TRA</th>
+              <th>PART</th>
+              <th>ABS</th>
+            </tr>
+          </thead>
+          <tbody id="ponderation-body-phase3">
+            <!-- Lignes générées dynamiquement -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
+  container.innerHTML = html;
+
+  // Ajouter les styles pour le tableau de pondération
+  if (!document.getElementById('phase3-styles')) {
+    const style = document.createElement('style');
+    style.id = 'phase3-styles';
+    style.textContent = `
+      .ponderation-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+        font-size: 14px;
+      }
+      .ponderation-table th, .ponderation-table td {
+        padding: 8px;
+        text-align: center;
+        border: 1px solid #ddd;
+      }
+      .ponderation-table th {
+        background-color: #f0c674;
+        font-weight: 500;
+      }
+      .ponderation-table tr:nth-child(even) {
+        background-color: #fff9e6;
+      }
+      .ponderation-table tr:nth-child(odd) {
+        background-color: #ffffff;
+      }
+      .ponderation-table input {
+        width: 50px;
+        text-align: center;
+        padding: 4px;
+        border: 1px solid #ddd;
+        border-radius: 3px;
+      }
+      .ponderation-table tr.special {
+        background-color: #ffebee;
+      }
+      .mapping-row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 12px;
+        padding: 12px;
+        background: #f9f9f9;
+        border-radius: 6px;
+      }
+      .mapping-row select, .mapping-row input {
+        flex: 1;
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+      .quota-classe {
+        margin-bottom: 20px;
+        padding: 16px;
+        background: #f9f9f9;
+        border-radius: 6px;
+      }
+      .quota-classe h4 {
+        margin: 0 0 12px 0;
+        color: #1976d2;
+      }
+      .quota-row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      .quota-row label {
+        flex: 0 0 120px;
+        font-size: 14px;
+      }
+      .quota-row input {
+        width: 80px;
+        padding: 6px 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        text-align: center;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  // Initialiser l'affichage
+  afficherMappingClasses();
+  afficherQuotas();
+  afficherScenariosPhase3();
+  afficherPonderationPhase3();
+}
+
+function afficherMappingClasses() {
+  const container = document.getElementById('mapping-classes-container');
+  if (!container) return;
+
+  if (!phase3_classesConfig || phase3_classesConfig.length === 0) {
+    // Créer un mapping par défaut basé sur les données de Phase 1
+    const nbDest = wizardState.data.nbDestinations || 5;
+    phase3_classesConfig = [];
+    for (let i = 1; i <= nbDest; i++) {
+      phase3_classesConfig.push({
+        origine: '',
+        destination: `6°${i}`,
+        effectif: 28,
+        options: []
+      });
+    }
+  }
+
+  container.innerHTML = phase3_classesConfig.map((classe, index) => `
+    <div class="mapping-row">
+      <input type="text" placeholder="Classe source" value="${classe.origine || ''}"
+             onchange="updateMappingClasse(${index}, 'origine', this.value)" />
+      <span style="font-size: 20px; color: #666;">→</span>
+      <input type="text" placeholder="Classe destination" value="${classe.destination || ''}"
+             onchange="updateMappingClasse(${index}, 'destination', this.value)" />
+      <label style="flex: 0 0 100px;">Effectif :</label>
+      <input type="number" min="1" max="35" value="${classe.effectif || 28}"
+             onchange="updateMappingClasse(${index}, 'effectif', parseInt(this.value))" />
+      <button type="button" class="btn btn-secondary" onclick="supprimerMappingClasse(${index})"
+              style="flex: 0 0 auto; padding: 8px 12px;">
+        <span class="material-icons">delete</span>
+      </button>
+    </div>
+  `).join('');
+}
+
+function afficherQuotas() {
+  const container = document.getElementById('quotas-container');
+  if (!container) return;
+
+  const lv2Options = wizardState.data.lv2Options || [];
+  const optOptions = wizardState.data.optOptions || [];
+
+  if (phase3_classesConfig.length === 0) {
+    container.innerHTML = '<p style="color: #999; font-style: italic;">Configurez d\'abord le mapping des classes</p>';
+    return;
+  }
+
+  container.innerHTML = phase3_classesConfig.map((classe, classeIndex) => {
+    // Récupérer les quotas existants
+    const quotasExistants = {};
+    (classe.options || []).forEach(opt => {
+      quotasExistants[opt.nom] = opt.quota;
+    });
+
+    return `
+      <div class="quota-classe">
+        <h4>${classe.destination || `Classe ${classeIndex + 1}`} (Effectif cible: ${classe.effectif})</h4>
+
+        ${lv2Options.length > 0 ? `
+          <div style="margin-bottom: 16px;">
+            <strong style="color: #1976d2; display: block; margin-bottom: 8px;">LV2 :</strong>
+            ${lv2Options.map(lv2 => `
+              <div class="quota-row">
+                <label>${lv2} :</label>
+                <input type="number" min="0" max="${classe.effectif}"
+                       value="${quotasExistants[lv2] || 0}"
+                       onchange="updateQuotaClasse(${classeIndex}, '${lv2}', parseInt(this.value))" />
+              </div>
+            `).join('')}
+          </div>
+        ` : ''}
+
+        ${optOptions.length > 0 ? `
+          <div>
+            <strong style="color: #7b1fa2; display: block; margin-bottom: 8px;">Options :</strong>
+            ${optOptions.map(opt => `
+              <div class="quota-row">
+                <label>${opt} :</label>
+                <input type="number" min="0" max="${classe.effectif}"
+                       value="${quotasExistants[opt] || 0}"
+                       onchange="updateQuotaClasse(${classeIndex}, '${opt}', parseInt(this.value))" />
+              </div>
+            `).join('')}
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function afficherScenariosPhase3() {
+  const select = document.getElementById('scenario-select-phase3');
+  if (!select) return;
+
+  select.innerHTML = phase3_scenarios.map(s => `
+    <option value="${s.id}" ${s.actif ? 'selected' : ''}>${s.nom}</option>
+  `).join('');
+
+  afficherInfoScenarioPhase3();
+}
+
+function afficherInfoScenarioPhase3() {
+  const container = document.getElementById('scenario-info-phase3');
+  if (!container) return;
+
+  const scenario = phase3_scenarios.find(s => s.id === phase3_scenarioActif);
+  if (!scenario) return;
+
+  container.innerHTML = `
+    <strong>${scenario.nom}</strong><br>
+    <span style="color: #666;">${scenario.description}</span>
+  `;
+}
+
+function afficherPonderationPhase3() {
+  const tbody = document.getElementById('ponderation-body-phase3');
+  if (!tbody) return;
+
+  const scenario = phase3_scenarios.find(s => s.id === phase3_scenarioActif);
+  if (!scenario || !scenario.ponderation) return;
+
+  const readOnly = (scenario.id === 'default' || scenario.id === 'equal');
+
+  tbody.innerHTML = scenario.ponderation.map((matiere, index) => `
+    <tr ${matiere.code === 'Spe' ? 'class="special"' : ''}>
+      <td>${matiere.matiere}</td>
+      <td>${matiere.code}</td>
+      <td>
+        <input type="number" min="0" max="10" value="${matiere.COM}"
+               ${readOnly ? 'disabled' : ''}
+               onchange="updatePonderationPhase3(${index}, 'COM', parseInt(this.value) || 0)" />
+      </td>
+      <td>
+        <input type="number" min="0" max="10" value="${matiere.TRA}"
+               ${readOnly ? 'disabled' : ''}
+               onchange="updatePonderationPhase3(${index}, 'TRA', parseInt(this.value) || 0)" />
+      </td>
+      <td>
+        <input type="number" min="0" max="10" value="${matiere.PART}"
+               ${readOnly ? 'disabled' : ''}
+               onchange="updatePonderationPhase3(${index}, 'PART', parseInt(this.value) || 0)" />
+      </td>
+      <td>
+        <input type="number" min="0" max="10" value="${matiere.ABS}"
+               ${readOnly ? 'disabled' : ''}
+               onchange="updatePonderationPhase3(${index}, 'ABS', parseInt(this.value) || 0)" />
+      </td>
+    </tr>
+  `).join('');
+}
+
+function ajouterMappingClasse() {
+  const nbDest = phase3_classesConfig.length + 1;
+  phase3_classesConfig.push({
+    origine: '',
+    destination: `6°${nbDest}`,
+    effectif: 28,
+    options: []
+  });
+  afficherMappingClasses();
+  afficherQuotas();
+}
+
+function supprimerMappingClasse(index) {
+  if (confirm('Voulez-vous vraiment supprimer ce mapping ?')) {
+    phase3_classesConfig.splice(index, 1);
+    afficherMappingClasses();
+    afficherQuotas();
+  }
+}
+
+function updateMappingClasse(index, propriete, valeur) {
+  if (phase3_classesConfig[index]) {
+    phase3_classesConfig[index][propriete] = valeur;
+    if (propriete === 'destination' || propriete === 'effectif') {
+      afficherQuotas();
+    }
+  }
+}
+
+function updateQuotaClasse(classeIndex, nomOption, quota) {
+  if (!phase3_classesConfig[classeIndex]) return;
+
+  if (!phase3_classesConfig[classeIndex].options) {
+    phase3_classesConfig[classeIndex].options = [];
+  }
+
+  const optionExistante = phase3_classesConfig[classeIndex].options.find(o => o.nom === nomOption);
+
+  if (optionExistante) {
+    optionExistante.quota = quota;
+  } else {
+    phase3_classesConfig[classeIndex].options.push({ nom: nomOption, quota: quota });
+  }
+}
+
+function changerScenarioPhase3(scenarioId) {
+  phase3_scenarioActif = scenarioId;
+
+  // Marquer le scénario comme actif
+  phase3_scenarios.forEach(s => {
+    s.actif = (s.id === scenarioId);
+  });
+
+  afficherInfoScenarioPhase3();
+  afficherPonderationPhase3();
+}
+
+function creerNouveauScenarioPhase3() {
+  const nom = prompt("Nom du nouveau scénario:");
+  if (!nom) return;
+
+  const description = prompt("Description (optionnelle):", "Coefficients personnalisés");
+
+  const id = "custom_" + Date.now();
+
+  const scenarioActuel = phase3_scenarios.find(s => s.id === phase3_scenarioActif);
+  const nouvellePonderation = JSON.parse(JSON.stringify(scenarioActuel.ponderation));
+
+  phase3_scenarios.push({
+    id: id,
+    nom: nom,
+    description: description || "Coefficients personnalisés",
+    actif: false,
+    ponderation: nouvellePonderation
+  });
+
+  phase3_scenarioActif = id;
+  changerScenarioPhase3(id);
+  afficherScenariosPhase3();
+}
+
+function updatePonderationPhase3(index, critere, valeur) {
+  const scenario = phase3_scenarios.find(s => s.id === phase3_scenarioActif);
+  if (scenario && scenario.ponderation[index]) {
+    scenario.ponderation[index][critere] = valeur;
+  }
+}
+
+function getDefaultScenarios() {
+  return [
+    {
+      id: "default",
+      nom: "Pondération recommandée",
+      description: "Coefficients standards recommandés par matière",
+      actif: true,
+      ponderation: [
+        {matiere: 'Français', code: 'FRA', COM: 4, TRA: 5, PART: 3, ABS: 1},
+        {matiere: 'Maths', code: 'MAT', COM: 4, TRA: 5, PART: 3, ABS: 1},
+        {matiere: 'Histoire', code: 'HIS', COM: 3, TRA: 4, PART: 3, ABS: 1},
+        {matiere: 'Anglais', code: 'ANG', COM: 3, TRA: 3, PART: 8, ABS: 1},
+        {matiere: 'Espagnol', code: 'ESP', COM: 3, TRA: 3, PART: 8, ABS: 1},
+        {matiere: 'Italien', code: 'ITA', COM: 3, TRA: 3, PART: 8, ABS: 1},
+        {matiere: 'Physique', code: 'PHY', COM: 2, TRA: 2, PART: 2, ABS: 1},
+        {matiere: 'SVT', code: 'SVT', COM: 2, TRA: 2, PART: 2, ABS: 1},
+        {matiere: 'Techno', code: 'TECH', COM: 2, TRA: 2, PART: 2, ABS: 1},
+        {matiere: 'Arts', code: 'ART', COM: 2, TRA: 1, PART: 1, ABS: 1},
+        {matiere: 'Musique', code: 'MUS', COM: 2, TRA: 1, PART: 1, ABS: 1},
+        {matiere: 'EPS', code: 'EPS', COM: 5, TRA: 2, PART: 2, ABS: 1},
+        {matiere: 'Viescolaire', code: 'VS', COM: 6, TRA: 0, PART: 0, ABS: 6},
+        {matiere: 'Special', code: 'Spe', COM: 10, TRA: 10, PART: 10, ABS: 10}
+      ]
+    },
+    {
+      id: "equal",
+      nom: "Coefficients égaux",
+      description: "Toutes les matières et critères ont le même poids (1)",
+      actif: false,
+      ponderation: [
+        {matiere: 'Français', code: 'FRA', COM: 1, TRA: 1, PART: 1, ABS: 1},
+        {matiere: 'Maths', code: 'MAT', COM: 1, TRA: 1, PART: 1, ABS: 1},
+        {matiere: 'Histoire', code: 'HIS', COM: 1, TRA: 1, PART: 1, ABS: 1},
+        {matiere: 'Anglais', code: 'ANG', COM: 1, TRA: 1, PART: 1, ABS: 1},
+        {matiere: 'Espagnol', code: 'ESP', COM: 1, TRA: 1, PART: 1, ABS: 1},
+        {matiere: 'Italien', code: 'ITA', COM: 1, TRA: 1, PART: 1, ABS: 1},
+        {matiere: 'Physique', code: 'PHY', COM: 1, TRA: 1, PART: 1, ABS: 1},
+        {matiere: 'SVT', code: 'SVT', COM: 1, TRA: 1, PART: 1, ABS: 1},
+        {matiere: 'Techno', code: 'TECH', COM: 1, TRA: 1, PART: 1, ABS: 1},
+        {matiere: 'Arts', code: 'ART', COM: 1, TRA: 1, PART: 1, ABS: 1},
+        {matiere: 'Musique', code: 'MUS', COM: 1, TRA: 1, PART: 1, ABS: 1},
+        {matiere: 'EPS', code: 'EPS', COM: 1, TRA: 1, PART: 1, ABS: 1},
+        {matiere: 'Viescolaire', code: 'VS', COM: 1, TRA: 1, PART: 1, ABS: 1},
+        {matiere: 'Special', code: 'Spe', COM: 1, TRA: 1, PART: 1, ABS: 1}
+      ]
+    }
+  ];
+}
+
+function validatePhase3() {
+  // Vérifier que tous les mappings sont complets
+  const mappingsValides = phase3_classesConfig.every(c => c.origine && c.destination && c.effectif > 0);
+
+  if (!mappingsValides) {
+    showAlert('error', 'Tous les mappings doivent être complétés (origine, destination, effectif)');
+    return false;
+  }
+
+  // Sauvegarder la configuration
+  showLoading('Sauvegarde de la configuration...');
+
+  const structureData = {
+    classes: phase3_classesConfig,
+    options: wizardState.data.optOptions || [],
+    scenarios: phase3_scenarios,
+    general: {
+      niveau: wizardState.data.niveau,
+      motDePasse: '',
+      maxSwaps: 30,
+      toleranceParite: 2
+    }
+  };
+
+  // Trouver la pondération du scénario actif
+  const scenarioActif = phase3_scenarios.find(s => s.actif);
+  if (scenarioActif && scenarioActif.ponderation) {
+    structureData.ponderation = scenarioActif.ponderation;
+  }
+
+  google.script.run
+    .withSuccessHandler((result) => {
+      hideLoading();
+      wizardState.data.mappingComplete = true;
+      wizardState.data.quotasComplete = true;
+      wizardState.data.coefficientsComplete = true;
+      showAlert('success', 'Configuration sauvegardée avec succès !');
+      setTimeout(() => goToPhase(4), 1000);
+    })
+    .withFailureHandler((error) => {
+      hideLoading();
+      showAlert('error', `Erreur de sauvegarde : ${error.message}`);
+    })
+    .sauvegarderStructure(structureData);
+
+  return false; // Bloquer la validation le temps de la sauvegarde
+}
+
+// ===================================================================
+// PHASE 4 : EXÉCUTION
+// ===================================================================
+
+let phase4_polling = null;
+let phase4_isRunning = false;
+
+function loadPhase4Content() {
+  const container = document.getElementById('phase-4-content');
+
+  let html = `
+    <div class="alert alert-info">
+      <span class="material-icons">rocket_launch</span>
+      <div>
+        <strong>Exécution du pipeline LEGACY</strong>
+        <p>Lancez le pipeline complet de répartition des élèves</p>
+      </div>
+    </div>
+
+    <!-- SECTION 1 : RÉCAPITULATIF -->
+    <div class="config-card">
+      <div class="section-header">
+        Récapitulatif de la configuration
+      </div>
+
+      <div id="recap-config">
+        <p style="color: #999; font-style: italic;">Chargement...</p>
+      </div>
+    </div>
+
+    <!-- SECTION 2 : LANCEMENT -->
+    <div class="config-card">
+      <div class="section-header">
+        Lancement du pipeline
+      </div>
+
+      <p style="margin-bottom: 16px;">
+        Le pipeline LEGACY va exécuter les 4 phases :
+      </p>
+
+      <ul style="margin-left: 20px; line-height: 1.8; margin-bottom: 20px;">
+        <li><strong>Phase 1</strong> : Répartition Options & LV2</li>
+        <li><strong>Phase 2</strong> : Application ASSO/DISSO</li>
+        <li><strong>Phase 3</strong> : Équilibrage Effectifs & Parité</li>
+        <li><strong>Phase 4</strong> : Optimisation Scores (OPTIMUM PRIME)</li>
+      </ul>
+
+      <div style="margin-bottom: 16px;">
+        <button id="btn-lancer-pipeline" class="btn btn-primary" onclick="lancerPipeline()" style="font-size: 16px; padding: 12px 24px;">
+          <span class="material-icons">play_arrow</span>
+          Lancer le Pipeline
+        </button>
+      </div>
+
+      <!-- PROGRESS BAR -->
+      <div id="progress-container" style="display: none;">
+        <div style="margin-bottom: 8px;">
+          <strong id="progress-phase">Phase 1/4 : Initialisation...</strong>
+        </div>
+        <div style="background: #e0e0e0; border-radius: 10px; height: 30px; overflow: hidden; margin-bottom: 16px;">
+          <div id="progress-bar" style="background: linear-gradient(90deg, #1976d2, #42a5f5); height: 100%; width: 0%; transition: width 0.3s; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+            <span id="progress-percent">0%</span>
+          </div>
+        </div>
+        <div style="font-size: 13px; color: #666;" id="progress-time">
+          Temps écoulé : 0s
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3 : LOGS EN DIRECT -->
+    <div class="config-card">
+      <div class="section-header">
+        Logs d'exécution
+      </div>
+
+      <div id="logs-container" style="background: #f5f5f5; border: 1px solid #ddd; border-radius: 6px; padding: 12px; max-height: 300px; overflow-y: auto; font-family: monospace; font-size: 12px; line-height: 1.6;">
+        <div style="color: #999; font-style: italic;">Les logs apparaîtront ici pendant l'exécution...</div>
+      </div>
+    </div>
+
+    <!-- SECTION 4 : RÉSULTATS -->
+    <div id="results-container" style="display: none;">
+      <div class="config-card">
+        <div class="section-header">
+          Résultats du pipeline
+        </div>
+
+        <div id="results-content"></div>
+      </div>
+    </div>
+  `;
+
+  container.innerHTML = html;
+
+  // Charger le récapitulatif
+  chargerRecapConfig();
+}
+
+function chargerRecapConfig() {
+  const container = document.getElementById('recap-config');
+  if (!container) return;
+
+  const recap = `
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+      <div>
+        <strong>Niveau :</strong> ${wizardState.data.niveau || 'N/A'}<br>
+        <strong>Classes sources :</strong> ${wizardState.data.nbSources || 'N/A'}<br>
+        <strong>Classes destinations :</strong> ${wizardState.data.nbDestinations || 'N/A'}
+      </div>
+      <div>
+        <strong>LV2 :</strong> ${(wizardState.data.lv2Options || []).join(', ') || 'Aucune'}<br>
+        <strong>Options :</strong> ${(wizardState.data.optOptions || []).join(', ') || 'Aucune'}
+      </div>
+    </div>
+  `;
+
+  container.innerHTML = recap;
+}
+
+function lancerPipeline() {
+  if (phase4_isRunning) {
+    showAlert('warning', 'Le pipeline est déjà en cours d\'exécution');
+    return;
+  }
+
+  // Confirmation
+  if (!confirm('Voulez-vous vraiment lancer le pipeline LEGACY complet ?\n\nCette opération peut prendre 2-5 minutes.')) {
+    return;
+  }
+
+  phase4_isRunning = true;
+
+  // Désactiver le bouton
+  const btn = document.getElementById('btn-lancer-pipeline');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="material-icons">hourglass_empty</span> Exécution en cours...';
+
+  // Afficher la progress bar
+  document.getElementById('progress-container').style.display = 'block';
+
+  // Réinitialiser les logs
+  const logsContainer = document.getElementById('logs-container');
+  logsContainer.innerHTML = '';
+
+  // Démarrer le polling
+  const startTime = Date.now();
+  phase4_polling = setInterval(() => {
+    pollPipelineProgress(startTime);
+  }, 2000); // Poll toutes les 2 secondes
+
+  // Lancer le pipeline côté serveur
+  google.script.run
+    .withSuccessHandler((result) => {
+      phase4_isRunning = false;
+      clearInterval(phase4_polling);
+      afficherResultatsPipeline(result, Date.now() - startTime);
+    })
+    .withFailureHandler((error) => {
+      phase4_isRunning = false;
+      clearInterval(phase4_polling);
+      showAlert('error', `Erreur pipeline : ${error.message}`);
+      btn.disabled = false;
+      btn.innerHTML = '<span class="material-icons">play_arrow</span> Relancer le Pipeline';
+    })
+    .wizard_runFullPipeline();
+}
+
+function pollPipelineProgress(startTime) {
+  google.script.run
+    .withSuccessHandler((progress) => {
+      if (progress) {
+        updateProgressUI(progress, Date.now() - startTime);
+      }
+    })
+    .withFailureHandler(() => {
+      // Ignorer les erreurs de polling
+    })
+    .getLegacyProgress();
+}
+
+function updateProgressUI(progress, elapsedTime) {
+  // Mettre à jour la phase
+  const phaseLabel = document.getElementById('progress-phase');
+  if (phaseLabel && progress.phase) {
+    phaseLabel.textContent = `Phase ${progress.phase} : ${progress.label || 'En cours...'}`;
+  }
+
+  // Mettre à jour la barre de progression
+  const progressBar = document.getElementById('progress-bar');
+  const progressPercent = document.getElementById('progress-percent');
+  if (progressBar && progress.percentage !== undefined) {
+    progressBar.style.width = progress.percentage + '%';
+    progressPercent.textContent = Math.round(progress.percentage) + '%';
+  }
+
+  // Mettre à jour le temps écoulé
+  const timeLabel = document.getElementById('progress-time');
+  if (timeLabel) {
+    const seconds = Math.floor(elapsedTime / 1000);
+    timeLabel.textContent = `Temps écoulé : ${seconds}s`;
+  }
+
+  // Mettre à jour les logs
+  const logsContainer = document.getElementById('logs-container');
+  if (logsContainer && progress.log) {
+    const logLine = document.createElement('div');
+    logLine.textContent = `[${new Date().toLocaleTimeString()}] ${progress.log}`;
+    logLine.style.color = progress.level === 'ERROR' ? '#e53935' : (progress.level === 'WARN' ? '#ff9800' : '#333');
+    logsContainer.appendChild(logLine);
+    logsContainer.scrollTop = logsContainer.scrollHeight;
+  }
+}
+
+function afficherResultatsPipeline(result, duration) {
+  // Masquer la progress bar
+  document.getElementById('progress-container').style.display = 'none';
+
+  // Réactiver le bouton
+  const btn = document.getElementById('btn-lancer-pipeline');
+  btn.disabled = false;
+  btn.innerHTML = '<span class="material-icons">play_arrow</span> Relancer le Pipeline';
+
+  // Afficher les résultats
+  const resultsContainer = document.getElementById('results-container');
+  const resultsContent = document.getElementById('results-content');
+
+  if (result.ok) {
+    const durationSec = (duration / 1000).toFixed(1);
+
+    resultsContent.innerHTML = `
+      <div class="alert alert-success">
+        <span class="material-icons">check_circle</span>
+        <div>
+          <strong>Pipeline terminé avec succès !</strong>
+          <p>Durée : ${durationSec}s</p>
+        </div>
+      </div>
+
+      <div style="margin-top: 16px;">
+        <strong>Onglets TEST créés :</strong> ${result.testSheets || 0}
+      </div>
+
+      <div style="margin-top: 16px;">
+        <p>Vous pouvez maintenant :</p>
+        <ul style="margin-left: 20px; line-height: 1.8;">
+          <li>Vérifier les résultats dans les onglets TEST</li>
+          <li>Consulter le rapport détaillé (Phase 5)</li>
+          <li>Effectuer des swaps manuels si nécessaire</li>
+          <li>Finaliser TEST → DEF (Phase 6)</li>
+        </ul>
+      </div>
+    `;
+
+    resultsContainer.style.display = 'block';
+
+    wizardState.data.pipelineExecuted = true;
+    showAlert('success', `Pipeline terminé en ${durationSec}s ! Passez à la Phase 5 pour voir le rapport.`);
+
+  } else {
+    resultsContent.innerHTML = `
+      <div class="alert alert-error">
+        <span class="material-icons">error</span>
+        <div>
+          <strong>Erreur pipeline</strong>
+          <p>${result.message || 'Une erreur est survenue'}</p>
+        </div>
+      </div>
+    `;
+
+    resultsContainer.style.display = 'block';
+  }
+}
+
+function validatePhase4() {
+  if (!wizardState.data.pipelineExecuted) {
+    showAlert('warning', 'Vous devez d\'abord lancer le pipeline');
+    return false;
+  }
+  return true;
+}
+
+// ===================================================================
+// PHASE 5 : VALIDATION & RAPPORT
+// ===================================================================
+
+function loadPhase5Content() {
+  const container = document.getElementById('phase-5-content');
+
+  let html = `
+    <div class="alert alert-info">
+      <span class="material-icons">assessment</span>
+      <div>
+        <strong>Rapport de répartition</strong>
+        <p>Consultez les statistiques détaillées de la répartition</p>
+      </div>
+    </div>
+
+    <!-- BOUTON GÉNÉRER RAPPORT -->
+    <div class="config-card" style="text-align: center;">
+      <button class="btn btn-primary" onclick="genererRapport()" style="font-size: 16px; padding: 12px 24px;">
+        <span class="material-icons">analytics</span>
+        Générer le Rapport
+      </button>
+    </div>
+
+    <!-- SECTION : STATISTIQUES GLOBALES -->
+    <div id="stats-globales" style="display: none;">
+      <div class="config-card">
+        <div class="section-header">
+          Statistiques globales
+        </div>
+        <div id="stats-globales-content"></div>
+      </div>
+    </div>
+
+    <!-- SECTION : RÉPARTITION PAR CLASSE -->
+    <div id="stats-classes" style="display: none;">
+      <div class="config-card">
+        <div class="section-header">
+          Répartition par classe
+        </div>
+        <div id="stats-classes-content"></div>
+      </div>
+    </div>
+
+    <!-- SECTION : RÉPARTITION LV2 -->
+    <div id="stats-lv2" style="display: none;">
+      <div class="config-card">
+        <div class="section-header">
+          Répartition par LV2
+        </div>
+        <div id="stats-lv2-content"></div>
+      </div>
+    </div>
+
+    <!-- SECTION : RÉPARTITION OPTIONS -->
+    <div id="stats-options" style="display: none;">
+      <div class="config-card">
+        <div class="section-header">
+          Répartition par Options
+        </div>
+        <div id="stats-options-content"></div>
+      </div>
+    </div>
+
+    <!-- SECTION : ALERTES -->
+    <div id="alertes-section" style="display: none;">
+      <div class="config-card">
+        <div class="section-header">
+          Alertes et Avertissements
+        </div>
+        <div id="alertes-content"></div>
+      </div>
+    </div>
+
+    <!-- SECTION : ACTIONS -->
+    <div id="actions-rapport" style="display: none;">
+      <div class="config-card">
+        <div class="section-header">
+          Actions disponibles
+        </div>
+
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+          <button class="btn btn-secondary" onclick="exporterRapportPDF()">
+            <span class="material-icons">picture_as_pdf</span>
+            Exporter en PDF
+          </button>
+          <button class="btn btn-secondary" onclick="exporterRapportExcel()">
+            <span class="material-icons">table_chart</span>
+            Exporter en Excel
+          </button>
+          <button class="btn btn-secondary" onclick="ouvrirOngletsTest()">
+            <span class="material-icons">open_in_new</span>
+            Ouvrir onglets TEST
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  container.innerHTML = html;
+}
+
+function genererRapport() {
+  showLoading('Génération du rapport...');
+
+  google.script.run
+    .withSuccessHandler((rapport) => {
+      hideLoading();
+      afficherRapport(rapport);
+      wizardState.data.rapportGenere = true;
+    })
+    .withFailureHandler((error) => {
+      hideLoading();
+      showAlert('error', `Erreur : ${error.message}`);
+    })
+    .wizard_genererRapport();
+}
+
+function afficherRapport(rapport) {
+  // STATISTIQUES GLOBALES
+  const statsGlobales = document.getElementById('stats-globales-content');
+  if (statsGlobales) {
+    statsGlobales.innerHTML = `
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+        <div style="background: #e3f2fd; padding: 16px; border-radius: 6px; text-align: center;">
+          <div style="font-size: 32px; font-weight: bold; color: #1976d2;">${rapport.totalEleves || 0}</div>
+          <div style="color: #666; margin-top: 4px;">Élèves répartis</div>
+        </div>
+        <div style="background: #f3e5f5; padding: 16px; border-radius: 6px; text-align: center;">
+          <div style="font-size: 32px; font-weight: bold; color: #7b1fa2;">${rapport.nbClasses || 0}</div>
+          <div style="color: #666; margin-top: 4px;">Classes créées</div>
+        </div>
+        <div style="background: #e8f5e9; padding: 16px; border-radius: 6px; text-align: center;">
+          <div style="font-size: 32px; font-weight: bold; color: #388e3c;">${rapport.effectifMoyen || 0}</div>
+          <div style="color: #666; margin-top: 4px;">Effectif moyen</div>
+        </div>
+        <div style="background: #fff3e0; padding: 16px; border-radius: 6px; text-align: center;">
+          <div style="font-size: 32px; font-weight: bold; color: #f57c00;">${rapport.parite || '50/50'}</div>
+          <div style="color: #666; margin-top: 4px;">Parité F/M</div>
+        </div>
+      </div>
+    `;
+    document.getElementById('stats-globales').style.display = 'block';
+  }
+
+  // RÉPARTITION PAR CLASSE
+  const statsClasses = document.getElementById('stats-classes-content');
+  if (statsClasses && rapport.classes) {
+    const tableHTML = `
+      <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr style="background: #f5f5f5;">
+            <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Classe</th>
+            <th style="padding: 10px; text-align: center; border: 1px solid #ddd;">Effectif</th>
+            <th style="padding: 10px; text-align: center; border: 1px solid #ddd;">Filles</th>
+            <th style="padding: 10px; text-align: center; border: 1px solid #ddd;">Garçons</th>
+            <th style="padding: 10px; text-align: center; border: 1px solid #ddd;">Score moyen</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rapport.classes.map(c => `
+            <tr>
+              <td style="padding: 10px; border: 1px solid #ddd;"><strong>${c.nom}</strong></td>
+              <td style="padding: 10px; text-align: center; border: 1px solid #ddd;">${c.effectif}</td>
+              <td style="padding: 10px; text-align: center; border: 1px solid #ddd;">${c.filles || 0}</td>
+              <td style="padding: 10px; text-align: center; border: 1px solid #ddd;">${c.garcons || 0}</td>
+              <td style="padding: 10px; text-align: center; border: 1px solid #ddd;">${c.scoreMoyen ? c.scoreMoyen.toFixed(2) : 'N/A'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+    statsClasses.innerHTML = tableHTML;
+    document.getElementById('stats-classes').style.display = 'block';
+  }
+
+  // RÉPARTITION LV2
+  const statsLV2 = document.getElementById('stats-lv2-content');
+  if (statsLV2 && rapport.lv2) {
+    const lv2HTML = `
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px;">
+        ${Object.keys(rapport.lv2).map(lv2 => `
+          <div style="background: #e3f2fd; padding: 12px; border-radius: 6px; text-align: center;">
+            <div style="font-size: 24px; font-weight: bold; color: #1976d2;">${rapport.lv2[lv2]}</div>
+            <div style="color: #666; margin-top: 4px;">${lv2}</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    statsLV2.innerHTML = lv2HTML;
+    document.getElementById('stats-lv2').style.display = 'block';
+  }
+
+  // RÉPARTITION OPTIONS
+  const statsOptions = document.getElementById('stats-options-content');
+  if (statsOptions && rapport.options) {
+    const optionsHTML = `
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px;">
+        ${Object.keys(rapport.options).map(opt => `
+          <div style="background: #f3e5f5; padding: 12px; border-radius: 6px; text-align: center;">
+            <div style="font-size: 24px; font-weight: bold; color: #7b1fa2;">${rapport.options[opt]}</div>
+            <div style="color: #666; margin-top: 4px;">${opt}</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    statsOptions.innerHTML = optionsHTML;
+    document.getElementById('stats-options').style.display = 'block';
+  }
+
+  // ALERTES
+  const alertesContent = document.getElementById('alertes-content');
+  if (alertesContent && rapport.alertes && rapport.alertes.length > 0) {
+    const alertesHTML = rapport.alertes.map(a => `
+      <div class="alert alert-${a.type || 'warning'}" style="margin-bottom: 12px;">
+        <span class="material-icons">${a.type === 'error' ? 'error' : 'warning'}</span>
+        <div>${a.message}</div>
+      </div>
+    `).join('');
+    alertesContent.innerHTML = alertesHTML;
+    document.getElementById('alertes-section').style.display = 'block';
+  } else if (alertesContent) {
+    alertesContent.innerHTML = `
+      <div class="alert alert-success">
+        <span class="material-icons">check_circle</span>
+        <div>Aucune alerte. La répartition est optimale !</div>
+      </div>
+    `;
+    document.getElementById('alertes-section').style.display = 'block';
+  }
+
+  // ACTIONS
+  document.getElementById('actions-rapport').style.display = 'block';
+
+  showAlert('success', 'Rapport généré avec succès !');
+}
+
+function exporterRapportPDF() {
+  showAlert('info', 'Export PDF : Fonctionnalité à venir. Utilisez l\'impression du navigateur (Ctrl+P) pour l\'instant.');
+}
+
+function exporterRapportExcel() {
+  showAlert('info', 'Export Excel : Fonctionnalité à venir. Les données sont déjà dans les onglets TEST.');
+}
+
+function ouvrirOngletsTest() {
+  google.script.host.close();
+  showAlert('info', 'Consultez les onglets TEST dans votre feuille de calcul');
+}
+
+function validatePhase5() {
+  return true;
+}
+
+// ===================================================================
+// PHASE 6 : FINALISATION
+// ===================================================================
+
+function loadPhase6Content() {
+  const container = document.getElementById('phase-6-content');
+
+  let html = `
+    <div class="alert alert-info">
+      <span class="material-icons">flag</span>
+      <div>
+        <strong>Finalisation</strong>
+        <p>Dernières actions : swaps manuels, finalisation TEST → DEF, exports</p>
+      </div>
+    </div>
+
+    <!-- SECTION 1 : SWAPS MANUELS -->
+    <div class="config-card">
+      <div class="section-header">
+        Swaps manuels (optionnel)
+      </div>
+
+      <p style="margin-bottom: 16px;">
+        Si vous souhaitez effectuer des ajustements manuels dans la répartition, utilisez l'Interface V2.
+      </p>
+
+      <button class="btn btn-secondary" onclick="ouvrirInterfaceV2()">
+        <span class="material-icons">swap_horiz</span>
+        Ouvrir Interface V2 (Swaps)
+      </button>
+
+      <div style="margin-top: 12px; font-size: 13px; color: #666;">
+        💡 L'Interface V2 permet d'échanger manuellement des élèves entre les classes
+      </div>
+    </div>
+
+    <!-- SECTION 2 : FINALISATION TEST → DEF -->
+    <div class="config-card">
+      <div class="section-header">
+        Finalisation TEST → DEF
+      </div>
+
+      <p style="margin-bottom: 16px;">
+        ⚠️ <strong>ATTENTION</strong> : Cette action est <strong>IRRÉVERSIBLE</strong>.<br>
+        Les onglets TEST seront copiés vers DEF et définitivement validés.
+      </p>
+
+      <div style="margin-bottom: 16px;">
+        <div id="confirmation-zone" style="display: none; padding: 16px; background: #fff3e0; border: 2px solid #ff9800; border-radius: 6px;">
+          <p style="margin-bottom: 12px; font-weight: bold;">
+            Pour confirmer, tapez exactement : <code style="background: #333; color: #fff; padding: 2px 6px; border-radius: 3px;">FINALISER</code>
+          </p>
+
+          <input type="text" id="confirmation-input" placeholder="Tapez FINALISER ici"
+                 style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 12px; font-size: 14px;" />
+
+          <div style="display: flex; gap: 12px;">
+            <button id="btn-confirmer-finalisation" class="btn btn-success" onclick="confirmerFinalisation()" disabled>
+              <span class="material-icons">check</span>
+              Finaliser TEST → DEF
+            </button>
+            <button class="btn btn-secondary" onclick="annulerFinalisation()">
+              <span class="material-icons">close</span>
+              Annuler
+            </button>
+          </div>
+        </div>
+
+        <button id="btn-demander-finalisation" class="btn btn-primary" onclick="demanderFinalisation()">
+          <span class="material-icons">published_with_changes</span>
+          Finaliser TEST → DEF
+        </button>
+      </div>
+    </div>
+
+    <!-- SECTION 3 : EXPORTS -->
+    <div class="config-card">
+      <div class="section-header">
+        Exports et Archivage
+      </div>
+
+      <p style="margin-bottom: 16px;">
+        Exportez les résultats finaux pour archivage ou partage.
+      </p>
+
+      <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+        <button class="btn btn-secondary" onclick="exporterToutPDF()">
+          <span class="material-icons">picture_as_pdf</span>
+          Exporter tout en PDF
+        </button>
+        <button class="btn btn-secondary" onclick="exporterToutExcel()">
+          <span class="material-icons">table_chart</span>
+          Exporter tout en Excel
+        </button>
+        <button class="btn btn-secondary" onclick="creerArchive()">
+          <span class="material-icons">archive</span>
+          Créer une archive
+        </button>
+      </div>
+    </div>
+
+    <!-- SECTION 4 : HISTORIQUE -->
+    <div class="config-card">
+      <div class="section-header">
+        Historique des exécutions
+      </div>
+
+      <div id="historique-container">
+        <p style="color: #999; font-style: italic;">Chargement de l'historique...</p>
+      </div>
+    </div>
+
+    <!-- SECTION 5 : TERMINÉ -->
+    <div id="section-termine" style="display: none;">
+      <div class="config-card" style="background: #e8f5e9; border: 2px solid #4caf50;">
+        <div style="text-align: center; padding: 24px;">
+          <div style="font-size: 64px; color: #4caf50; margin-bottom: 16px;">
+            <span class="material-icons" style="font-size: 64px;">check_circle</span>
+          </div>
+          <h2 style="color: #2e7d32; margin-bottom: 12px;">Félicitations !</h2>
+          <p style="font-size: 16px; color: #666;">
+            La répartition est finalisée et validée.<br>
+            Vous pouvez maintenant fermer cette fenêtre.
+          </p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  container.innerHTML = html;
+
+  // Event listener pour la confirmation
+  setTimeout(() => {
+    const confirmInput = document.getElementById('confirmation-input');
+    if (confirmInput) {
+      confirmInput.addEventListener('input', function() {
+        const btn = document.getElementById('btn-confirmer-finalisation');
+        if (this.value === 'FINALISER') {
+          btn.disabled = false;
+        } else {
+          btn.disabled = true;
+        }
+      });
+    }
+  }, 100);
+
+  // Charger l'historique
+  chargerHistorique();
+}
+
+function demanderFinalisation() {
+  document.getElementById('btn-demander-finalisation').style.display = 'none';
+  document.getElementById('confirmation-zone').style.display = 'block';
+  document.getElementById('confirmation-input').focus();
+}
+
+function annulerFinalisation() {
+  document.getElementById('btn-demander-finalisation').style.display = 'block';
+  document.getElementById('confirmation-zone').style.display = 'none';
+  document.getElementById('confirmation-input').value = '';
+}
+
+function confirmerFinalisation() {
+  const input = document.getElementById('confirmation-input').value;
+
+  if (input !== 'FINALISER') {
+    showAlert('error', 'Vous devez taper exactement "FINALISER" pour confirmer');
+    return;
+  }
+
+  showLoading('Finalisation en cours...');
+
+  google.script.run
+    .withSuccessHandler((result) => {
+      hideLoading();
+
+      if (result.ok) {
+        // Masquer la section de confirmation
+        document.getElementById('confirmation-zone').style.display = 'none';
+        document.getElementById('btn-demander-finalisation').style.display = 'none';
+
+        // Afficher la section "Terminé"
+        document.getElementById('section-termine').style.display = 'block';
+
+        wizardState.data.finalise = true;
+
+        showAlert('success', 'Finalisation réussie ! Les onglets TEST ont été copiés vers DEF.');
+      } else {
+        showAlert('error', `Erreur : ${result.message}`);
+        annulerFinalisation();
+      }
+    })
+    .withFailureHandler((error) => {
+      hideLoading();
+      showAlert('error', `Erreur : ${error.message}`);
+      annulerFinalisation();
+    })
+    .wizard_finaliserTestVersDef();
+}
+
+function ouvrirInterfaceV2() {
+  google.script.host.close();
+  // L'utilisateur devra manuellement ouvrir Interface V2 depuis le menu
+  showAlert('info', 'Utilisez le menu Interface V2 pour effectuer des swaps manuels');
+}
+
+function exporterToutPDF() {
+  showAlert('info', 'Export PDF : Fonctionnalité à venir');
+}
+
+function exporterToutExcel() {
+  showAlert('info', 'Export Excel : Fonctionnalité à venir');
+}
+
+function creerArchive() {
+  showAlert('info', 'Création d\'archive : Fonctionnalité à venir');
+}
+
+function chargerHistorique() {
+  const container = document.getElementById('historique-container');
+  if (!container) return;
+
+  google.script.run
+    .withSuccessHandler((historique) => {
+      if (!historique || historique.length === 0) {
+        container.innerHTML = '<p style="color: #999; font-style: italic;">Aucun historique disponible</p>';
+        return;
+      }
+
+      const histHTML = `
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="background: #f5f5f5;">
+              <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Date</th>
+              <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Action</th>
+              <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Résultat</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${historique.map(h => `
+              <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;">${new Date(h.date).toLocaleString()}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${h.action}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${h.resultat}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+
+      container.innerHTML = histHTML;
+    })
+    .withFailureHandler(() => {
+      container.innerHTML = '<p style="color: #999; font-style: italic;">Erreur de chargement de l\'historique</p>';
+    })
+    .wizard_getHistorique();
+}
+
+function validatePhase6() {
+  return true;
+}
+
+// ===================================================================
+// FONCTIONS UTILITAIRES (PARTAGÉES)
+// ===================================================================
+
+function ouvrirConfigurationComplete() {
+  google.script.host.close();
+  showAlert('info', 'Utilisez le menu Console > Configuration Complète');
+}
+
+function validatePhase3() {
+  // Pour l'instant, on accepte de passer
+  wizardState.data.mappingComplete = true;
+  wizardState.data.quotasComplete = true;
+  wizardState.data.coefficientsComplete = true;
+  return true;
+}
+
+function validatePhase4() {
+  // Pour l'instant, on accepte de passer
+  wizardState.data.pipelineExecuted = true;
+  return true;
+}
+
+function validatePhase5() {
+  return true;
+}
+
+function validatePhase6() {
+  return true;
+}
+
+function ouvrirConfigurationComplete() {
+  // Fermer le wizard et ouvrir ConfigurationComplete
+  google.script.host.close();
+  // L'utilisateur devra manuellement ouvrir ConfigurationComplete depuis le menu
+  showAlert('info', 'Utilisez le menu Console > Configuration Complète');
+}
+
+function ouvrirInterfaceV2() {
+  google.script.host.close();
+  showAlert('info', 'Utilisez le menu Interface V2 pour les swaps manuels');
+}
+</script>
