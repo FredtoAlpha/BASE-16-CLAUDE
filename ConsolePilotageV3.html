@@ -1469,11 +1469,6 @@
     <!-- Toast Container -->
     <div class="toast-container" id="toast-container"></div>
 
-    <!-- Bouton de Minimisation/Maximisation Flottant -->
-    <button class="console-toggle-btn" id="console-toggle-btn" onclick="toggleConsoleMinimize()" title="Minimiser/Restaurer la Console">
-        <i class="fas fa-chevron-down"></i>
-    </button>
-
     <!-- Barre Minimisée (visible quand la console est minimisée) -->
     <div class="console-minimized-bar">
         <div class="minimized-bar-content">
@@ -1784,6 +1779,18 @@
                             <p style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">Deux chemins sont possibles après l'initialisation. Vous pouvez faire A puis B, ou B puis A.</p>
                         </div>
                     </div>
+                </div>
+
+                <!-- MODULE DE CONFIGURATION INTÉGRÉ (repliable) -->
+                <div id="module-configuration-container" class="card" style="display: none; border-color: var(--info);">
+                    <div class="config-module">
+                        <!-- Barre d'onglets -->
+                        <div class="tabs">
+                          <button class="tab-button" data-tab="general">Général</button>
+                          <button class="tab-button active" data-tab="structure">Structure des Classes</button>
+                          <button class="tab-button" data-tab="options">Options Disponibles</button>
+                          <button class="tab-button" data-tab="ponderation">Pondération Matières</button>
+                        </div>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-xl);">
 
@@ -1829,67 +1836,6 @@
                                     <button id="btn-show-stats" class="btn btn-secondary" style="width: 100%;"><i class="btn-icon fas fa-chart-bar"></i><span>Statistiques</span></button>
                                     <div id="stats-status" style="margin-top: var(--space-sm); font-size: 12px;"></div>
                                 </div>
-                                <!-- Étape A.2 : Consolidation -->
-                                <div style="padding: var(--space-lg); background: white; border-radius: var(--radius-lg); border: 1px solid var(--border-light);">
-                                    <div style="display: flex; align-items: center; gap: var(--space-md); margin-bottom: var(--space-md);">
-                                        <div style="width: 32px; height: 32px; background: linear-gradient(135deg, var(--secondary-500), var(--secondary-700)); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px;">A.2</div>
-                                        <div>
-                                            <h4 style="font-size: 15px; font-weight: 700;">Consolider les Données</h4>
-                                            <p style="font-size: 12px; color: var(--text-secondary);">Rassemble tous les élèves dans l'onglet CONSOLIDATION</p>
-                                        </div>
-                                    </div>
-                                    <button id="btn-consolidate" class="btn btn-secondary" style="width: 100%;"><i class="btn-icon fas fa-stream"></i><span>Consolider</span></button>
-                                    <div id="consolidate-status" style="margin-top: var(--space-sm); font-size: 12px;"></div>
-                                </div>
-
-                                <!-- Étape A.3 : Statistiques -->
-                                <div style="padding: var(--space-lg); background: white; border-radius: var(--radius-lg); border: 1px solid var(--border-light);">
-                                    <div style="display: flex; align-items: center; gap: var(--space-md); margin-bottom: var(--space-md);">
-                                        <div style="width: 32px; height: 32px; background: linear-gradient(135deg, var(--secondary-500), var(--secondary-700)); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px;">A.3</div>
-                                        <div>
-                                            <h4 style="font-size: 15px; font-weight: 700;">Afficher les Statistiques</h4>
-                                            <p style="font-size: 12px; color: var(--text-secondary);">Génère un rapport d'analyse des données sources</p>
-                                        </div>
-                                    </div>
-                                    <button id="btn-show-stats" class="btn btn-secondary" style="width: 100%;"><i class="btn-icon fas fa-chart-bar"></i><span>Statistiques</span></button>
-                                    <div id="stats-status" style="margin-top: var(--space-sm); font-size: 12px;"></div>
-                                </div>
-                                <!-- Ajoutez d'autres étapes pour le parcours B ici -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- MODULE DE CONFIGURATION INTÉGRÉ (repliable) -->
-                <div id="module-configuration-container" class="card" style="display: none; border-color: var(--info);">
-                    <div class="config-module">
-                        <!-- Barre d'onglets -->
-                        <div class="tabs">
-                          <button class="tab-button" data-tab="general">Général</button>
-                          <button class="tab-button active" data-tab="structure">Structure des Classes</button>
-                          <button class="tab-button" data-tab="options">Options Disponibles</button>
-                          <button class="tab-button" data-tab="ponderation">Pondération Matières</button>
-                        </div>
-
-                        <!-- Onglet Général -->
-                        <div id="tab-general" class="tab-content">
-                          <div class="config-card">
-                            <div class="config-title">Paramètres Généraux</div>
-                            <div class="input-row">
-                              <label for="niveau-scolaire">Niveau scolaire:</label>
-                              <select id="niveau-scolaire"><option value="6°">6°</option><option value="5°">5°</option><option value="4°">4°</option><option value="3°">3°</option></select>
-                            </div>
-                            <div class="input-row">
-                              <label for="mot-de-passe">Mot de passe admin:</label>
-                              <input type="password" id="mot-de-passe">
-                            </div>
-                            <div class="input-row">
-                              <label for="max-swaps">Nombre max d'échanges:</label>
-                              <input type="number" id="max-swaps" value="30">
-                            </div>
-                            <div class="input-row">
-                              <label for="tolerance-parite">Tolérance parité (%):</label>
-                              <input type="number" id="tolerance-parite" value="2">
                             </div>
                         </div>
 
@@ -2616,6 +2562,7 @@
         // WORKFLOW LOGIC
         // ===================================================================
         function updateWorkflowButtons() {
+            console.log("🔄 Mise à jour des boutons de workflow avec l'état :", JSON.stringify(appState.workflow));
             const wf = appState.workflow;
             const btnGenerateIds = document.getElementById('btn-generate-ids');
             const btnConsolidate = document.getElementById('btn-consolidate');
@@ -2627,8 +2574,13 @@
             btnConsolidate.disabled = !wf.a1_ids_generated || wf.a2_consolidated;
             btnShowStats.disabled = !wf.a2_consolidated || wf.a3_stats_shown;
 
+            console.log(`  - Bouton Générer IDs: ${btnGenerateIds.disabled ? 'Désactivé' : 'Activé'}`);
+            console.log(`  - Bouton Consolider: ${btnConsolidate.disabled ? 'Désactivé' : 'Activé'} (IDs générés: ${wf.a1_ids_generated}, Déjà consolidé: ${wf.a2_consolidated})`);
+            console.log(`  - Bouton Stats: ${btnShowStats.disabled ? 'Désactivé' : 'Activé'}`);
+
             // --- Parcours B ---
             btnConfigureStructure.disabled = wf.b1_structure_configured;
+            console.log(`  - Bouton Configurer Structure: ${btnConfigureStructure.disabled ? 'Désactivé' : 'Activé'}`);
 
             // Update status text based on state
             if (wf.a1_ids_generated) {
@@ -2930,18 +2882,28 @@
             document.getElementById('btn-consolidate').addEventListener('click', () => {
                 showLoading('Consolidation des données en cours...');
                 const statusDiv = document.getElementById('consolidate-status');
+                console.log("▶️ Lancement de la consolidation...");
 
                 google.script.run
                     .withSuccessHandler(response => {
                         hideLoading();
-                        appState.workflow.a2_consolidated = true;
-                        updateWorkflowButtons();
-                        showToast('success', '✅ Consolidation terminée !');
+                        if (response && response.success) {
+                            console.log("✅ Consolidation réussie:", response);
+                            appState.workflow.a2_consolidated = true;
+                            updateWorkflowButtons();
+                            showToast('success', '✅ Consolidation terminée !');
+                        } else {
+                            const errorMsg = response ? response.error : "Erreur inconnue.";
+                            console.error("❌ Erreur de consolidation (côté serveur):", errorMsg);
+                            statusDiv.innerHTML = `<span style="color: var(--danger);"><i class="fas fa-exclamation-circle"></i> Erreur: ${errorMsg}</span>`;
+                            showToast('error', `Erreur: ${errorMsg}`);
+                        }
                     })
                     .withFailureHandler(error => {
                         hideLoading();
+                        console.error("❌ Échec critique de la consolidation:", error);
                         statusDiv.innerHTML = `<span style="color: var(--danger);"><i class="fas fa-exclamation-circle"></i> Erreur: ${error.message}</span>`;
-                        showToast('error', 'Erreur lors de la consolidation');
+                        showToast('error', 'Erreur critique lors de la consolidation');
                     })
                     .consoliderDonnees();
             });
@@ -3285,18 +3247,24 @@
             updateWorkflowButtons();
 
             // Charger l'état initial depuis le backend
+            console.log("🚀 Demande de l'état initial au backend...");
             google.script.run
-                .withSuccessHandler(function(initialState) {
-                    if (initialState) {
-                        appState.workflow.a1_ids_generated = initialState.idsGenerated;
-                        appState.workflow.a2_consolidated = initialState.consolidationDone;
-                        appState.workflow.b1_structure_configured = initialState.structureConfigured;
+                .withSuccessHandler(function(response) {
+                    if (response && response.success) {
+                        console.log("✅ État initial reçu:", response);
+                        appState.workflow.a1_ids_generated = response.idsGenerated;
+                        appState.workflow.a2_consolidated = response.consolidationDone;
+                        appState.workflow.b1_structure_configured = response.structureConfigured;
                         updateWorkflowButtons();
-                        showToast('info', 'État du workflow chargé.');
+                        showToast('info', 'État du workflow chargé avec succès.');
+                    } else {
+                        console.error("❌ Erreur lors de la récupération de l'état initial:", response ? response.error : "Réponse invalide");
+                        showToast('error', "Erreur au chargement de l'état: " + (response ? response.error : "Réponse invalide"));
                     }
                 })
                 .withFailureHandler(function(err) {
-                     showToast('error', "Erreur au chargement de l'état.");
+                     console.error("❌ Échec critique du chargement de l'état:", err);
+                     showToast('error', "Échec critique du chargement de l'état.");
                 })
                 .v3_getInitialState();
 
@@ -3688,7 +3656,7 @@
     <!-- =====================================================================
      * BOUTON TOGGLE FLOTTANT
      * ===================================================================-->
-    <button class="console-toggle-btn" id="consoleToggleBtn" title="Minimiser/Maximiser la console (Ctrl+M)">
+    <button class="console-toggle-btn" id="console-toggle-btn" title="Minimiser/Maximiser la console (Ctrl+M)">
         <i class="fas fa-chevron-down"></i>
     </button>
 
