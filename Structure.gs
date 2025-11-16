@@ -301,3 +301,39 @@ function sauvegarderStructure(structure) {
     return { success: false, message: "Erreur lors de la sauvegarde: " + e.toString() };
   }
 }
+
+/**
+ * Récupère l'état initial du workflow pour la Console V3.
+ * @returns {Object} {success: boolean, idsGenerated: boolean, consolidationDone: boolean, structureConfigured: boolean, error?: string}
+ */
+function v3_getInitialState() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const config = getConfig();
+
+    // Vérifier si la structure est configurée (onglet _STRUCTURE existe et n'est pas vide)
+    const structureSheet = ss.getSheetByName(config.SHEETS.STRUCTURE);
+    const structureConfigured = structureSheet && structureSheet.getLastRow() > 1;
+
+    // Vérifier si la consolidation est faite (onglet CONSOLIDATION existe et n'est pas vide)
+    const consolidationSheet = ss.getSheetByName(config.SHEETS.CONSOLIDATION);
+    const consolidationDone = consolidationSheet && consolidationSheet.getLastRow() > 1;
+
+    // Pour la génération des IDs, on ne peut pas savoir avec certitude sans un marqueur.
+    // On va considérer que si la consolidation est faite, les IDs ont dû être générés.
+    const idsGenerated = consolidationDone;
+
+    return {
+      success: true,
+      idsGenerated: idsGenerated,
+      consolidationDone: consolidationDone,
+      structureConfigured: structureConfigured
+    };
+  } catch (e) {
+    Logger.log("Erreur dans v3_getInitialState: " + e.message);
+    return {
+      success: false,
+      error: e.message
+    };
+  }
+}

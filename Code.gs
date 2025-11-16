@@ -1131,46 +1131,6 @@ function buildStudentIndex_() {
   });
   return { header, rows:index };
 }
-/**
- * Récupère l'état initial du workflow pour savoir quelles étapes ont déjà été complétées.
- * @returns {object} Un objet décrivant l'état des étapes clés du workflow.
- */
-function v3_getInitialState() {
-  try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const sourceSheets = ss.getSheets().filter(s => s.getName().match(/^\d°\d+$/));
-    const consolidationSheet = ss.getSheetByName('CONSOLIDATION');
-    const structureSheet = ss.getSheetByName('_STRUCTURE');
-
-    let idsGenerated = false;
-    if (sourceSheets.length > 0) {
-      const firstSheet = sourceSheets[0];
-      const headers = firstSheet.getRange(1, 1, 1, firstSheet.getLastColumn()).getValues()[0];
-      if (headers.includes('ID_ELEVE') && headers.includes('NOM_PRENOM')) {
-        idsGenerated = true;
-      }
-    }
-
-    const consolidationDone = consolidationSheet !== null;
-    const structureConfigured = structureSheet !== null && structureSheet.getLastRow() > 1;
-
-    console.log(`État initial chargé: IDs générés=${idsGenerated}, Consolidation faite=${consolidationDone}, Structure configurée=${structureConfigured}`);
-
-    return {
-      success: true,
-      idsGenerated: idsGenerated,
-      consolidationDone: consolidationDone,
-      structureConfigured: structureConfigured
-    };
-  } catch (e) {
-    console.error("Erreur dans v3_getInitialState: " + e.toString());
-    return {
-      success: false,
-      error: e.toString()
-    };
-  }
-}
-
 /******************** Sauvegardes DRY (générique) *************************/
 /**
  * Sauvegarde générique des classes dans des onglets <classe><suffix>
