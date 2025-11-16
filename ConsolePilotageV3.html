@@ -605,6 +605,2233 @@
             })
             .testerOptionsPersonnaliseesInterface();
         }
+
+        .metric-card {
+            background: white;
+            padding: var(--space-lg);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-md);
+            transition: all var(--transition-base);
+            border: 1px solid var(--border-light);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-500), #764ba2);
+        }
+
+        .metric-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .metric-value {
+            font-size: 36px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary-500), #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+            margin-bottom: var(--space-sm);
+        }
+
+        .metric-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+        }
+
+        .metric-icon {
+            opacity: 0.6;
+        }
+
+        /* Live Status Section */
+        .live-status {
+            background: white;
+            padding: var(--space-lg);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-md);
+            margin-bottom: var(--space-xl);
+            border: 1px solid var(--border-light);
+        }
+
+        .status-header {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            margin-bottom: var(--space-md);
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s infinite;
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+        }
+
+        .status-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .status-time {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            margin-left: auto;
+        }
+
+        /* Alerts Section */
+        .alerts-section {
+            margin-top: var(--space-xl);
+        }
+
+        .alert {
+            padding: var(--space-md) var(--space-lg);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--space-md);
+            font-size: 13px;
+            line-height: 1.6;
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-md);
+            animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border-left: 4px solid;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .alert-icon {
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            color: #065f46;
+            border-color: var(--success);
+        }
+
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: #92400e;
+            border-color: var(--warning);
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1);
+            color: #991b1b;
+            border-color: var(--danger);
+        }
+
+        .alert-info {
+            background: rgba(59, 130, 246, 0.1);
+            color: #1e40af;
+            border-color: var(--info);
+        }
+
+        /* Diagnostic List */
+        .diagnostic-list {
+            list-style: none;
+            margin-top: var(--space-lg);
+        }
+
+        .diagnostic-item {
+            padding: var(--space-md);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-sm);
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            font-size: 13px;
+            transition: all var(--transition-base);
+            border: 1px solid transparent;
+        }
+
+        .diagnostic-item:hover {
+            transform: translateX(-2px);
+        }
+
+        .diagnostic-item.status-ok {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.2);
+        }
+
+        .diagnostic-item.status-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: rgba(245, 158, 11, 0.2);
+        }
+
+        .diagnostic-item.status-error {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+
+        .diagnostic-icon {
+            font-size: 16px;
+        }
+
+        /* =====================================================================
+         * MODAL SYSTEM
+         * ===================================================================*/
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: var(--z-modal);
+            opacity: 0;
+            visibility: hidden;
+            transition: all var(--transition-base);
+        }
+
+        .modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: var(--radius-2xl);
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-2xl);
+            transform: scale(0.9) translateY(20px);
+            transition: transform var(--transition-slow);
+        }
+
+        .modal.active .modal-content {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-xl);
+            border-bottom: 2px solid var(--border-light);
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-500), #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .modal-close {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--gray-100);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: var(--text-secondary);
+            transition: all var(--transition-base);
+        }
+
+        .modal-close:hover {
+            background: var(--gray-200);
+            color: var(--text-primary);
+            transform: rotate(90deg);
+        }
+
+        .modal-body {
+            padding: var(--space-xl);
+        }
+
+        .modal-footer {
+            padding: var(--space-xl);
+            border-top: 2px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: var(--space-md);
+        }
+
+        /* Checklist */
+        .checklist {
+            list-style: none;
+            margin-top: var(--space-lg);
+        }
+
+        .checklist-item {
+            padding: var(--space-md);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-sm);
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            transition: all var(--transition-base);
+        }
+
+        .confirm-checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-right: auto;
+            cursor: pointer;
+        }
+
+        #confirm-checklist {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        /* =====================================================================
+         * LOADING STATES
+         * ===================================================================*/
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: var(--z-modal);
+            opacity: 0;
+            visibility: hidden;
+            transition: all var(--transition-base);
+        }
+
+        .loading-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .loading-content {
+            background: white;
+            padding: var(--space-2xl) var(--space-2xl);
+            border-radius: var(--radius-2xl);
+            text-align: center;
+            box-shadow: var(--shadow-2xl);
+        }
+
+        .spinner {
+            display: flex;
+            justify-content: center;
+            gap: var(--space-sm);
+            margin-bottom: var(--space-lg);
+        }
+
+        .spinner-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-500), #764ba2);
+            animation: spinnerBounce 1.4s infinite ease-in-out both;
+        }
+
+        .spinner-dot:nth-child(1) { animation-delay: -0.32s; }
+        .spinner-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes spinnerBounce {
+            0%, 80%, 100% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1.2);
+                opacity: 1;
+            }
+        }
+
+        .loading-text {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* =====================================================================
+         * TOAST NOTIFICATIONS
+         * ===================================================================*/
+        .toast-container {
+            position: fixed;
+            top: var(--space-xl);
+            right: var(--space-xl);
+            z-index: var(--z-tooltip);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-md);
+        }
+
+        .toast {
+            background: white;
+            padding: var(--space-lg) var(--space-xl);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-2xl);
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            min-width: 300px;
+            border-left: 4px solid;
+            animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .toast-success { border-color: var(--success); }
+        .toast-error { border-color: var(--danger); }
+        .toast-warning { border-color: var(--warning); }
+        .toast-info { border-color: var(--info); }
+
+        /* =====================================================================
+         * RESPONSIVE DESIGN
+         * ===================================================================*/
+        @media (max-width: 1400px) {
+            :root {
+                --sidebar-width: 280px;
+                --panel-width: 340px;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .app-container {
+                grid-template-columns: 260px 1fr;
+            }
+
+            .diagnostic-panel {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                display: none;
+            }
+
+            .main-content {
+                padding: var(--space-lg);
+            }
+        }
+
+        /* =====================================================================
+         * UTILITY CLASSES
+         * ===================================================================*/
+        .hidden { display: none !important; }
+        .flex { display: flex; }
+        .flex-col { flex-direction: column; }
+        .items-center { align-items: center; }
+        .justify-between { justify-content: space-between; }
+        .gap-sm { gap: var(--space-sm); }
+        .gap-md { gap: var(--space-md); }
+        .gap-lg { gap: var(--space-lg); }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* =====================================================================
+         * SYSTÈME DE MINIMISATION - CORRECTION DU BUG
+         * Quand minimisé, le cadre DISPARAÎT complètement (pas de blocage des clics)
+         * ===================================================================*/
+        .console-toggle-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary-500), #764ba2);
+            border-radius: 50%;
+            border: none;
+            color: white;
+            font-size: 28px;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.6);
+            z-index: 99999;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .console-toggle-btn:hover {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 6px 30px rgba(102, 126, 234, 0.8);
+        }
+
+        .console-toggle-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* État minimisé : le app-container DISPARAÎT COMPLÈTEMENT */
+        body.console-minimized .app-container {
+            display: none !important;
+            pointer-events: none !important;
+            visibility: hidden !important;
+        }
+
+        /* Rotation de l'icône quand minimisé */
+        body.console-minimized .console-toggle-btn i {
+            transform: rotate(180deg);
+        }
+
+        /* Barre minimale en bas */
+        .console-minimized-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background: linear-gradient(135deg, rgba(26, 31, 54, 0.98), rgba(45, 55, 72, 0.98));
+            backdrop-filter: blur(24px);
+            border-top: 3px solid var(--primary-500);
+            z-index: 99998;
+            display: none;
+            align-items: center;
+            padding: 0 30px;
+            box-shadow: 0 -4px 25px rgba(0, 0, 0, 0.4);
+            animation: slideUpFromBottom 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body.console-minimized .console-minimized-bar {
+            display: flex;
+        }
+
+        @keyframes slideUpFromBottom {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .minimized-bar-content {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            width: 100%;
+        }
+
+        .minimized-bar-logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .minimized-bar-logo i {
+            font-size: 32px;
+            color: var(--primary-400);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .minimized-bar-title {
+            color: white;
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .minimized-bar-status {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex: 1;
+            padding: 0 30px;
+        }
+
+        .minimized-status-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 18px;
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 25px;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .minimized-status-item i {
+            font-size: 18px;
+            color: var(--primary-400);
+        }
+
+        .minimized-bar-progress {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .minimized-progress-circle {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            background: conic-gradient(
+                var(--primary-500) 0deg,
+                var(--primary-500) var(--progress-angle, 0deg),
+                rgba(255, 255, 255, 0.15) var(--progress-angle, 0deg)
+            );
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .minimized-progress-circle::before {
+            content: '';
+            width: 47px;
+            height: 47px;
+            border-radius: 50%;
+            background: var(--bg-sidebar);
+            position: absolute;
+        }
+
+        .minimized-progress-text {
+            position: relative;
+            z-index: 1;
+            color: white;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        @keyframes slideOutRight {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(120%);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Bouton de Minimisation/Maximisation Flottant -->
+    <button class="console-toggle-btn" id="console-toggle-btn" onclick="toggleConsoleMinimize()" title="Minimiser/Restaurer la Console">
+        <i class="fas fa-chevron-down"></i>
+    </button>
+
+    <!-- Barre Minimisée (visible quand la console est minimisée) -->
+    <div class="console-minimized-bar">
+        <div class="minimized-bar-content">
+            <div class="minimized-bar-logo">
+                <i class="fas fa-rocket"></i>
+                <div class="minimized-bar-title">Console de Pilotage V3</div>
+            </div>
+            <div class="minimized-bar-status">
+                <div style="color: rgba(255,255,255,0.7); font-size: 14px;">
+                    <i class="fas fa-check-circle" style="color: var(--success); margin-right: 5px;"></i>
+                    Système prêt
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- App Container -->
+    <div class="app-container">
+
+        <!-- =====================================================================
+         * SIDEBAR - Left Navigation
+         * ===================================================================-->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-brand">
+                    <div class="brand-icon">
+                        <i class="fas fa-rocket"></i>
+                    </div>
+                    <div class="brand-text">
+                        <h1>Console de Pilotage</h1>
+                        <div class="version">Version 3.0 Expert</div>
+                    </div>
+                    <!-- BOUTON DE VRAIE FERMETURE -->
+                    <button onclick="closeConsole()" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; margin-left: auto;" title="Fermer la Console">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <!-- Theme Toggle -->
+                <div class="theme-toggle">
+                    <div class="toggle-switch" id="theme-toggle">
+                        <div class="toggle-slider"></div>
+                    </div>
+                    <div class="toggle-label">
+                        <i class="fas fa-moon"></i>
+                        <span>Mode Sombre</span>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">Phases du Processus</div>
+
+                <div class="nav-item">
+                    <a href="#" class="nav-link active" data-step="1" role="button" aria-label="Phase 1: Initialisation">
+                        <div class="nav-icon-wrapper">
+                            <span class="nav-number">1</span>
+                            <i class="nav-icon fas fa-play-circle"></i>
+                        </div>
+                        <span class="nav-text">Initialisation</span>
+                        <span id="badge-1" class="nav-badge badge-active">En cours</span>
+                    </a>
+                </div>
+
+                <div class="nav-item">
+                    <a href="#" class="nav-link" data-step="2" role="button" aria-label="Phase 2: Diagnostic">
+                        <div class="nav-icon-wrapper">
+                            <span class="nav-number">2</span>
+                            <i class="nav-icon fas fa-stethoscope"></i>
+                        </div>
+                        <span class="nav-text">Diagnostic</span>
+                        <span id="badge-2" class="nav-badge badge-pending">En attente</span>
+                    </a>
+                </div>
+
+                <div class="nav-item">
+                    <a href="#" class="nav-link" data-step="3" role="button" aria-label="Phase 3: Génération">
+                        <div class="nav-icon-wrapper">
+                            <span class="nav-number">3</span>
+                            <i class="nav-icon fas fa-wand-magic-sparkles"></i>
+                        </div>
+                        <span class="nav-text">Génération</span>
+                        <span id="badge-3" class="nav-badge badge-pending">En attente</span>
+                    </a>
+                </div>
+
+                <div class="nav-item">
+                    <a href="#" class="nav-link" data-step="4" role="button" aria-label="Phase 4: Optimisation">
+                        <div class="nav-icon-wrapper">
+                            <span class="nav-number">4</span>
+                            <i class="nav-icon fas fa-gauge-high"></i>
+                        </div>
+                        <span class="nav-text">Optimisation</span>
+                        <span id="badge-4" class="nav-badge badge-pending">En attente</span>
+                    </a>
+                </div>
+
+                <div class="nav-item">
+                    <a href="#" class="nav-link" data-step="5" role="button" aria-label="Phase 5: Swaps Manuels">
+                        <div class="nav-icon-wrapper">
+                            <span class="nav-number">5</span>
+                            <i class="nav-icon fas fa-arrows-rotate"></i>
+                        </div>
+                        <span class="nav-text">Swaps Manuels</span>
+                        <span id="badge-5" class="nav-badge badge-pending">En attente</span>
+                    </a>
+                </div>
+
+                <div class="nav-item">
+                    <a href="#" class="nav-link" data-step="6" role="button" aria-label="Phase 6: Finalisation">
+                        <div class="nav-icon-wrapper">
+                            <span class="nav-number">6</span>
+                            <i class="nav-icon fas fa-check-double"></i>
+                        </div>
+                        <span class="nav-text">Finalisation</span>
+                        <span id="badge-6" class="nav-badge badge-pending">En attente</span>
+                    </a>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="progress-summary">
+                    <div class="progress-title">Progression Globale</div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="global-progress" style="width: 0%"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span id="progress-completed">0</span>
+                        <span id="progress-percentage">0%</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- =====================================================================
+         * MAIN CONTENT
+         * ===================================================================-->
+        <main class="main-content">
+
+            <!-- Phase 1: Initialisation -->
+            <div id="phase-1" class="phase active">
+                <div class="content-header">
+                    <h1 class="page-title">Phase 1: Initialisation & Configuration</h1>
+                    <p class="page-subtitle">✨ ZÉRO POPUP ! Configurez tous les paramètres directement ici, puis lancez l'initialisation</p>
+                </div>
+
+                <!-- FORMULAIRE DE CONFIGURATION INTÉGRÉ -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fas fa-cogs"></i>
+                        </div>
+                        <div>
+                            <h2 class="card-title">⚙️ Paramètres Généraux</h2>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-xl); margin-bottom: var(--space-2xl);">
+                        <!-- Niveau Scolaire -->
+                        <div>
+                            <label style="display: block; font-weight: 700; margin-bottom: var(--space-sm); color: var(--text-primary); font-size: 14px;">
+                                <i class="fas fa-graduation-cap" style="margin-right: 8px; color: var(--primary-500);"></i>
+                                Niveau Scolaire
+                            </label>
+                            <select id="config-niveau" style="width: 100%; padding: 12px 16px; border: 2px solid var(--border-light); border-radius: var(--radius-lg); font-size: 15px; font-weight: 500; background: white; transition: all var(--transition-base); cursor: pointer;">
+                                <option value="6°">6ème</option>
+                                <option value="5°" selected>5ème</option>
+                                <option value="4°">4ème</option>
+                                <option value="3°">3ème</option>
+                            </select>
+                        </div>
+
+                        <!-- Nombre de Sources -->
+                        <div>
+                            <label style="display: block; font-weight: 700; margin-bottom: var(--space-sm); color: var(--text-primary); font-size: 14px;">
+                                <i class="fas fa-arrow-right" style="margin-right: 8px; color: var(--secondary-500);"></i>
+                                Classes Sources <span id="source-label" style="font-weight: 400; font-size: 13px; color: var(--text-secondary);">(6°)</span>
+                            </label>
+                            <input type="number" id="config-nb-sources" min="1" max="20" value="6" style="width: 100%; padding: 12px 16px; border: 2px solid var(--border-light); border-radius: var(--radius-lg); font-size: 15px; font-weight: 500; transition: all var(--transition-base);">
+                        </div>
+
+                        <!-- Nombre de Destinations -->
+                        <div>
+                            <label style="display: block; font-weight: 700; margin-bottom: var(--space-sm); color: var(--text-primary); font-size: 14px;">
+                                <i class="fas fa-bullseye" style="margin-right: 8px; color: var(--info);"></i>
+                                Classes Destinations
+                            </label>
+                            <input type="number" id="config-nb-dest" min="1" max="15" value="6" style="width: 100%; padding: 12px 16px; border: 2px solid var(--border-light); border-radius: var(--radius-lg); font-size: 15px; font-weight: 500; transition: all var(--transition-base);">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- OPTIONS & LANGUES -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fas fa-language"></i>
+                        </div>
+                        <div>
+                            <h2 class="card-title">📚 Options & Langues</h2>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr; gap: var(--space-xl); margin-bottom: var(--space-xl);">
+                        <!-- LV2 -->
+                        <div>
+                            <label style="display: block; font-weight: 700; margin-bottom: var(--space-sm); color: var(--text-primary); font-size: 14px;">
+                                <i class="fas fa-globe" style="margin-right: 8px; color: var(--primary-500);"></i>
+                                Langues Vivantes 2 (LV2)
+                            </label>
+                            <input type="text" id="config-lv2" placeholder="ESP, ITA, ALL (séparés par virgules)" value="ESP, ITA" style="width: 100%; padding: 12px 16px; border: 2px solid var(--border-light); border-radius: var(--radius-lg); font-size: 15px; font-weight: 500; transition: all var(--transition-base);">
+                            <small style="color: var(--text-secondary); font-size: 12px; margin-top: 4px; display: block;">Entrez les sigles séparés par des virgules</small>
+                        </div>
+
+                        <!-- Options Spécifiques -->
+                        <div>
+                            <label style="display: block; font-weight: 700; margin-bottom: var(--space-sm); color: var(--text-primary); font-size: 14px;">
+                                <i class="fas fa-star" style="margin-right: 8px; color: var(--warning);"></i>
+                                Options Spécifiques (LATIN, GREC, etc.)
+                            </label>
+                            <input type="text" id="config-opt" placeholder="LATIN, GREC, CHAV (séparés par virgules)" value="LATIN, GREC, CHAV" style="width: 100%; padding: 12px 16px; border: 2px solid var(--border-light); border-radius: var(--radius-lg); font-size: 15px; font-weight: 500; transition: all var(--transition-base);">
+                            <small style="color: var(--text-secondary); font-size: 12px; margin-top: 4px; display: block;">Entrez les sigles séparés par des virgules</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PARAMÈTRES AVANCÉS -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fas fa-sliders-h"></i>
+                        </div>
+                        <div>
+                            <h2 class="card-title">🎛️ Paramètres Avancés</h2>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-lg); margin-bottom: var(--space-xl);">
+                        <div>
+                            <label style="display: block; font-weight: 700; margin-bottom: var(--space-sm); color: var(--text-primary); font-size: 14px;">Max Swaps</label>
+                            <input type="number" id="config-max-swaps" min="10" max="200" value="50" style="width: 100%; padding: 12px 16px; border: 2px solid var(--border-light); border-radius: var(--radius-lg); font-size: 15px; font-weight: 500;">
+                        </div>
+
+                        <div>
+                            <label style="display: block; font-weight: 700; margin-bottom: var(--space-sm); color: var(--text-primary); font-size: 14px;">Tolérance Parité</label>
+                            <input type="number" id="config-parity-tolerance" min="0" max="5" value="2" style="width: 100%; padding: 12px 16px; border: 2px solid var(--border-light); border-radius: var(--radius-lg); font-size: 15px; font-weight: 500;">
+                        </div>
+
+                        <div>
+                            <label style="display: block; font-weight: 700; margin-bottom: var(--space-sm); color: var(--text-primary); font-size: 14px;">Suffixe TEST</label>
+                            <input type="text" id="config-test-suffix" value="TEST" style="width: 100%; padding: 12px 16px; border: 2px solid var(--border-light); border-radius: var(--radius-lg); font-size: 15px; font-weight: 500;">
+                        </div>
+
+                        <div>
+                            <label style="display: block; font-weight: 700; margin-bottom: var(--space-sm); color: var(--text-primary); font-size: 14px;">Suffixe DEF</label>
+                            <input type="text" id="config-def-suffix" value="DEF" style="width: 100%; padding: 12px 16px; border: 2px solid var(--border-light); border-radius: var(--radius-lg); font-size: 15px; font-weight: 500;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SÉCURITÉ : MOT DE PASSE ADMIN -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fas fa-shield-halved"></i>
+                        </div>
+                        <div>
+                            <h2 class="card-title">🔐 Authentification Administrateur</h2>
+                        </div>
+                    </div>
+                    <div style="max-width: 400px;">
+                        <label style="display: block; font-weight: 700; margin-bottom: var(--space-sm); color: var(--text-primary); font-size: 14px;">
+                            <i class="fas fa-key" style="margin-right: 8px; color: var(--danger);"></i>
+                            Mot de passe Administrateur
+                        </label>
+                        <input type="password" id="config-admin-password" placeholder="Requis pour lancer l'initialisation" style="width: 100%; padding: 12px 16px; border: 2px solid var(--border-light); border-radius: var(--radius-lg); font-size: 15px; font-weight: 500; transition: all var(--transition-base);">
+                        <small style="color: var(--text-secondary); font-size: 12px; margin-top: 4px; display: block;">
+                            🔒 Nécessaire pour valider toute modification de configuration
+                        </small>
+                    </div>
+                </div>
+
+                <!-- BOUTONS D'ACTION -->
+                <div class="card">
+                    <div style="display: flex; gap: var(--space-md); flex-wrap: wrap;">
+                        <button id="btn-save-config" class="btn btn-success" style="flex: 1; min-width: 200px;">
+                            <i class="btn-icon fas fa-save"></i>
+                            <span>Sauvegarder la Configuration</span>
+                        </button>
+                        <button id="btn-run-initialisation" class="btn btn-primary" style="flex: 1; min-width: 200px;">
+                            <i class="btn-icon fas fa-play"></i>
+                            <span>Lancer l'Initialisation</span>
+                        </button>
+                    </div>
+                    <p style="margin-top: var(--space-md); font-size: 13px; color: var(--text-secondary); text-align: center;">
+                        💾 La configuration est automatiquement sauvegardée dans votre navigateur et dans la feuille _CONFIG
+                    </p>
+                </div>
+
+                <!-- ÉTAPES SUPPLÉMENTAIRES OBLIGATOIRES -->
+                <div class="card" style="border: 2px solid var(--warning); background: linear-gradient(135deg, rgba(245, 158, 11, 0.05), rgba(251, 191, 36, 0.05));">
+                    <div class="card-header">
+                        <div class="card-icon" style="background: var(--warning);">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div>
+                            <h2 class="card-title" style="color: var(--warning);">⚠️ ÉTAPES OBLIGATOIRES AVANT CONSOLIDATION</h2>
+                            <p style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">Ces étapes DOIVENT être complétées après l'initialisation</p>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; gap: var(--space-lg);">
+                        <!-- Étape 1 : Génération NOM_PRENOM et ID_ELEVE -->
+                        <div style="padding: var(--space-lg); background: white; border-radius: var(--radius-lg); border: 1px solid var(--border-light);">
+                            <div style="display: flex; align-items: center; gap: var(--space-md); margin-bottom: var(--space-md);">
+                                <div style="width: 32px; height: 32px; background: linear-gradient(135deg, var(--primary-500), #764ba2); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px;">1</div>
+                                <div style="flex: 1;">
+                                    <h3 style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">Générer NOM_PRENOM & ID_ELEVE</h3>
+                                    <p style="font-size: 13px; color: var(--text-secondary);">Crée les colonnes D (NOM_PRENOM) et A (ID_ELEVE) dans les onglets sources</p>
+                                </div>
+                            </div>
+                            <button id="btn-generate-ids" class="btn btn-warning" style="width: 100%;">
+                                <i class="btn-icon fas fa-id-card"></i>
+                                <span>Générer NOM_PRENOM & ID_ELEVE</span>
+                            </button>
+                            <div id="ids-status" style="margin-top: var(--space-sm); font-size: 13px; color: var(--text-secondary);"></div>
+                        </div>
+
+                        <!-- Étape 2 : Configuration Structure Classes -->
+                        <div style="padding: var(--space-lg); background: white; border-radius: var(--radius-lg); border: 1px solid var(--border-light);">
+                            <div style="display: flex; align-items: center; gap: var(--space-md); margin-bottom: var(--space-md);">
+                                <div style="width: 32px; height: 32px; background: linear-gradient(135deg, var(--secondary-500), var(--secondary-700)); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px;">2</div>
+                                <div style="flex: 1;">
+                                    <h3 style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">Configurer la Structure des Classes</h3>
+                                    <p style="font-size: 13px; color: var(--text-secondary);">Définit le nombre d'élèves par classe et le placement des OPT/LV2</p>
+                                </div>
+                            </div>
+                            <button id="btn-configure-structure" class="btn btn-info" style="width: 100%;">
+                                <i class="btn-icon fas fa-cogs"></i>
+                                <span>Configurer Structure (OPT/LV2)</span>
+                            </button>
+                            <div id="structure-status" style="margin-top: var(--space-sm); font-size: 13px; color: var(--text-secondary);"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phase 2: Diagnostic -->
+            <div id="phase-2" class="phase">
+                <div class="content-header">
+                    <h1 class="page-title">Phase 2: Diagnostic</h1>
+                    <p class="page-subtitle">Analyse complète du système et vérification de l'intégrité des données</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fas fa-stethoscope"></i>
+                        </div>
+                        <div>
+                            <h2 class="card-title">Diagnostic Complet</h2>
+                        </div>
+                    </div>
+                    <p class="card-description">
+                        Le système va analyser toutes les données, vérifier la cohérence des informations et détecter d'éventuels problèmes
+                        avant de procéder à la génération des classes.
+                    </p>
+                    <ul id="diagnostic-results" class="diagnostic-list">
+                        <!-- Les résultats du diagnostic seront injectés ici -->
+                    </ul>
+                    <button id="btn-run-diagnostics" class="btn btn-primary">
+                        <i class="btn-icon fas fa-play"></i>
+                        <span>Lancer le Diagnostic</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Phase 3: Génération -->
+            <div id="phase-3" class="phase">
+                <div class="content-header">
+                    <h1 class="page-title">Phase 3: Génération</h1>
+                    <p class="page-subtitle">Création automatique des classes avec l'algorithme de répartition</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fas fa-wand-magic-sparkles"></i>
+                        </div>
+                        <div>
+                            <h2 class="card-title">Création des Classes</h2>
+                        </div>
+                    </div>
+                    <p class="card-description">
+                        L'algorithme de répartition va créer les onglets ...TEST avec une première version des classes,
+                        en tenant compte de tous les critères configurés (niveau, parité, options, etc.).
+                    </p>
+                    <button id="btn-run-generation" class="btn btn-primary">
+                        <i class="btn-icon fas fa-play"></i>
+                        <span>Générer les Classes</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Phase 4: Optimisation -->
+            <div id="phase-4" class="phase">
+                <div class="content-header">
+                    <h1 class="page-title">Phase 4: Optimisation</h1>
+                    <p class="page-subtitle">Équilibrage automatique des classes avec l'algorithme JULES-VERNE-NAUTILUS</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fas fa-gauge-high"></i>
+                        </div>
+                        <div>
+                            <h2 class="card-title">Équilibrage Automatique</h2>
+                        </div>
+                    </div>
+                    <p class="card-description">
+                        L'algorithme "JULES-VERNE-NAUTILUS" va optimiser l'équilibre des classes en fonction des scores,
+                        de la parité et de tous les paramètres configurés pour obtenir la répartition la plus équitable possible.
+                    </p>
+                    <button id="btn-run-optimization" class="btn btn-primary">
+                        <i class="btn-icon fas fa-play"></i>
+                        <span>Lancer l'Optimisation</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Phase 5: Swaps Manuels -->
+            <div id="phase-5" class="phase">
+                <div class="content-header">
+                    <h1 class="page-title">Phase 5: Swaps Manuels</h1>
+                    <p class="page-subtitle">Ajustements fins et échanges d'élèves entre les classes</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fas fa-arrows-rotate"></i>
+                        </div>
+                        <div>
+                            <h2 class="card-title">Ajustements Fins</h2>
+                        </div>
+                    </div>
+                    <p class="card-description">
+                        Ouvre l'Interface V2 dans un nouvel onglet pour effectuer des échanges manuels d'élèves entre les classes.
+                        Les classes ...TEST seront chargées automatiquement pour faciliter les modifications.
+                    </p>
+                    <button id="btn-open-swap-interface" class="btn btn-primary">
+                        <i class="btn-icon fas fa-external-link-alt"></i>
+                        <span>Ouvrir l'Interface de Swap</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Phase 6: Finalisation -->
+            <div id="phase-6" class="phase">
+                <div class="content-header">
+                    <h1 class="page-title">Phase 6: Finalisation</h1>
+                    <p class="page-subtitle">Validation finale et création des onglets définitifs</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fas fa-check-double"></i>
+                        </div>
+                        <div>
+                            <h2 class="card-title">Action Finale</h2>
+                        </div>
+                    </div>
+                    <p class="card-description">
+                        <strong style="color: var(--danger);">⚠️ Attention :</strong> Cette action va copier les résultats des onglets ...TEST
+                        vers des onglets définitifs ...DEF. Cette opération est <strong>irréversible</strong>.
+                        Assurez-vous que tout est correct avant de continuer.
+                    </p>
+                    <button id="btn-finalize-process" class="btn btn-danger">
+                        <i class="btn-icon fas fa-exclamation-triangle"></i>
+                        <span>Finaliser le Processus</span>
+                    </button>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- =====================================================================
+         * DIAGNOSTIC PANEL - Right Sidebar
+         * ===================================================================-->
+        <aside class="diagnostic-panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">
+                        <i class="fas fa-chart-line"></i>
+                        Diagnostic Live
+                    </h2>
+                    <div class="panel-subtitle">Métriques en temps réel</div>
+                </div>
+            </div>
+
+            <!-- Metrics Grid -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value" id="metric-students">0</div>
+                    <div class="metric-label">
+                        <i class="fas fa-users metric-icon"></i>
+                        Élèves
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-value" id="metric-classes">0</div>
+                    <div class="metric-label">
+                        <i class="fas fa-school metric-icon"></i>
+                        Classes
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-value" id="metric-sources">0</div>
+                    <div class="metric-label">
+                        <i class="fas fa-file-import metric-icon"></i>
+                        Sources
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-value" id="metric-destinations">0</div>
+                    <div class="metric-label">
+                        <i class="fas fa-bullseye metric-icon"></i>
+                        Destinations
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Status -->
+            <div class="live-status">
+                <div class="status-header">
+                    <div class="status-indicator"></div>
+                    <div class="status-title">Système Actif</div>
+                    <div class="status-time" id="current-time">--:--</div>
+                </div>
+            </div>
+
+            <!-- Alerts Section -->
+            <div class="alerts-section" id="alerts-section">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle alert-icon"></i>
+                    <div>Démarrez par l'initialisation du système pour commencer le processus de répartition.</div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- =====================================================================
+     * MODAL - Review Modal
+     * ===================================================================-->
+    <div id="reviewModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Révision Finale Avant Finalisation</h2>
+                <button id="btn-close-modal" class="modal-close" aria-label="Fermer">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: var(--space-lg); color: var(--text-secondary);">
+                    Veuillez vérifier les diagnostics suivants avant de continuer. Cette action est <strong>irréversible</strong>.
+                </p>
+                <ul id="checklist-container" class="checklist">
+                    <!-- Les éléments de la checklist seront injectés ici par JavaScript -->
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <label class="confirm-checkbox-label">
+                    <input type="checkbox" id="confirm-checklist">
+                    <span>Je confirme avoir lu et compris les avertissements</span>
+                </label>
+                <button id="btn-cancel-finalize" class="btn btn-secondary">
+                    <i class="fas fa-times"></i>
+                    <span>Annuler</span>
+                </button>
+                <button id="btn-confirm-finalize" class="btn btn-primary" disabled>
+                    <i class="fas fa-check"></i>
+                    <span>Confirmer et Finaliser</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+     * LOADING OVERLAY
+     * ===================================================================-->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-content">
+            <div class="spinner">
+                <div class="spinner-dot"></div>
+                <div class="spinner-dot"></div>
+                <div class="spinner-dot"></div>
+            </div>
+            <div class="loading-text" id="loading-text">Chargement...</div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+     * JAVASCRIPT
+     * ===================================================================-->
+    <script>
+        // ===================================================================
+        // STATE MANAGEMENT
+        // ===================================================================
+        const appState = {
+            currentPhase: 1,
+            theme: 'light',
+            phases: {
+                1: { status: 'active', completed: false },
+                2: { status: 'pending', completed: false },
+                3: { status: 'pending', completed: false },
+                4: { status: 'pending', completed: false },
+                5: { status: 'pending', completed: false },
+                6: { status: 'pending', completed: false }
+            },
+            metrics: {
+                students: 0,
+                classes: 0,
+                sources: 0,
+                destinations: 0
+            }
+        };
+
+        // ===================================================================
+        // THEME MANAGEMENT
+        // ===================================================================
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            appState.theme = savedTheme;
+            document.documentElement.setAttribute('data-theme', savedTheme);
+
+            const toggle = document.getElementById('theme-toggle');
+            if (savedTheme === 'dark') {
+                toggle.classList.add('active');
+            }
+        }
+
+        function toggleTheme() {
+            const newTheme = appState.theme === 'light' ? 'dark' : 'light';
+            appState.theme = newTheme;
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+
+            const toggle = document.getElementById('theme-toggle');
+            toggle.classList.toggle('active');
+
+            showToast('success', `Mode ${newTheme === 'dark' ? 'sombre' : 'clair'} activé`);
+        }
+
+        // ===================================================================
+        // MINIMISATION / MAXIMISATION
+        // ===================================================================
+        function toggleConsoleMinimize() {
+            const isCurrentlyMinimized = document.body.classList.contains('console-minimized');
+
+            if (isCurrentlyMinimized) {
+                // RESTAURER la console
+                document.body.classList.remove('console-minimized');
+                localStorage.setItem('console_v3_minimized', 'false');
+                showToast('info', '📊 Console restaurée');
+            } else {
+                // MINIMISER la console
+                document.body.classList.add('console-minimized');
+                localStorage.setItem('console_v3_minimized', 'true');
+                showToast('info', '📉 Console minimisée - Accès complet à Google Sheets');
+            }
+        }
+
+        // Restaurer l'état de minimisation au chargement
+        function restoreMinimizedState() {
+            const wasMinimized = localStorage.getItem('console_v3_minimized') === 'true';
+            if (wasMinimized) {
+                document.body.classList.add('console-minimized');
+            }
+        }
+
+        // ===================================================================
+        // FERMETURE COMPLÈTE DE LA CONSOLE
+        // ===================================================================
+        function closeConsole() {
+            if (confirm('⚠️ Voulez-vous vraiment FERMER la Console de Pilotage V3 ?\n\nVous pourrez la rouvrir depuis le menu BASE-16 RENEW.')) {
+                try {
+                    google.script.host.close();
+                } catch (e) {
+                    // Si on est en mode dev local, on simule la fermeture
+                    window.close();
+                }
+            }
+        }
+
+        // ===================================================================
+        // NAVIGATION
+        // ===================================================================
+        function goToPhase(phaseNum) {
+            appState.currentPhase = phaseNum;
+
+            // Hide all phases
+            document.querySelectorAll('.phase').forEach(p => p.classList.remove('active'));
+
+            // Show target phase
+            document.getElementById(`phase-${phaseNum}`).classList.add('active');
+
+            // Update navigation
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+                if (parseInt(link.dataset.step) === phaseNum) {
+                    link.classList.add('active');
+                }
+            });
+
+            // Scroll to top
+            document.querySelector('.main-content').scrollTop = 0;
+        }
+
+        // ===================================================================
+        // STATUS MANAGEMENT
+        // ===================================================================
+        function updatePhaseStatus(phaseNum, status) {
+            appState.phases[phaseNum].status = status;
+
+            const badge = document.getElementById(`badge-${phaseNum}`);
+            const navLink = document.querySelector(`.nav-link[data-step="${phaseNum}"]`);
+
+            // Remove all status classes
+            badge.classList.remove('badge-pending', 'badge-active', 'badge-completed', 'badge-error');
+            navLink.classList.remove('completed');
+
+            // Add new status
+            switch(status) {
+                case 'active':
+                    badge.classList.add('badge-active');
+                    badge.textContent = 'En cours';
+                    break;
+                case 'completed':
+                    badge.classList.add('badge-completed');
+                    badge.textContent = 'Terminé';
+                    navLink.classList.add('completed');
+                    appState.phases[phaseNum].completed = true;
+                    updateGlobalProgress();
+                    break;
+                case 'error':
+                    badge.classList.add('badge-error');
+                    badge.textContent = 'Erreur';
+                    break;
+                default:
+                    badge.classList.add('badge-pending');
+                    badge.textContent = 'En attente';
+            }
+
+            updateNavLockState();
+        }
+
+        function updateNavLockState() {
+            let enabledUpTo = 0;
+
+            Object.keys(appState.phases).forEach(phase => {
+                if (appState.phases[phase].completed) {
+                    enabledUpTo = Math.max(enabledUpTo, parseInt(phase));
+                }
+            });
+
+            document.querySelectorAll('.nav-link').forEach(link => {
+                const step = parseInt(link.dataset.step);
+                if (step > enabledUpTo + 1) {
+                    link.classList.add('disabled');
+                } else {
+                    link.classList.remove('disabled');
+                }
+            });
+        }
+
+        function updateGlobalProgress() {
+            const completedCount = Object.values(appState.phases).filter(p => p.completed).length;
+            const totalPhases = 6;
+            const percentage = Math.round((completedCount / totalPhases) * 100);
+
+            document.getElementById('global-progress').style.width = `${percentage}%`;
+            document.getElementById('progress-completed').textContent = `${completedCount}/${totalPhases} phases`;
+            document.getElementById('progress-percentage').textContent = `${percentage}%`;
+        }
+
+        // ===================================================================
+        // METRICS
+        // ===================================================================
+        function updateMetrics(metrics) {
+            if (metrics.students !== undefined) {
+                appState.metrics.students = metrics.students;
+                animateNumber('metric-students', metrics.students);
+            }
+            if (metrics.classes !== undefined) {
+                appState.metrics.classes = metrics.classes;
+                animateNumber('metric-classes', metrics.classes);
+            }
+            if (metrics.sources !== undefined) {
+                appState.metrics.sources = metrics.sources;
+                animateNumber('metric-sources', metrics.sources);
+            }
+            if (metrics.destinations !== undefined) {
+                appState.metrics.destinations = metrics.destinations;
+                animateNumber('metric-destinations', metrics.destinations);
+            }
+        }
+
+        function animateNumber(elementId, targetValue) {
+            const element = document.getElementById(elementId);
+            const currentValue = parseInt(element.textContent) || 0;
+            const duration = 600;
+            const steps = 30;
+            const increment = (targetValue - currentValue) / steps;
+            let current = currentValue;
+            let step = 0;
+
+            const timer = setInterval(() => {
+                step++;
+                current += increment;
+                element.textContent = Math.round(current);
+
+                if (step >= steps) {
+                    element.textContent = targetValue;
+                    clearInterval(timer);
+                }
+            }, duration / steps);
+        }
+
+        // ===================================================================
+        // TOAST NOTIFICATIONS
+        // ===================================================================
+        function showToast(type, message, duration = 4000) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+
+            const iconMap = {
+                success: 'fa-check-circle',
+                error: 'fa-times-circle',
+                warning: 'fa-exclamation-triangle',
+                info: 'fa-info-circle'
+            };
+
+            toast.innerHTML = `
+                <i class="fas ${iconMap[type]}"></i>
+                <span>${message}</span>
+            `;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'slideOutRight 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        }
+
+        // ===================================================================
+        // ALERTS
+        // ===================================================================
+        function showAlert(type, message) {
+            const alertsSection = document.getElementById('alerts-section');
+            const iconMap = {
+                success: 'fa-check-circle',
+                warning: 'fa-exclamation-triangle',
+                error: 'fa-times-circle',
+                info: 'fa-info-circle'
+            };
+
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.innerHTML = `
+                <i class="fas ${iconMap[type]} alert-icon"></i>
+                <div>${message}</div>
+            `;
+
+            // Remove old alerts of same type
+            alertsSection.querySelectorAll(`.alert-${type}`).forEach(a => a.remove());
+
+            alertsSection.appendChild(alert);
+
+            // Auto-remove success alerts
+            if (type === 'success') {
+                setTimeout(() => alert.remove(), 5000);
+            }
+        }
+
+        function clearAlerts() {
+            document.getElementById('alerts-section').innerHTML = '';
+        }
+
+        // ===================================================================
+        // LOADING
+        // ===================================================================
+        function showLoading(text = 'Chargement...') {
+            document.getElementById('loading-text').textContent = text;
+            document.getElementById('loading-overlay').classList.add('active');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading-overlay').classList.remove('active');
+        }
+
+        // ===================================================================
+        // MODAL
+        // ===================================================================
+        function showModal() {
+            document.getElementById('reviewModal').classList.add('active');
+        }
+
+        function hideModal() {
+            document.getElementById('reviewModal').classList.remove('active');
+        }
+
+        // ===================================================================
+        // DIAGNOSTIC
+        // ===================================================================
+        function displayDiagnostics(results) {
+            const container = document.getElementById('diagnostic-results');
+            container.innerHTML = '';
+
+            results.forEach(item => {
+                const li = document.createElement('li');
+                li.className = `diagnostic-item status-${item.status}`;
+
+                const iconMap = {
+                    ok: '✅',
+                    warning: '⚠️',
+                    error: '❌'
+                };
+
+                li.innerHTML = `
+                    <span class="diagnostic-icon">${iconMap[item.status]}</span>
+                    <span class="diagnostic-message">${item.message}</span>
+                `;
+
+                container.appendChild(li);
+            });
+        }
+
+        // ===================================================================
+        // CLOCK
+        // ===================================================================
+        function updateClock() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('current-time').textContent = timeString;
+        }
+
+        // ===================================================================
+        // EVENT LISTENERS
+        // ===================================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize theme
+            initTheme();
+
+            // Restore minimized state
+            restoreMinimizedState();
+
+            // Theme toggle
+            const themeToggle = document.getElementById('theme-toggle');
+            if (themeToggle) {
+                themeToggle.addEventListener('click', toggleTheme);
+            }
+
+            // Navigation
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (!link.classList.contains('disabled')) {
+                        const phaseNum = parseInt(link.dataset.step);
+                        goToPhase(phaseNum);
+                    }
+                });
+            });
+
+            // Modal controls
+            const confirmCheckbox = document.getElementById('confirm-checklist');
+            const confirmBtn = document.getElementById('btn-confirm-finalize');
+
+            if(confirmCheckbox) {
+                confirmCheckbox.addEventListener('change', () => {
+                    if(confirmBtn) {
+                        confirmBtn.disabled = !confirmCheckbox.checked;
+                    }
+                });
+            }
+
+            const closeModalBtn = document.getElementById('btn-close-modal');
+            if(closeModalBtn) {
+                closeModalBtn.addEventListener('click', hideModal);
+            }
+
+            const cancelFinalizeBtn = document.getElementById('btn-cancel-finalize');
+            if(cancelFinalizeBtn) {
+                cancelFinalizeBtn.addEventListener('click', hideModal);
+            }
+
+            // ===================================================================
+            // PHASE 1 : FORMULAIRE DE CONFIGURATION INTÉGRÉ
+            // ===================================================================
+            const configNiveau = document.getElementById('config-niveau');
+            const configNbSources = document.getElementById('config-nb-sources');
+            const configNbDest = document.getElementById('config-nb-dest');
+            const configLv2 = document.getElementById('config-lv2');
+            const configOpt = document.getElementById('config-opt');
+            const configMaxSwaps = document.getElementById('config-max-swaps');
+            const configParityTolerance = document.getElementById('config-parity-tolerance');
+            const configTestSuffix = document.getElementById('config-test-suffix');
+            const configDefSuffix = document.getElementById('config-def-suffix');
+            const sourceLabel = document.getElementById('source-label');
+
+            // Fonction pour déterminer le niveau source selon le niveau destination
+            function getNiveauSource(niveau) {
+                switch(niveau) {
+                    case '6°': return '(écoles primaires)';
+                    case '5°': return '(6°)';
+                    case '4°': return '(5°)';
+                    case '3°': return '(4°)';
+                    default: return '';
+                }
+            }
+
+            // Mise à jour dynamique du label "Classes Sources"
+            configNiveau.addEventListener('change', () => {
+                sourceLabel.textContent = getNiveauSource(configNiveau.value);
+                autoSaveConfig(); // Sauvegarde auto
+            });
+
+            // ===================================================================
+            // SAUVEGARDE AUTOMATIQUE EN TEMPS RÉEL
+            // ===================================================================
+            let autoSaveTimeout;
+
+            function autoSaveConfig() {
+                // Debounce : attendre 500ms après la dernière modification
+                clearTimeout(autoSaveTimeout);
+                autoSaveTimeout = setTimeout(() => {
+                    const config = {
+                        niveau: configNiveau.value,
+                        nbSources: parseInt(configNbSources.value),
+                        nbDest: parseInt(configNbDest.value),
+                        lv2: configLv2.value,
+                        opt: configOpt.value,
+                        maxSwaps: parseInt(configMaxSwaps.value),
+                        parityTolerance: parseInt(configParityTolerance.value),
+                        testSuffix: configTestSuffix.value,
+                        defSuffix: configDefSuffix.value
+                    };
+
+                    // Sauvegarder localement (silencieux, pas de toast)
+                    localStorage.setItem('console_v3_config', JSON.stringify(config));
+                    console.log('✅ Configuration auto-sauvegardée');
+                }, 500);
+            }
+
+            // Ajouter les event listeners pour la sauvegarde auto sur tous les champs
+            [configNiveau, configNbSources, configNbDest, configLv2, configOpt,
+             configMaxSwaps, configParityTolerance, configTestSuffix, configDefSuffix].forEach(field => {
+                field.addEventListener('input', autoSaveConfig);
+                field.addEventListener('change', autoSaveConfig);
+            });
+
+            // Charger la configuration sauvegardée
+            function loadSavedConfig() {
+                const saved = localStorage.getItem('console_v3_config');
+                if (saved) {
+                    try {
+                        const config = JSON.parse(saved);
+                        if (config.niveau) configNiveau.value = config.niveau;
+                        if (config.nbSources) configNbSources.value = config.nbSources;
+                        if (config.nbDest) configNbDest.value = config.nbDest;
+                        if (config.lv2) configLv2.value = config.lv2;
+                        if (config.opt) configOpt.value = config.opt;
+                        if (config.maxSwaps) configMaxSwaps.value = config.maxSwaps;
+                        if (config.parityTolerance) configParityTolerance.value = config.parityTolerance;
+                        if (config.testSuffix) configTestSuffix.value = config.testSuffix;
+                        if (config.defSuffix) configDefSuffix.value = config.defSuffix;
+
+                        // Mettre à jour le label
+                        sourceLabel.textContent = getNiveauSource(configNiveau.value);
+
+                        showToast('info', 'Configuration chargée depuis votre navigateur');
+                    } catch(e) {
+                        console.error('Erreur lors du chargement de la config:', e);
+                    }
+                }
+            }
+
+            // Sauvegarder la configuration
+            const saveConfigBtn = document.getElementById('btn-save-config');
+            if (saveConfigBtn) {
+                saveConfigBtn.addEventListener('click', () => {
+                    const config = {
+                        niveau: configNiveau.value,
+                    nbSources: parseInt(configNbSources.value),
+                    nbDest: parseInt(configNbDest.value),
+                    lv2: configLv2.value,
+                    opt: configOpt.value,
+                    maxSwaps: parseInt(configMaxSwaps.value),
+                    parityTolerance: parseInt(configParityTolerance.value),
+                    testSuffix: configTestSuffix.value,
+                    defSuffix: configDefSuffix.value
+                };
+
+                // Validation basique
+                if (config.nbSources < 1 || config.nbSources > 20) {
+                    showToast('error', 'Le nombre de sources doit être entre 1 et 20');
+                    return;
+                }
+                if (config.nbDest < 1 || config.nbDest > 15) {
+                    showToast('error', 'Le nombre de destinations doit être entre 1 et 15');
+                    return;
+                }
+
+                // Sauvegarder localement
+                localStorage.setItem('console_v3_config', JSON.stringify(config));
+                showToast('success', '💾 Configuration sauvegardée dans votre navigateur');
+
+                // TODO: Envoyer au backend pour mise à jour de _CONFIG
+                // google.script.run.saveConfiguration(config);
+            });
+
+            // Phase 1: Initialisation (avec données du formulaire)
+            document.getElementById('btn-run-initialisation').addEventListener('click', () => {
+                // Récupérer le mot de passe admin
+                const adminPassword = document.getElementById('config-admin-password').value;
+
+                // Validation du mot de passe
+                if (!adminPassword || adminPassword.trim() === '') {
+                    showToast('error', '🔒 Veuillez entrer le mot de passe administrateur');
+                    document.getElementById('config-admin-password').focus();
+                    return;
+                }
+
+                // Récupérer les données du formulaire
+                const formData = {
+                    adminPassword: adminPassword,
+                    niveau: configNiveau.value,
+                    nbSources: parseInt(configNbSources.value),
+                    nbDest: parseInt(configNbDest.value),
+                    lv2: configLv2.value,
+                    opt: configOpt.value
+                };
+
+                // Validation basique
+                if (formData.nbSources < 1 || formData.nbSources > 20) {
+                    showToast('error', 'Le nombre de sources doit être entre 1 et 20');
+                    return;
+                }
+                if (formData.nbDest < 1 || formData.nbDest > 15) {
+                    showToast('error', 'Le nombre de destinations doit être entre 1 et 15');
+                    return;
+                }
+
+                updatePhaseStatus(1, 'active');
+                showLoading('Initialisation en cours...');
+
+                // Sauvegarder automatiquement avant l'initialisation (SANS le mot de passe)
+                localStorage.setItem('console_v3_config', JSON.stringify({
+                    niveau: formData.niveau,
+                    nbSources: formData.nbSources,
+                    nbDest: formData.nbDest,
+                    lv2: configLv2.value,
+                    opt: configOpt.value,
+                    maxSwaps: parseInt(configMaxSwaps.value),
+                    parityTolerance: parseInt(configParityTolerance.value),
+                    testSuffix: configTestSuffix.value,
+                    defSuffix: configDefSuffix.value
+                }));
+
+                // Appeler la NOUVELLE fonction backend sans popups
+                google.script.run
+                    .withSuccessHandler(response => {
+                        hideLoading();
+                        if (response.success) {
+                            updatePhaseStatus(1, 'completed');
+                            showToast('success', '✅ Initialisation terminée avec succès !');
+                            showAlert('success', response.message || 'Le système a été initialisé avec succès. Vous pouvez passer au diagnostic.');
+                        } else {
+                            updatePhaseStatus(1, 'error');
+                            showToast('error', 'Erreur lors de l\'initialisation');
+                            showAlert('error', response.error || 'Une erreur est survenue');
+                        }
+                    })
+                    .withFailureHandler(error => {
+                        hideLoading();
+                        updatePhaseStatus(1, 'error');
+                        showToast('error', 'Erreur lors de l\'initialisation');
+                        showAlert('error', error.message);
+                    })
+                    .v3_runInitializationWithForm(formData);
+            });
+
+            // NOUVEAUX BOUTONS - Étape 1 : Générer NOM_PRENOM & ID_ELEVE
+            const generateIdsBtn = document.getElementById('btn-generate-ids');
+            if(generateIdsBtn) {
+                generateIdsBtn.addEventListener('click', () => {
+                    showLoading('Génération NOM_PRENOM & ID_ELEVE...');
+                    const statusDiv = document.getElementById('ids-status');
+
+                    google.script.run
+                        .withSuccessHandler(response => {
+                            hideLoading();
+                            if (response.success) {
+                                statusDiv.innerHTML = '<span style="color: var(--success);"><i class="fas fa-check-circle"></i> ' + response.message + '</span>';
+                                showToast('success', '✅ NOM_PRENOM & ID_ELEVE générés !');
+                            } else {
+                                statusDiv.innerHTML = '<span style="color: var(--danger);"><i class="fas fa-exclamation-circle"></i> Erreur: ' + response.error + '</span>';
+                                showToast('error', 'Erreur lors de la génération');
+                            }
+                        })
+                        .withFailureHandler(error => {
+                            hideLoading();
+                            statusDiv.innerHTML = '<span style="color: var(--danger);"><i class="fas fa-exclamation-circle"></i> Erreur: ' + error.message + '</span>';
+                            showToast('error', 'Erreur lors de la génération');
+                        })
+                        .v3_genererNomPrenomEtID();
+                });
+            }
+
+            // NOUVEAUX BOUTONS - Étape 2 : Configurer Structure
+            const configureStructureBtn = document.getElementById('btn-configure-structure');
+            if(configureStructureBtn) {
+                configureStructureBtn.addEventListener('click', () => {
+                    const statusDiv = document.getElementById('structure-status');
+                    statusDiv.innerHTML = '<span style="color: var(--info);"><i class="fas fa-spinner fa-spin"></i> Ouverture de l\'interface...</span>';
+
+                    try {
+                        google.script.run
+                            .withSuccessHandler(() => {
+                                statusDiv.innerHTML = '<span style="color: var(--success);"><i class="fas fa-check-circle"></i> Interface ouverte - Complétez la configuration</span>';
+                            })
+                            .withFailureHandler(error => {
+                                statusDiv.innerHTML = '<span style="color: var(--danger);"><i class="fas fa-exclamation-circle"></i> Erreur: ' + error.message + '</span>';
+                                showToast('error', 'Impossible d\'ouvrir l\'interface');
+                            })
+                            .ouvrirConfigurationComplete();
+                    } catch (e) {
+                        statusDiv.innerHTML = '<span style="color: var(--danger);"><i class="fas fa-exclamation-circle"></i> Erreur: ' + e.message + '</span>';
+                    }
+                });
+            }
+
+            // Sauvegarde automatique lors de la modification d'un champ
+            const configFields = [
+                configNiveau, configNbSources, configNbDest, configLv2, configOpt,
+                configMaxSwaps, configParityTolerance, configTestSuffix, configDefSuffix
+            ];
+
+            configFields.forEach(field => {
+                field.addEventListener('input', () => {
+                    const config = {
+                        niveau: configNiveau.value,
+                        nbSources: parseInt(configNbSources.value),
+                        nbDest: parseInt(configNbDest.value),
+                        lv2: configLv2.value,
+                        opt: configOpt.value,
+                        maxSwaps: parseInt(configMaxSwaps.value),
+                        parityTolerance: parseInt(configParityTolerance.value),
+                        testSuffix: configTestSuffix.value,
+                        defSuffix: configDefSuffix.value
+                    };
+                    localStorage.setItem('console_v3_config', JSON.stringify(config));
+                    showToast('info', '💾 brouillon sauvegardé...');
+                });
+            });
+
+            // Charger la configuration au démarrage
+            loadSavedConfig();
+
+            // Initialiser le label source dès le début
+            sourceLabel.textContent = getNiveauSource(configNiveau.value);
+
+            // Phase 2: Diagnostic
+            const runDiagnosticsBtn = document.getElementById('btn-run-diagnostics');
+            if(runDiagnosticsBtn) {
+                runDiagnosticsBtn.addEventListener('click', () => {
+                    updatePhaseStatus(2, 'active');
+                    showLoading('Diagnostic en cours...');
+
+                    google.script.run
+                        .withSuccessHandler(results => {
+                            hideLoading();
+                            displayDiagnostics(results);
+                            const hasErrors = results.some(r => r.status === 'error');
+                            updatePhaseStatus(2, hasErrors ? 'error' : 'completed');
+
+                            if (hasErrors) {
+                                showToast('error', 'Des erreurs ont été détectées');
+                                showAlert('error', 'Veuillez corriger les erreurs avant de continuer.');
+                            } else {
+                                showToast('success', 'Diagnostic terminé avec succès');
+                                showAlert('success', 'Aucune erreur détectée. Vous pouvez passer à la génération.');
+                            }
+                        })
+                        .withFailureHandler(error => {
+                            hideLoading();
+                            updatePhaseStatus(2, 'error');
+                            showToast('error', 'Erreur lors du diagnostic');
+                            showAlert('error', error.message);
+                        })
+                        .v3_runDiagnostics();
+                });
+            }
+
+            // Phase 3: Génération
+            const runGenerationBtn = document.getElementById('btn-run-generation');
+            if(runGenerationBtn) {
+                runGenerationBtn.addEventListener('click', () => {
+                    updatePhaseStatus(3, 'active');
+                    showLoading('Génération des classes en cours...');
+
+                    google.script.run
+                        .withSuccessHandler(response => {
+                            hideLoading();
+                            if (response.success) {
+                                updatePhaseStatus(3, 'completed');
+                                showToast('success', 'Classes générées avec succès !');
+                                showAlert('success', response.message || 'Les classes ont été générées dans les onglets ...TEST.');
+                            } else {
+                                updatePhaseStatus(3, 'error');
+                                showToast('error', 'Erreur lors de la génération');
+                                showAlert('error', response.error || 'Une erreur est survenue');
+                            }
+                        })
+                        .withFailureHandler(error => {
+                            hideLoading();
+                            updatePhaseStatus(3, 'error');
+                            showToast('error', 'Erreur lors de la génération');
+                            showAlert('error', error.message);
+                        })
+                        .v3_runGeneration();
+                });
+            }
+
+            // Phase 4: Optimisation
+            const runOptimizationBtn = document.getElementById('btn-run-optimization');
+            if(runOptimizationBtn) {
+                runOptimizationBtn.addEventListener('click', () => {
+                    updatePhaseStatus(4, 'active');
+
+                    google.script.run
+                        .withSuccessHandler(response => {
+                            if (response.success) {
+                                updatePhaseStatus(4, 'completed');
+                                showToast('success', 'Panneau d\'optimisation ouvert');
+                                showAlert('success', response.message || 'Utilisez le panneau pour optimiser la répartition.');
+                            } else {
+                                updatePhaseStatus(4, 'error');
+                                showToast('error', 'Erreur lors de l\'optimisation');
+                                showAlert('error', response.error || 'Une erreur est survenue');
+                            }
+                        })
+                        .withFailureHandler(error => {
+                            updatePhaseStatus(4, 'error');
+                            showToast('error', 'Erreur lors de l\'optimisation');
+                            showAlert('error', error.message);
+                        })
+                        .v3_runOptimization();
+                });
+            }
+
+            // Phase 5: Swaps Manuels
+            const openSwapInterfaceBtn = document.getElementById('btn-open-swap-interface');
+            if(openSwapInterfaceBtn) {
+                openSwapInterfaceBtn.addEventListener('click', () => {
+                    updatePhaseStatus(5, 'active');
+
+                    google.script.run
+                        .withSuccessHandler(response => {
+                            if (response.success) {
+                                window.open(google.script.host.origin + google.script.host.path, '_blank');
+                                updatePhaseStatus(5, 'completed');
+                                showToast('success', 'Interface de swap ouverte');
+                            } else {
+                                updatePhaseStatus(5, 'error');
+                                showToast('error', 'Erreur lors de l\'ouverture');
+                                showAlert('error', response.error || 'Impossible d\'ouvrir l\'interface');
+                            }
+                        })
+                        .withFailureHandler(error => {
+                            updatePhaseStatus(5, 'error');
+                            showToast('error', 'Erreur lors de l\'ouverture');
+                            showAlert('error', error.message);
+                        })
+                        .v3_setBridgeContext('TEST', '');
+                });
+            }
+
+            // Phase 6: Finalisation
+            const finalizeProcessBtn = document.getElementById('btn-finalize-process');
+            if(finalizeProcessBtn) {
+                finalizeProcessBtn.addEventListener('click', () => {
+                    updatePhaseStatus(6, 'active');
+                    showLoading('Vérification avant finalisation...');
+
+                    google.script.run
+                        .withSuccessHandler(results => {
+                            hideLoading();
+
+                            // Populate modal checklist
+                            const checklistContainer = document.getElementById('checklist-container');
+                            checklistContainer.innerHTML = '';
+
+                            results.forEach(item => {
+                                const li = document.createElement('li');
+                                li.className = 'checklist-item';
+
+                                let icon = '';
+                                if (item.status === 'ok') {
+                                    icon = '✅';
+                                    li.style.background = 'rgba(16, 185, 129, 0.1)';
+                                } else if (item.status === 'warning') {
+                                    icon = '⚠️';
+                                    li.style.background = 'rgba(245, 158, 11, 0.1)';
+                                } else {
+                                    icon = '❌';
+                                    li.style.background = 'rgba(239, 68, 68, 0.1)';
+                                }
+
+                                li.innerHTML = `<span style="margin-right: 12px;">${icon}</span><span>${item.message}</span>`;
+                                checklistContainer.appendChild(li);
+                            });
+
+                            // Reset checkbox
+                            confirmCheckbox.checked = false;
+                            confirmBtn.disabled = true;
+
+                            showModal();
+                        })
+                        .withFailureHandler(error => {
+                            hideLoading();
+                            updatePhaseStatus(6, 'error');
+                            showToast('error', 'Erreur lors de la vérification');
+                            showAlert('error', error.message);
+                        })
+                        .v3_runDiagnostics();
+                });
+            }
+
+            // Confirm finalize
+            confirmBtn.addEventListener('click', () => {
+                hideModal();
+                showLoading('Finalisation en cours...');
+                updatePhaseStatus(6, 'active');
+
+                google.script.run
+                    .withSuccessHandler(response => {
+                        hideLoading();
+                        if (response.success) {
+                            updatePhaseStatus(6, 'completed');
+                            showToast('success', 'Processus finalisé avec succès !');
+                            showAlert('success', response.message);
+                        } else {
+                            updatePhaseStatus(6, 'error');
+                            showToast('error', 'Erreur lors de la finalisation');
+                            showAlert('error', response.error || 'Une erreur est survenue');
+                        }
+                    })
+                    .withFailureHandler(error => {
+                        hideLoading();
+                        updatePhaseStatus(6, 'error');
+                        showToast('error', 'Erreur lors de la finalisation');
+                        showAlert('error', error.message);
+                    })
+                    .v3_finalizeProcess();
+            });
+
+            // Start clock
+            updateClock();
+            setInterval(updateClock, 1000);
+
+            // Initial state
+            updateNavLockState();
+            updateGlobalProgress();
+
+            console.log('✅ Console de Pilotage V3 Expert Edition chargée !');
+
+            // ===================================================================
+            // SYSTÈME DE MINIMISATION - GESTION
+            // ===================================================================
+            const consoleToggleBtn = document.getElementById('consoleToggleBtn');
+            const minimizedCurrentPhase = document.getElementById('minimized-current-phase');
+            const minimizedCurrentStatus = document.getElementById('minimized-current-status');
+            const minimizedProgressCircle = document.getElementById('minimizedProgressCircle');
+            const minimizedProgressText = document.getElementById('minimizedProgressText');
+
+            let isConsoleMinimized = localStorage.getItem('consoleMinimized') === 'true';
+
+            // Appliquer l'état initial au chargement
+            if (isConsoleMinimized) {
+                document.body.classList.add('console-minimized');
+                updateMinimizedBar();
+            }
+
+            // Fonction pour mettre à jour la barre minimale
+            function updateMinimizedBar() {
+                const currentPhaseNum = appState.currentPhase;
+                const currentPhase = appState.phases[currentPhaseNum];
+
+                // Mettre à jour la phase actuelle
+                minimizedCurrentPhase.textContent = `Phase ${currentPhaseNum}`;
+
+                // Mettre à jour le statut
+                const statusText = {
+                    'active': 'En cours',
+                    'pending': 'En attente',
+                    'completed': 'Terminé',
+                    'error': 'Erreur'
+                };
+                minimizedCurrentStatus.textContent = statusText[currentPhase.status] || 'En attente';
+
+                // Calculer et mettre à jour la progression
+                const completedPhases = Object.values(appState.phases).filter(p => p.completed).length;
+                const totalPhases = 6;
+                const percentage = Math.round((completedPhases / totalPhases) * 100);
+                const angle = (percentage / 100) * 360;
+
+                minimizedProgressCircle.style.setProperty('--progress-angle', `${angle}deg`);
+                minimizedProgressText.textContent = `${percentage}%`;
+            }
+
+            // Fonction toggle
+            function toggleConsole() {
+                isConsoleMinimized = !isConsoleMinimized;
+                document.body.classList.toggle('console-minimized');
+                localStorage.setItem('consoleMinimized', isConsoleMinimized);
+
+                if (isConsoleMinimized) {
+                    updateMinimizedBar();
+                    showToast('info', 'Console minimisée. Les onglets Google Sheets sont maintenant accessibles.');
+                } else {
+                    showToast('success', 'Console restaurée.');
+                }
+            }
+
+            // Événement du bouton toggle
+            consoleToggleBtn.addEventListener('click', toggleConsole);
+
+            // Raccourci clavier : Ctrl + M (ou Cmd + M sur Mac)
+            document.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'm') {
+                    e.preventDefault();
+                    toggleConsole();
+                }
+            });
+
+            // Override updatePhaseStatus pour mettre à jour la barre minimale
+            const originalUpdatePhaseStatus = updatePhaseStatus;
+            updatePhaseStatus = function(phaseNum, status) {
+                originalUpdatePhaseStatus(phaseNum, status);
+                if (isConsoleMinimized) {
+                    updateMinimizedBar();
+                }
+            };
+
+            // Override goToPhase pour mettre à jour la barre minimale
+            const originalGoToPhase = goToPhase;
+            goToPhase = function(phaseNum) {
+                originalGoToPhase(phaseNum);
+                if (isConsoleMinimized) {
+                    updateMinimizedBar();
+                }
+            };
+
+            // Initialiser la barre minimale
+            updateMinimizedBar();
+        });
     </script>
     <button id="console-toggle-btn" class="btn" style="position: fixed; bottom: 20px; right: 20px; z-index: 1002;">Minimiser</button>
 </body>
