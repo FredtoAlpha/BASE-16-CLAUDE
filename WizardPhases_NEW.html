@@ -1,0 +1,714 @@
+<script>
+/**
+ * ===================================================================
+ * WIZARD - WORKFLOW COMPLET
+ * ===================================================================
+ *
+ * WORKFLOW :
+ * 1. Initialisation (mdp, niveau, nb classes)
+ * 2. Paramétrage LV2/Options (input CSV)
+ * 3. CHOIX parcours A ou B
+ *    A: Sources → Consolidation → Stats → Config
+ *    B: Config directe
+ * 4. Configuration complète (inline, pas popup)
+ * 5. Lancement LEGACY
+ *
+ * INTERFACE : Sections accordion repliables
+ * ===================================================================
+ */
+
+(function() {
+  'use strict';
+
+  if (typeof document === 'undefined') {
+    console.warn('[Wizard] Skipping client-side code in server context');
+    return;
+  }
+
+  // ===================================================================
+  // STATE GLOBAL
+  // ===================================================================
+  window.wizardState = {
+    currentStep: 1,
+    parcours: null, // 'A' ou 'B'
+    data: {
+      // Phase 1
+      motDePasse: '',
+      niveau: '6°',
+      nbSourcesClasses: 6,
+      nbDestinations: 5,
+
+      // Phase 2
+      lv2List: [],
+      optionsList: [],
+
+      // Phase 3
+      dataReady: false,
+      structureReady: false,
+
+      // Phase 4
+      pipelineExecuted: false
+    }
+  };
+
+  // ===================================================================
+  // UTILITAIRES ACCORDION
+  // ===================================================================
+  function createAccordionSection(id, title, icon, content, isOpen = false) {
+    return `
+      <div class="accordion-section ${isOpen ? 'open' : ''}">
+        <div class="accordion-header" onclick="toggleAccordion('${id}')">
+          <div class="accordion-title">
+            <i class="fas ${icon}"></i>
+            <span>${title}</span>
+          </div>
+          <i class="fas fa-chevron-down accordion-icon"></i>
+        </div>
+        <div class="accordion-content" id="${id}">
+          ${content}
+        </div>
+      </div>
+    `;
+  }
+
+  window.toggleAccordion = function(id) {
+    const section = document.getElementById(id).closest('.accordion-section');
+    const isOpen = section.classList.contains('open');
+
+    // Fermer toutes les sections (optionnel)
+    // document.querySelectorAll('.accordion-section').forEach(s => s.classList.remove('open'));
+
+    // Toggle la section cliquée
+    if (isOpen) {
+      section.classList.remove('open');
+    } else {
+      section.classList.add('open');
+    }
+  };
+
+  // ===================================================================
+  // PHASE 1 : INITIALISATION
+  // ===================================================================
+  window.loadPhase1Content = function() {
+    const container = document.getElementById('phase-1-content');
+
+    const html = `
+      <style>
+        .accordion-section {
+          margin-bottom: 16px;
+          background: white;
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+          overflow: hidden;
+        }
+        .accordion-header {
+          padding: 20px;
+          cursor: pointer;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          background: #f8f9fa;
+          transition: background 0.2s;
+        }
+        .accordion-header:hover {
+          background: #e9ecef;
+        }
+        .accordion-title {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          font-size: 16px;
+          font-weight: 600;
+          color: #1e293b;
+        }
+        .accordion-title i {
+          font-size: 20px;
+          color: #667eea;
+        }
+        .accordion-icon {
+          transition: transform 0.3s;
+          color: #94a3b8;
+        }
+        .accordion-section.open .accordion-icon {
+          transform: rotate(180deg);
+        }
+        .accordion-content {
+          max-height: 0;
+          overflow: hidden;
+          transition: max-height 0.3s ease-out;
+        }
+        .accordion-section.open .accordion-content {
+          max-height: 2000px;
+        }
+        .accordion-body {
+          padding: 24px;
+        }
+        .form-group {
+          margin-bottom: 20px;
+        }
+        .form-group label {
+          display: block;
+          margin-bottom: 8px;
+          font-weight: 500;
+          color: #475569;
+        }
+        .form-group input,
+        .form-group select {
+          width: 100%;
+          padding: 10px 14px;
+          border: 1px solid #cbd5e1;
+          border-radius: 6px;
+          font-size: 14px;
+          transition: border-color 0.2s;
+        }
+        .form-group input:focus,
+        .form-group select:focus {
+          outline: none;
+          border-color: #667eea;
+        }
+        .btn {
+          padding: 12px 24px;
+          border: none;
+          border-radius: 6px;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .btn-primary {
+          background: #667eea;
+          color: white;
+        }
+        .btn-primary:hover {
+          background: #5568d3;
+        }
+        .help-text {
+          font-size: 13px;
+          color: #64748b;
+          margin-top: 4px;
+        }
+      </style>
+
+      <h2 style="margin-bottom: 24px; color: #1e293b;">
+        <i class="fas fa-play-circle"></i> Initialisation du Wizard
+      </h2>
+
+      ${createAccordionSection('step1-auth', 'Mot de passe administrateur', 'fa-lock', `
+        <div class="accordion-body">
+          <div class="form-group">
+            <label for="mdp-admin">Mot de passe :</label>
+            <input type="password" id="mdp-admin" placeholder="Entrez le mot de passe administrateur" />
+            <div class="help-text">Requis pour sauvegarder la configuration</div>
+          </div>
+        </div>
+      `, true)}
+
+      ${createAccordionSection('step1-niveau', 'Choix du niveau scolaire', 'fa-graduation-cap', `
+        <div class="accordion-body">
+          <div class="form-group">
+            <label for="niveau-select">Niveau :</label>
+            <select id="niveau-select">
+              <option value="6°">6ème</option>
+              <option value="5°">5ème</option>
+              <option value="4°">4ème</option>
+              <option value="3°">3ème</option>
+            </select>
+          </div>
+        </div>
+      `)}
+
+      ${createAccordionSection('step1-classes', 'Nombre de classes', 'fa-users', `
+        <div class="accordion-body">
+          <div class="form-group">
+            <label for="nb-sources">Nombre de classes sources :</label>
+            <input type="number" id="nb-sources" value="6" min="1" max="20" />
+            <div class="help-text">Exemple : 6 pour 6°1, 6°2, ..., 6°6</div>
+          </div>
+
+          <div class="form-group">
+            <label for="nb-dest">Nombre de classes à créer (destinations) :</label>
+            <input type="number" id="nb-dest" value="5" min="1" max="20" />
+            <div class="help-text">Exemple : 5 pour 6e1, 6e2, ..., 6e5</div>
+          </div>
+        </div>
+      `)}
+
+      <div style="margin-top: 32px; text-align: right;">
+        <button class="btn btn-primary" onclick="validatePhase1()">
+          <i class="fas fa-arrow-right"></i> Suivant : Paramétrage LV2/Options
+        </button>
+      </div>
+    `;
+
+    container.innerHTML = html;
+  };
+
+  window.validatePhase1 = function() {
+    // Récupérer les valeurs
+    wizardState.data.motDePasse = document.getElementById('mdp-admin').value;
+    wizardState.data.niveau = document.getElementById('niveau-select').value;
+    wizardState.data.nbSourcesClasses = parseInt(document.getElementById('nb-sources').value);
+    wizardState.data.nbDestinations = parseInt(document.getElementById('nb-dest').value);
+
+    // Validation
+    if (!wizardState.data.motDePasse) {
+      alert('Veuillez entrer le mot de passe administrateur');
+      return;
+    }
+
+    if (wizardState.data.nbSourcesClasses < 1 || wizardState.data.nbDestinations < 1) {
+      alert('Le nombre de classes doit être supérieur à 0');
+      return;
+    }
+
+    // Passer à la phase 2
+    goToPhase(2);
+  };
+
+  // ===================================================================
+  // PHASE 2 : LV2 / OPTIONS
+  // ===================================================================
+  window.loadPhase2Content = function() {
+    const container = document.getElementById('phase-2-content');
+
+    const html = `
+      <h2 style="margin-bottom: 24px; color: #1e293b;">
+        <i class="fas fa-language"></i> Paramétrage LV2 et Options
+      </h2>
+
+      ${createAccordionSection('step2-lv2', 'LV2 proposées', 'fa-globe', `
+        <div class="accordion-body">
+          <div class="form-group">
+            <label for="lv2-input">Saisir les SIGLES des LV2 séparés par des virgules :</label>
+            <input type="text" id="lv2-input" placeholder="ESP,ITA,ALL" />
+            <div class="help-text">Exemple : ESP,ITA,ALL (laisser vide s'il n'y a aucune LV2)</div>
+          </div>
+        </div>
+      `, true)}
+
+      ${createAccordionSection('step2-options', 'Options spécifiques', 'fa-star', `
+        <div class="accordion-body">
+          <div class="form-group">
+            <label for="options-input">Saisir les SIGLES des options séparés par des virgules :</label>
+            <input type="text" id="options-input" placeholder="LATIN,GREC,CHAV" />
+            <div class="help-text">Exemple : LATIN,GREC,CHAV (laisser vide s'il n'y a aucune option)</div>
+          </div>
+        </div>
+      `)}
+
+      <div style="margin-top: 32px; display: flex; justify-content: space-between;">
+        <button class="btn" onclick="goToPhase(1)" style="background: #e2e8f0; color: #475569;">
+          <i class="fas fa-arrow-left"></i> Retour
+        </button>
+        <button class="btn btn-primary" onclick="validatePhase2()">
+          <i class="fas fa-arrow-right"></i> Suivant : Choix du parcours
+        </button>
+      </div>
+    `;
+
+    container.innerHTML = html;
+  };
+
+  window.validatePhase2 = function() {
+    // Récupérer et parser les LV2
+    const lv2Input = document.getElementById('lv2-input').value;
+    wizardState.data.lv2List = lv2Input ? lv2Input.split(',').map(s => s.trim().toUpperCase()).filter(Boolean) : [];
+
+    // Récupérer et parser les Options
+    const optInput = document.getElementById('options-input').value;
+    wizardState.data.optionsList = optInput ? optInput.split(',').map(s => s.trim().toUpperCase()).filter(Boolean) : [];
+
+    // Sauvegarder dans _CONFIG
+    google.script.run
+      .withSuccessHandler(() => {
+        goToPhase(3);
+      })
+      .withFailureHandler((err) => {
+        alert('Erreur sauvegarde : ' + err.message);
+      })
+      .wizard_saveInitialConfig(wizardState.data);
+  };
+
+  // ===================================================================
+  // PHASE 3 : CHOIX DU PARCOURS
+  // ===================================================================
+  window.loadPhase3Content = function() {
+    const container = document.getElementById('phase-3-content');
+
+    const html = `
+      <style>
+        .choice-card {
+          background: white;
+          border: 2px solid #e2e8f0;
+          border-radius: 12px;
+          padding: 32px;
+          margin-bottom: 24px;
+          cursor: pointer;
+          transition: all 0.3s;
+        }
+        .choice-card:hover {
+          border-color: #667eea;
+          box-shadow: 0 8px 24px rgba(102, 126, 234, 0.15);
+          transform: translateY(-2px);
+        }
+        .choice-card h3 {
+          color: #1e293b;
+          margin-bottom: 12px;
+          font-size: 20px;
+        }
+        .choice-card p {
+          color: #64748b;
+          line-height: 1.6;
+          margin-bottom: 16px;
+        }
+        .choice-card ul {
+          color: #475569;
+          margin-left: 24px;
+          line-height: 1.8;
+        }
+        .choice-card .btn {
+          margin-top: 16px;
+          width: 100%;
+        }
+      </style>
+
+      <h2 style="margin-bottom: 32px; color: #1e293b;">
+        <i class="fas fa-route"></i> Choix du Parcours
+      </h2>
+
+      <p style="margin-bottom: 32px; color: #64748b; font-size: 15px;">
+        Choisissez le parcours qui correspond à votre situation :
+      </p>
+
+      <div class="choice-card">
+        <h3><i class="fas fa-database" style="color: #10b981;"></i> Parcours A : Préparation des données</h3>
+        <p>
+          Commencez par préparer vos données élèves, puis configurez la structure des classes.
+        </p>
+        <ul>
+          <li>Peupler les onglets sources (6°1, 6°2, etc.)</li>
+          <li>Créer les colonnes ID_ELEVE et NOM_PRENOM</li>
+          <li>Consolider les données</li>
+          <li>Générer les statistiques (optionnel)</li>
+          <li>Ensuite : Configuration complète</li>
+        </ul>
+        <button class="btn btn-primary" onclick="choisirParcours('A')">
+          <i class="fas fa-check"></i> Choisir Parcours A
+        </button>
+      </div>
+
+      <div class="choice-card">
+        <h3><i class="fas fa-sliders-h" style="color: #f59e0b;"></i> Parcours B : Configuration directe</h3>
+        <p>
+          Configurez d'abord la structure des classes, vous pourrez importer les données plus tard.
+        </p>
+        <ul>
+          <li>Définir la structure des classes destinations</li>
+          <li>Mapper origine → destination</li>
+          <li>Définir effectifs et quotas LV2/Options</li>
+          <li>Plus tard : Import des données élèves</li>
+        </ul>
+        <button class="btn btn-primary" onclick="choisirParcours('B')" style="background: #f59e0b;">
+          <i class="fas fa-check"></i> Choisir Parcours B
+        </button>
+      </div>
+
+      <div style="margin-top: 32px; text-align: left;">
+        <button class="btn" onclick="goToPhase(2)" style="background: #e2e8f0; color: #475569;">
+          <i class="fas fa-arrow-left"></i> Retour
+        </button>
+      </div>
+    `;
+
+    container.innerHTML = html;
+  };
+
+  window.choisirParcours = function(parcours) {
+    wizardState.parcours = parcours;
+
+    if (parcours === 'A') {
+      goToPhase(4); // Phase 4 = Parcours A
+    } else {
+      goToPhase(5); // Phase 5 = Configuration complète (Parcours B)
+    }
+  };
+
+  // ===================================================================
+  // PHASE 4 : PARCOURS A - PRÉPARATION DONNÉES
+  // ===================================================================
+  window.loadPhase4Content = function() {
+    const container = document.getElementById('phase-4-content');
+
+    const html = `
+      <h2 style="margin-bottom: 24px; color: #1e293b;">
+        <i class="fas fa-database"></i> Parcours A : Préparation des Données
+      </h2>
+
+      ${createAccordionSection('parcoursA-sources', '1. Peupler les onglets sources', 'fa-table', `
+        <div class="accordion-body">
+          <p style="margin-bottom: 16px; color: #64748b;">
+            Remplissez les onglets sources créés (6°1, 6°2, etc.) avec les données élèves.
+          </p>
+          <button class="btn btn-primary" onclick="ouvrirOngletsSourcesPourSaisie()">
+            <i class="fas fa-edit"></i> Ouvrir les onglets pour saisie
+          </button>
+          <div style="margin-top: 16px;">
+            <button class="btn" style="background: #e2e8f0; color: #475569;" onclick="genererNomPrenomID()">
+              <i class="fas fa-cog"></i> Générer ID_ELEVE et NOM_PRENOM
+            </button>
+          </div>
+        </div>
+      `, true)}
+
+      ${createAccordionSection('parcoursA-consolidation', '2. Consolidation', 'fa-compress', `
+        <div class="accordion-body">
+          <p style="margin-bottom: 16px; color: #64748b;">
+            Consolidez toutes les données sources dans un seul onglet CONSOLIDATION.
+          </p>
+          <button class="btn btn-primary" onclick="consoliderDonnees()">
+            <i class="fas fa-compress-arrows-alt"></i> CONSOLIDER
+          </button>
+          <div id="consolidation-status" style="margin-top: 16px;"></div>
+        </div>
+      `)}
+
+      ${createAccordionSection('parcoursA-stats', '3. Statistiques (optionnel)', 'fa-chart-bar', `
+        <div class="accordion-body">
+          <p style="margin-bottom: 16px; color: #64748b;">
+            Générez un onglet de statistiques globales (optionnel).
+          </p>
+          <button class="btn" style="background: #06b6d4; color: white;" onclick="genererStatistiques()">
+            <i class="fas fa-chart-line"></i> Générer les Statistiques
+          </button>
+          <div id="stats-status" style="margin-top: 16px;"></div>
+        </div>
+      `)}
+
+      <div style="margin-top: 32px; display: flex; justify-content: space-between;">
+        <button class="btn" onclick="goToPhase(3)" style="background: #e2e8f0; color: #475569;">
+          <i class="fas fa-arrow-left"></i> Retour au choix
+        </button>
+        <button class="btn btn-primary" onclick="goToPhase(5)">
+          <i class="fas fa-arrow-right"></i> Suivant : Configuration complète
+        </button>
+      </div>
+    `;
+
+    container.innerHTML = html;
+  };
+
+  window.ouvrirOngletsSourcesPourSaisie = function() {
+    alert('Vous pouvez maintenant saisir les données dans les onglets sources. Revenez ici une fois terminé.');
+  };
+
+  window.genererNomPrenomID = function() {
+    google.script.run
+      .withSuccessHandler(() => {
+        alert('✅ ID_ELEVE et NOM_PRENOM générés avec succès !');
+      })
+      .withFailureHandler((err) => {
+        alert('❌ Erreur : ' + err.message);
+      })
+      .wizard_genererNomPrenomEtID();
+  };
+
+  window.consoliderDonnees = function() {
+    google.script.run
+      .withSuccessHandler((result) => {
+        document.getElementById('consolidation-status').innerHTML = `
+          <div style="padding: 12px; background: #d1fae5; color: #065f46; border-radius: 6px;">
+            ✅ ${result.message}
+          </div>
+        `;
+      })
+      .withFailureHandler((err) => {
+        alert('❌ Erreur : ' + err.message);
+      })
+      .wizard_consoliderDonnees();
+  };
+
+  window.genererStatistiques = function() {
+    google.script.run
+      .withSuccessHandler(() => {
+        document.getElementById('stats-status').innerHTML = `
+          <div style="padding: 12px; background: #d1fae5; color: #065f46; border-radius: 6px;">
+            ✅ Statistiques générées dans l'onglet STATS
+          </div>
+        `;
+      })
+      .withFailureHandler((err) => {
+        alert('❌ Erreur : ' + err.message);
+      })
+      .wizard_genererStatistiques();
+  };
+
+  // ===================================================================
+  // PHASE 5 : CONFIGURATION COMPLÈTE (INLINE)
+  // ===================================================================
+  window.loadPhase5Content = function() {
+    const container = document.getElementById('phase-5-content');
+
+    container.innerHTML = `
+      <h2 style="margin-bottom: 24px; color: #1e293b;">
+        <i class="fas fa-sliders-h"></i> Configuration Complète
+      </h2>
+      <p style="margin-bottom: 24px; color: #64748b;">
+        Chargement de l'interface de configuration...
+      </p>
+    `;
+
+    // Charger la configuration depuis le serveur
+    google.script.run
+      .withSuccessHandler((structureData) => {
+        renderConfigurationComplete(container, structureData);
+      })
+      .withFailureHandler((err) => {
+        container.innerHTML += `<div style="color: red;">Erreur : ${err.message}</div>`;
+      })
+      .chargerStructure();
+  };
+
+  window.renderConfigurationComplete = function(container, structureData) {
+    // TODO: Intégrer le contenu de ConfigurationComplete.html ici (inline)
+    // Pour l'instant, placeholder
+    container.innerHTML = `
+      <h2 style="margin-bottom: 24px; color: #1e293b;">
+        <i class="fas fa-sliders-h"></i> Configuration Complète
+      </h2>
+
+      <div style="padding: 24px; background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; margin-bottom: 24px;">
+        <p style="color: #92400e; margin: 0;">
+          ⚠️ Cette section sera complétée dans la prochaine version.
+          En attendant, utilisez le menu <strong>Console > Configuration Complète</strong>.
+        </p>
+      </div>
+
+      <div style="margin-top: 32px; display: flex; justify-content: space-between;">
+        <button class="btn" onclick="goToPhase(${wizardState.parcours === 'A' ? '4' : '3'})" style="background: #e2e8f0; color: #475569;">
+          <i class="fas fa-arrow-left"></i> Retour
+        </button>
+        <button class="btn btn-primary" onclick="goToPhase(6)">
+          <i class="fas fa-arrow-right"></i> Suivant : Lancement LEGACY
+        </button>
+      </div>
+    `;
+  };
+
+  // ===================================================================
+  // PHASE 6 : LANCEMENT LEGACY
+  // ===================================================================
+  window.loadPhase6Content = function() {
+    const container = document.getElementById('phase-6-content');
+
+    container.innerHTML = `
+      <h2 style="margin-bottom: 24px; color: #1e293b;">
+        <i class="fas fa-rocket"></i> Lancement du Processus LEGACY
+      </h2>
+
+      <div style="padding: 24px; background: #f0fdf4; border: 1px solid #10b981; border-radius: 8px; margin-bottom: 24px;">
+        <h3 style="color: #065f46; margin-bottom: 12px;">Prêt à lancer !</h3>
+        <p style="color: #065f46; margin: 0;">
+          Toutes les étapes sont complétées. Vous pouvez maintenant lancer le pipeline de répartition LEGACY.
+        </p>
+      </div>
+
+      <button class="btn btn-primary" onclick="lancerLEGACY()" style="font-size: 16px; padding: 16px 32px;">
+        <i class="fas fa-play"></i> LANCER LE PROCESSUS LEGACY
+      </button>
+
+      <div id="legacy-status" style="margin-top: 24px;"></div>
+
+      <div style="margin-top: 32px; text-align: left;">
+        <button class="btn" onclick="goToPhase(5)" style="background: #e2e8f0; color: #475569;">
+          <i class="fas fa-arrow-left"></i> Retour
+        </button>
+      </div>
+    `;
+  };
+
+  window.lancerLEGACY = function() {
+    if (!confirm('Êtes-vous sûr de vouloir lancer le processus LEGACY ?')) {
+      return;
+    }
+
+    document.getElementById('legacy-status').innerHTML = `
+      <div style="padding: 12px; background: #dbeafe; color: #1e40af; border-radius: 6px;">
+        ⏳ Lancement en cours...
+      </div>
+    `;
+
+    google.script.run
+      .withSuccessHandler((result) => {
+        document.getElementById('legacy-status').innerHTML = `
+          <div style="padding: 12px; background: #d1fae5; color: #065f46; border-radius: 6px;">
+            ✅ ${result.message}
+          </div>
+        `;
+      })
+      .withFailureHandler((err) => {
+        document.getElementById('legacy-status').innerHTML = `
+          <div style="padding: 12px; background: #fee2e2; color: #991b1b; border-radius: 6px;">
+            ❌ Erreur : ${err.message}
+          </div>
+        `;
+      })
+      .legacy_runFullPipeline_PRIME();
+  };
+
+  // ===================================================================
+  // NAVIGATION
+  // ===================================================================
+  window.goToPhase = function(phaseNum) {
+    // Masquer toutes les phases
+    document.querySelectorAll('.phase').forEach(p => p.classList.remove('active'));
+
+    // Afficher la phase demandée
+    const phaseEl = document.getElementById(`phase-${phaseNum}-content`);
+    if (phaseEl) {
+      phaseEl.classList.add('active');
+    }
+
+    // Charger le contenu si besoin
+    loadPhaseContent(phaseNum);
+
+    // Mettre à jour la navigation (si elle existe)
+    updateNavigation(phaseNum);
+
+    wizardState.currentStep = phaseNum;
+  };
+
+  window.loadPhaseContent = function(phaseNum) {
+    const loaders = {
+      1: loadPhase1Content,
+      2: loadPhase2Content,
+      3: loadPhase3Content,
+      4: loadPhase4Content,
+      5: loadPhase5Content,
+      6: loadPhase6Content
+    };
+
+    if (loaders[phaseNum]) {
+      loaders[phaseNum]();
+    }
+  };
+
+  window.updateNavigation = function(phaseNum) {
+    // Mettre à jour les badges de navigation (si ils existent)
+    document.querySelectorAll('.nav-item').forEach((item, index) => {
+      if (index + 1 === phaseNum) {
+        item.classList.add('active');
+      } else {
+        item.classList.remove('active');
+      }
+    });
+  };
+
+  // ===================================================================
+  // INIT
+  // ===================================================================
+  document.addEventListener('DOMContentLoaded', function() {
+    loadPhase1Content();
+  });
+
+})();
+</script>
